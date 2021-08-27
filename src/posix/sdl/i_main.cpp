@@ -191,10 +191,10 @@ static int DoomSpecificInfo (char *buffer, char *end)
 // matter.
 extern "C"
 {
-	extern void *rtext_a_start, *rtext_a_end;
-	extern void *rtext_tmap_start, *rtext_tmap_end;
-	extern void *rtext_tmap2_start, *rtext_tmap2_end;
-	extern void *rtext_tmap3_start, *rtext_tmap3_end;
+	void *rtext_a_start, *rtext_a_end;
+	void *rtext_tmap_start, *rtext_tmap_end;
+	void *rtext_tmap2_start, *rtext_tmap2_end;
+	void *rtext_tmap3_start, *rtext_tmap3_end;
 };
 
 static void unprotect_pages(long pagesize, void *start, void *end)
