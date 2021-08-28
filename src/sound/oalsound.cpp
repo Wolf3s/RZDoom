@@ -1291,11 +1291,11 @@ void OpenALSoundRenderer::UnloadSound(SoundHandle sfx)
     getALError();
 }
 
-
+// Adam - std::mem_fn is deprecated in C++17 and there are no alternatives, it only generates wrappers for pointers so lets just remove it. 
 SoundStream *OpenALSoundRenderer::CreateStream(SoundStreamCallback callback, int buffbytes, int flags, int samplerate, void *userdata)
 {
     if(StreamThread.get_id() == std::thread::id())
-        StreamThread = std::thread(std::mem_fn(&OpenALSoundRenderer::BackgroundProc), this);
+        StreamThread = std::thread((&OpenALSoundRenderer::BackgroundProc), this);
 	OpenALSoundStream *stream = new OpenALSoundStream(this);
 	if (!stream->Init(callback, buffbytes, flags, samplerate, userdata))
 	{
@@ -1308,7 +1308,7 @@ SoundStream *OpenALSoundRenderer::CreateStream(SoundStreamCallback callback, int
 SoundStream *OpenALSoundRenderer::OpenStream(FileReader *reader, int flags)
 {
     if(StreamThread.get_id() == std::thread::id())
-        StreamThread = std::thread(std::mem_fn(&OpenALSoundRenderer::BackgroundProc), this);
+        StreamThread = std::thread((&OpenALSoundRenderer::BackgroundProc), this);
 	OpenALSoundStream *stream = new OpenALSoundStream(this);
 	if (!stream->Init(reader, !!(flags&SoundStream::Loop)))
 	{
