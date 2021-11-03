@@ -60,7 +60,7 @@
 #include <dlfcn.h>
 
 #ifdef __APPLE__
-#define FLUIDSYNTHLIB1	"libfluidsynth.1.dylib"
+#define FLUIDSYNTHLIB1	"libfluidsynth.dylib"
 #else // !__APPLE__
 #define FLUIDSYNTHLIB1	"libfluidsynth.so.1"
 #endif // __APPLE__
