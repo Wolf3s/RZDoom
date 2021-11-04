@@ -481,11 +481,6 @@ retry_as_sndsys:
 	{
 		info = GME_OpenSong(*reader, fmt);
 	}
-	// Check for module formats
-	else
-	{
-		info = MOD_OpenSong(*reader);
-	}
 
     if (info == NULL)
     {
