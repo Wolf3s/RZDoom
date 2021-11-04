@@ -62,7 +62,7 @@
 #ifdef __APPLE__
 #define FLUIDSYNTHLIB1	"libfluidsynth.dylib"
 #else // !__APPLE__
-#define FLUIDSYNTHLIB1	"libfluidsynth.so.1"
+#define FLUIDSYNTHLIB1	"libfluidsynth.so.2"
 #endif // __APPLE__
 #endif
 
