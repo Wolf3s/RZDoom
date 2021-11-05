@@ -59,6 +59,7 @@
 #include "oalload.h"
 
 CVAR (String, snd_aldevice, "Default", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Bool, snd_efx, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 #ifdef _WIN32
 static HMODULE hmodOpenAL;
@@ -147,7 +148,6 @@ void I_BuildALDeviceList(FOptionValues *opt)
 
 EXTERN_CVAR (Int, snd_channels)
 EXTERN_CVAR (Int, snd_samplerate)
-EXTERN_CVAR (Bool, snd_waterreverb)
 EXTERN_CVAR (Bool, snd_pitched)
 
 
@@ -253,6 +253,18 @@ class OpenALSoundStream : public SoundStream
                 return false;
         }
         Renderer->FreeSfx.Pop(Source);
+
+        /* Set the default properties for localized playback */
+        alSource3f(Source, AL_DIRECTION, 0.f, 0.f, 0.f);
+        alSource3f(Source, AL_VELOCITY, 0.f, 0.f, 0.f);
+        alSource3f(Source, AL_POSITION, 0.f, 0.f, 0.f);
+        alSourcef(Source, AL_MAX_GAIN, 1.f);
+        alSourcef(Source, AL_GAIN, 1.f);
+        alSourcef(Source, AL_PITCH, 1.f);
+        alSourcef(Source, AL_ROLLOFF_FACTOR, 0.f);
+        alSourcef(Source, AL_SEC_OFFSET, 0.f);
+        alSourcei(Source, AL_SOURCE_RELATIVE, AL_TRUE);
+        alSourcei(Source, AL_LOOPING, AL_FALSE);
 
         alGenBuffers(BufferCount, Buffers);
         return (getALError() == AL_NO_ERROR);
@@ -604,8 +616,6 @@ public:
 };
 
 
-extern ReverbContainer *ForcedEnvironment;
-
 #define AREA_SOUND_RADIUS  (128.f)
 
 #define PITCH_MULT (0.7937005f) /* Approx. 4 semitones lower; what Nash suggested */
@@ -668,9 +678,8 @@ static void LoadALFunc(const char *name, T *x)
 
 #define LOAD_FUNC(x)  (LoadALFunc(#x, &x))
 OpenALSoundRenderer::OpenALSoundRenderer()
-    : Device(NULL), Context(NULL), SFXPaused(0), PrevEnvironment(NULL), EnvSlot(0)
+    : Device(NULL), Context(NULL), SFXPaused(0)
 {
-    EnvFilters[0] = EnvFilters[1] = 0;
 
     Printf("I_InitSound: Initializing OpenAL\n");
 
@@ -721,7 +730,6 @@ OpenALSoundRenderer::OpenALSoundRenderer()
     DPrintf("  Vendor: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_VENDOR));
     DPrintf("  Renderer: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_RENDERER));
     DPrintf("  Version: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_VERSION));
-    DPrintf("  Extensions: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_EXTENSIONS));
 
     ALC.EXT_disconnect = !!alcIsExtensionPresent(Device, "ALC_EXT_disconnect");;
     AL.EXT_source_distance_model = !!alIsExtensionPresent("AL_EXT_source_distance_model");
@@ -783,8 +791,6 @@ OpenALSoundRenderer::OpenALSoundRenderer()
     }
     FreeSfx = Sources;
     DPrintf("  Allocated " TEXTCOLOR_BLUE"%u" TEXTCOLOR_NORMAL" sources\n", Sources.Size());
-
-    WasInWater = false;
 }
 #undef LOAD_FUNC
 
@@ -801,7 +807,6 @@ OpenALSoundRenderer::~OpenALSoundRenderer()
     FreeSfx.Clear();
     SfxGroup.Clear();
     PausableSfx.Clear();
-    ReverbSfx.Clear();
 
     alcMakeContextCurrent(NULL);
     alcDestroyContext(Context);
@@ -1069,11 +1074,19 @@ FISoundChannel *OpenALSoundRenderer::StartSound(SoundHandle sfx, float vol, int 
 
     ALuint buffer = GET_PTRID(sfx.data);
     ALuint source = FreeSfx.Last();
+    alSource3f(source, AL_POSITION, 0.f, 0.f, 0.f);
+    alSource3f(source, AL_VELOCITY, 0.f, 0.f, 0.f);
+    alSource3f(source, AL_DIRECTION, 0.f, 0.f, 0.f);
+    alSourcei(source, AL_SOURCE_RELATIVE, AL_TRUE);
 
-    if(WasInWater && !(chanflags&SNDF_NOREVERB))
-        alSourcef(source, AL_PITCH, PITCH(pitch)*PITCH_MULT);
-    else
-        alSourcef(source, AL_PITCH, PITCH(pitch));
+    alSourcei(source, AL_LOOPING, (chanflags&SNDF_LOOP) ? AL_TRUE : AL_FALSE);
+
+    alSourcef(source, AL_REFERENCE_DISTANCE, 1.f);
+    alSourcef(source, AL_MAX_DISTANCE, 1000.f);
+    alSourcef(source, AL_ROLLOFF_FACTOR, 0.f);
+    alSourcef(source, AL_MAX_GAIN, SfxVolume);
+    alSourcef(source, AL_GAIN, SfxVolume*vol);
+    alSourcef(source, AL_PITCH, PITCH(pitch));
 
     if(!reuse_chan)
         alSourcef(source, AL_SEC_OFFSET, 0.f);
@@ -1100,8 +1113,6 @@ FISoundChannel *OpenALSoundRenderer::StartSound(SoundHandle sfx, float vol, int 
         return NULL;
     }
 
-    if(!(chanflags&SNDF_NOREVERB))
-        ReverbSfx.Push(source);
     if(!(chanflags&SNDF_NOPAUSE))
         PausableSfx.Push(source);
     SfxGroup.Push(source);
@@ -1219,11 +1230,18 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
         dir += listener->position;
         alSource3f(source, AL_POSITION, dir[0], dir[1], -dir[2]);
     }
-
-    if(WasInWater && !(chanflags&SNDF_NOREVERB))
-        alSourcef(source, AL_PITCH, PITCH(pitch)*PITCH_MULT);
     else
-        alSourcef(source, AL_PITCH, PITCH(pitch));
+        alSource3f(source, AL_POSITION, pos[0], pos[1], -pos[2]);
+    alSource3f(source, AL_VELOCITY, vel[0], vel[1], -vel[2]);
+    alSource3f(source, AL_DIRECTION, 0.f, 0.f, 0.f);
+
+    alSourcei(source, AL_SOURCE_RELATIVE, AL_FALSE);
+    alSourcei(source, AL_LOOPING, (chanflags&SNDF_LOOP) ? AL_TRUE : AL_FALSE);
+
+    alSourcef(source, AL_MAX_GAIN, SfxVolume);
+    alSourcef(source, AL_GAIN, SfxVolume*vol);
+
+    alSourcef(source, AL_PITCH, PITCH(pitch));
 
     if(!reuse_chan)
         alSourcef(source, AL_SEC_OFFSET, 0.f);
@@ -1250,8 +1268,6 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
         return NULL;
     }
 
-    if(!(chanflags&SNDF_NOREVERB))
-        ReverbSfx.Push(source);
     if(!(chanflags&SNDF_NOPAUSE))
         PausableSfx.Push(source);
     SfxGroup.Push(source);
@@ -1297,8 +1313,6 @@ void OpenALSoundRenderer::StopChannel(FISoundChannel *chan)
     uint32 i;
     if((i=PausableSfx.Find(source)) < PausableSfx.Size())
         PausableSfx.Delete(i);
-    if((i=ReverbSfx.Find(source)) < ReverbSfx.Size())
-        ReverbSfx.Delete(i);
 
     SfxGroup.Delete(SfxGroup.Find(source));
     FreeSfx.Push(source);
@@ -1460,14 +1474,6 @@ void OpenALSoundRenderer::UpdateListener(SoundListener *listener)
                               listener->velocity.Y,
                              -listener->velocity.Z);
     getALError();
-
-    const ReverbContainer *env = ForcedEnvironment;
-    if(!env)
-    {
-        env = listener->Environment;
-        if(!env)
-            env = DefaultEnvironments[0];
-    }
 }
 
 void OpenALSoundRenderer::UpdateSounds()
@@ -1542,6 +1548,7 @@ void OpenALSoundRenderer::PrintStatus()
         Printf("ALC Version: " TEXTCOLOR_BLUE"%d.%d\n", major, minor);
         Printf("Available sources: " TEXTCOLOR_BLUE"%d" TEXTCOLOR_NORMAL" (" TEXTCOLOR_BLUE"%d" TEXTCOLOR_NORMAL" mono, " TEXTCOLOR_BLUE"%d" TEXTCOLOR_NORMAL" stereo)\n", mono+stereo, mono, stereo);
     }
+    ALCint sends;
     Printf("Vendor: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_VENDOR));
     Printf("Renderer: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_RENDERER));
     Printf("Version: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_VERSION));
@@ -1622,11 +1629,6 @@ void OpenALSoundRenderer::PurgeStoppedSources()
     getALError();
 }
 
-void OpenALSoundRenderer::LoadReverb(const ReverbContainer *env)
-{
-
-}
-
 FSoundChan *OpenALSoundRenderer::FindLowestChannel()
 {
     FSoundChan *schan = Channels;
@@ -1646,3 +1648,4 @@ FSoundChan *OpenALSoundRenderer::FindLowestChannel()
 }
 
 #endif // NO_OPENAL
+
