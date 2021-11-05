@@ -268,15 +268,6 @@ else()
 	set( BZIP2_LIBRARY bz2 )
 endif()
 
-if( GME_FOUND AND NOT FORCE_INTERNAL_GME )
-	message( STATUS "Using system gme library, includes found at ${GME_INCLUDE_DIR}" )
-else()
-	message( STATUS "Using internal gme library" )
-	add_subdirectory( game-music-emu )
-	set( GME_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/game-music-emu" )
-	set( GME_LIBRARIES gme )
-endif()
-
 set( LZMA_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lzma/C" )
 
 if( NOT CMAKE_CROSSCOMPILING )
