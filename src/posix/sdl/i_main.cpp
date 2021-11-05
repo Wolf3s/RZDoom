@@ -150,7 +150,7 @@ static int DoomSpecificInfo (char *buffer, char *end)
 	int i, p;
 
 	p = 0;
-	p += snprintf (buffer+p, size-p, GAMENAME" version %s\n", GetVersionString());
+	p += snprintf (buffer+p, size-p, GAMENAME " " VERSIONSTR);
 #ifdef __VERSION__
 	p += snprintf (buffer+p, size-p, "Compiler version: %s\n", __VERSION__);
 #endif
@@ -244,8 +244,7 @@ int main (int argc, char **argv)
 	}
 #endif // !__APPLE__
 
-	printf(GAMENAME" %s - %s - SDL version\nCompiled on %s\n",
-		GetVersionString(), GetGitTime(), __DATE__);
+	printf(GAMENAME " " VERSIONSTR" SDL version\nCompiled on %s\n",__DATE__);
 
 	seteuid (getuid ());
     std::set_new_handler (NewFailure);

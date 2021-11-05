@@ -2232,7 +2232,7 @@ void D_DoomMain (void)
 		hashfile = fopen(filename, "w");
 		if (hashfile)
 		{
-			fprintf(hashfile, "%s version %s\n", GAMENAME, GetVersionString());
+			fprintf(hashfile, GAMENAME, VERSIONSTR);
 #ifdef __VERSION__
 			fprintf(hashfile, "Compiler version: %s\n", __VERSION__);
 #endif

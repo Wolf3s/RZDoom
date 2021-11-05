@@ -8,8 +8,7 @@
 // Generated from the TEXTINCLUDE 2 resource.
 //
 #include "afxres.h"
-#include "../version.h"
-#include "../gitinfo.h"
+#include "../version.h"
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
@@ -38,7 +37,6 @@ END
 BEGIN
     "#include ""afxres.h""\r\n"
     "#include ""../version.h""\r\r\n"
-    "#include ""../gitinfo.h""\r\0"
 END
 
 3 TEXTINCLUDE 
@@ -51,7 +49,7 @@ BEGIN
     "//\r\n"
     "// Version\r\n"
     "//\r\n"
-    "#define RC_FILEVERSION2 GIT_DESCRIPTION\r\n"
+    "#define RC_FILEVERSION2\r\n"
     "\r\n"
     "VS_VERSION_INFO VERSIONINFO\r\n"
     " FILEVERSION RC_FILEVERSION\r\n"
@@ -471,7 +469,7 @@ IDB_DEADGUY             BITMAP                  "deadguy.bmp"
 //
 // Version
 //
-#define RC_FILEVERSION2 GIT_DESCRIPTION
+#define RC_FILEVERSION2
 
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION RC_FILEVERSION

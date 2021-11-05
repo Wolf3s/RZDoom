@@ -1498,7 +1498,6 @@ OptionMenu OpenALSoundItems
 {
 	Title "OPENAL OPTIONS"
 	Option "Playback device",	"snd_aldevice",	"ALDevices"
-	Option "Enable EFX",		"snd_efx",		"OnOff"
 }
 
 

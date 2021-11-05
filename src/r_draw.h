@@ -67,12 +67,7 @@ extern void (*R_DrawColumn)(void);
 
 extern DWORD (STACK_ARGS *dovline1) ();
 extern DWORD (STACK_ARGS *doprevline1) ();
-#ifdef X64_ASM
-#define dovline4 vlinetallasm4
-extern "C" void vlinetallasm4();
-#else
 extern void (STACK_ARGS *dovline4) ();
-#endif
 extern void setupvline (int);
 
 extern DWORD (STACK_ARGS *domvline1) ();

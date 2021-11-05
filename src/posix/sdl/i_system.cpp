@@ -319,7 +319,7 @@ int I_PickIWad_Gtk (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 
 	// Create the dialog window.
 	window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-	mysnprintf(caption, countof(caption), GAMESIG " %s: Select an IWAD to use", GetVersionString());
+	mysnprintf(caption, countof(caption), GAMESIG " %s: Select an IWAD to use", VERSIONSTR);
 	gtk_window_set_title (GTK_WINDOW(window), caption);
 	gtk_window_set_position (GTK_WINDOW(window), GTK_WIN_POS_CENTER);
 	gtk_container_set_border_width (GTK_CONTAINER(window), 10);
@@ -449,7 +449,7 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 	if((str=getenv("KDE_FULL_SESSION")) && strcmp(str, "true") == 0)
 	{
 		FString cmd("kdialog --title \"" GAMESIG " ");
-		cmd << GetVersionString() << ": Select an IWAD to use\""
+		cmd << VERSIONSTR << ": Select an IWAD to use\""
 		            " --menu \"" GAMENAME " found more than one IWAD\n"
 		            "Select from the list below to determine which one to use:\"";
 

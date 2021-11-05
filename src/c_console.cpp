@@ -876,9 +876,9 @@ void C_DrawConsole (bool hw2d)
 		if (ConBottom >= 12)
 		{
 			screen->DrawText (ConFont, CR_ORANGE, SCREENWIDTH - 8 -
-				ConFont->StringWidth (GetVersionString()),
+				ConFont->StringWidth (VERSIONSTR),
 				ConBottom - ConFont->GetHeight() - 4,
-				GetVersionString(), TAG_DONE);
+				VERSIONSTR, TAG_DONE);
 			if (TickerMax)
 			{
 				char tickstr[256];

@@ -10,12 +10,6 @@ include( CheckCXXCompilerFlag )
 include( CheckLibraryExists )
 include( FindPkgConfig )
 
-if( NOT APPLE )
-	option( NO_ASM "Disable assembly code" OFF )
-else( NOT APPLE )
-	# At the moment asm code doesn't work with OS X, so disable by default
-	option( NO_ASM "Disable assembly code" ON )
-endif( NOT APPLE )
 if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	option( NO_STRIP "Do not strip Release or MinSizeRel builds" )
 	# At least some versions of Xcode fail if you strip with the linker
@@ -106,7 +100,6 @@ if( WIN32 )
 		)
 	set( FMOD_INC_PATH_SUFFIXES PATH_SUFFIXES inc )
 	set( FMOD_LIB_PATH_SUFFIXES PATH_SUFFIXES lib )
-	set( NASM_NAMES nasmw nasm )
 	
 	find_path( D3D_INCLUDE_DIR d3d9.h
 		PATHS ENV DXSDK_DIR
@@ -181,23 +174,9 @@ else( WIN32 )
 			/opt/include/fmodex )
 		set( FMOD_INC_PATH_SUFFIXES PATH_SUFFIXES fmodex )
 
-		# Use GTK+ for the IWAD picker, if available.
-		if( NOT NO_GTK )
-			pkg_check_modules( GTK2 gtk+-2.0 )
-			if( GTK2_FOUND )
-				set( ZDOOM_LIBS ${ZDOOM_LIBS} ${GTK2_LIBRARIES} )
-				include_directories( ${GTK2_INCLUDE_DIRS} )
-				link_directories( ${GTK2_LIBRARY_DIRS} )
-			else( GTK2_FOUND )
-				set( NO_GTK ON )
-			endif( GTK2_FOUND )
-		endif( NOT NO_GTK )
 	endif( APPLE )
-	set( NASM_NAMES nasm )
 	
-	if( NO_GTK )
 		add_definitions( -DNO_GTK=1 )
-	endif( NO_GTK )
 	
 	# Non-Windows version also needs SDL except native OS X backend
 	if( NOT APPLE OR NOT OSX_COCOA_BACKEND )
@@ -301,107 +280,6 @@ endif( NO_OPENAL )
 # Search for FluidSynth
 
 find_package( FluidSynth )
-
-# Search for NASM
-
-if( NOT NO_ASM )
-	if( UNIX AND X64 )
-		find_program( GAS_PATH as )
-		
-		if( GAS_PATH )
-			set( ASSEMBLER ${GAS_PATH} )
-		else( GAS_PATH )
-			message( STATUS "Could not find as. Disabling assembly code." )
-			set( NO_ASM ON )
-		endif( GAS_PATH )
-	else( UNIX AND X64 )
-		find_program( NASM_PATH NAMES ${NASM_NAMES} )
-		find_program( YASM_PATH yasm )
-
-		if( X64 )
-			if( YASM_PATH )
-				set( ASSEMBLER ${YASM_PATH} )
-			else( YASM_PATH )
-				message( STATUS "Could not find YASM. Disabling assembly code." )
-				set( NO_ASM ON )
-			endif( YASM_PATH )
-		else( X64 )
-			if( NASM_PATH )
-				set( ASSEMBLER ${NASM_PATH} )
-			else( NASM_PATH )
-				message( STATUS "Could not find NASM. Disabling assembly code." )
-				set( NO_ASM ON )
-			endif( NASM_PATH )
-		endif( X64 )
-	endif( UNIX AND X64 )
-
-	# I think the only reason there was a version requirement was because the
-	# executable name for Windows changed from 0.x to 2.0, right? This is
-	# how to do it in case I need to do something similar later.
-	
-	#	execute_process( COMMAND ${NASM_PATH} -v
-	#		OUTPUT_VARIABLE NASM_VER_STRING )
-	#	string( REGEX REPLACE ".*version ([0-9]+[.][0-9]+).*" "\\1" NASM_VER "${NASM_VER_STRING}" )
-	#	if( NOT NASM_VER LESS 2 )
-	#		message( SEND_ERROR "NASM version should be 2 or later. (Installed version is ${NASM_VER}.)" )
-	#	endif( NOT NASM_VER LESS 2 )
-endif( NOT NO_ASM )
-
-if( NOT NO_ASM )
-	# Valgrind support is meaningless without assembly code.
-	if( VALGRIND )
-		add_definitions( -DVALGRIND_AWARE=1 )
-		# If you're Valgrinding, you probably want to keep symbols around.
-		set( NO_STRIP ON )
-	endif( VALGRIND )
-
-	# Tell CMake how to assemble our files
-	if( UNIX )
-		set( ASM_OUTPUT_EXTENSION .o )
-		if( X64 )
-			set( ASM_FLAGS )
-			set( ASM_SOURCE_EXTENSION .s )
-		else( X64 )
-			if( APPLE )
-				set( ASM_FLAGS -fmacho -DM_TARGET_MACHO )
-			else( APPLE )
-				set( ASM_FLAGS -felf -DM_TARGET_LINUX )
-			endif( APPLE )
-			set( ASM_FLAGS "${ASM_FLAGS}" -i${CMAKE_CURRENT_SOURCE_DIR}/ )
-			set( ASM_SOURCE_EXTENSION .asm )
-		endif( X64 )
-	else( UNIX )
-		set( ASM_OUTPUT_EXTENSION .obj )
-		set( ASM_SOURCE_EXTENSION .asm )
-		if( X64 )
-			set( ASM_FLAGS -f win64 -DWIN32 -DWIN64 )
-		else( X64 )
-			set( ASM_FLAGS -f win32 -DWIN32 -i${CMAKE_CURRENT_SOURCE_DIR}/ )
-		endif( X64 )
-	endif( UNIX )
-	if( WIN32 AND NOT X64 )
-		set( FIXRTEXT fixrtext )
-	else( WIN32 AND NOT X64 )
-		set( FIXRTEXT "" )
-	endif( WIN32 AND NOT X64 )
-	message( STATUS "Selected assembler: ${ASSEMBLER}" )
-	MACRO( ADD_ASM_FILE indir infile )
-		set( ASM_OUTPUT_${infile} "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/zdoom.dir/${indir}/${infile}${ASM_OUTPUT_EXTENSION}" )
-		if( WIN32 AND NOT X64 )
-			set( FIXRTEXT_${infile} COMMAND ${FIXRTEXT} "${ASM_OUTPUT_${infile}}" )
-		else( WIN32 AND NOT X64 )
-			set( FIXRTEXT_${infile} COMMAND "" )
-		endif( WIN32 AND NOT X64 )
-		add_custom_command( OUTPUT ${ASM_OUTPUT_${infile}}
-			COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/zdoom.dir/${indir}
-			COMMAND ${ASSEMBLER} ${ASM_FLAGS} -o"${ASM_OUTPUT_${infile}}" "${CMAKE_CURRENT_SOURCE_DIR}/${indir}/${infile}${ASM_SOURCE_EXTENSION}"
-			${FIXRTEXT_${infile}}
-			DEPENDS ${indir}/${infile}.asm ${FIXRTEXT} )
-		set( ASM_SOURCES ${ASM_SOURCES} "${ASM_OUTPUT_${infile}}" )
-	ENDMACRO( ADD_ASM_FILE )
-endif( NOT NO_ASM )
-
-# Decide on SSE setup
 
 set( SSE_MATTERS NO )
 
@@ -544,13 +422,6 @@ if( BACKPATCH )
 	add_definitions( -DBACKPATCH )
 endif( BACKPATCH )
 
-# Update gitinfo.h
-
-add_custom_target( revision_check ALL
-	COMMAND updaterevision src/gitinfo.h
-	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-	DEPENDS updaterevision )
-
 # Libraries ZDoom needs
 
 message( STATUS "Fluid synth libs: ${FLUIDSYNTH_LIBRARIES}" )
@@ -659,24 +530,6 @@ else( WIN32 )
 	set( SYSTEM_SOURCES ${PLAT_POSIX_SOURCES} ${PLAT_SDL_SOURCES} )
 	set( OTHER_SYSTEM_SOURCES ${PLAT_WIN32_SOURCES} ${PLAT_OSX_SOURCES} ${PLAT_COCOA_SOURCES} )
 endif( WIN32 )
-
-if( NOT ASM_SOURCES )
-	set( ASM_SOURCES "" )
-endif( NOT ASM_SOURCES )
-
-if( NO_ASM )
-	add_definitions( -DNOASM )
-else( NO_ASM )
-	if( X64 )
-		ADD_ASM_FILE( asm_x86_64 tmap3 )
-	else( X64 )
-		ADD_ASM_FILE( asm_ia32 a )
-		ADD_ASM_FILE( asm_ia32 misc )
-		ADD_ASM_FILE( asm_ia32 tmap )
-		ADD_ASM_FILE( asm_ia32 tmap2 )
-		ADD_ASM_FILE( asm_ia32 tmap3 )
-	endif( X64 )
-endif( NO_ASM )
 
 add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.h
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/xlat/xlat_parser.y .
@@ -836,23 +689,12 @@ set( NOT_COMPILED_SOURCE_FILES
 	xlat/xlat_parser.y
 	xlat_parser.c
 	xlat_parser.h
-
-	# We could have the ASM macro add these files, but it wouldn't add all
-	# platforms.
-	asm_ia32/a.asm
-	asm_ia32/misc.asm
-	asm_ia32/tmap.asm
-	asm_ia32/tmap2.asm
-	asm_ia32/tmap3.asm
-	asm_x86_64/tmap3.asm
-	asm_x86_64/tmap3.s
 )
 
 add_executable( zdoom WIN32 MACOSX_BUNDLE
 	${HEADER_FILES}
 	${NOT_COMPILED_SOURCE_FILES}
 	__autostart.cpp
-	${ASM_SOURCES}
 	${SYSTEM_SOURCES}
 	${X86_SOURCES}
 	x86.cpp
@@ -901,7 +743,6 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	g_skill.cpp
 	gameconfigfile.cpp
 	gi.cpp
-	gitinfo.cpp
 	hu_scores.cpp
 	i_net.cpp
 	info.cpp
@@ -1198,8 +1039,6 @@ include_directories( .
 	${CMAKE_BINARY_DIR}/gdtoa
 	${SYSTEM_SOURCES_DIR} )
 
-add_dependencies( zdoom revision_check )
-
 # Due to some quirks, we need to do this in this order
 if( NOT ZDOOM_OUTPUT_OLDSTYLE OR NO_GENERATOR_EXPRESSIONS )
 	# RUNTIME_OUTPUT_DIRECTORY does not exist in CMake 2.4.
@@ -1222,9 +1061,9 @@ endif( NOT ZDOOM_OUTPUT_OLDSTYLE OR NO_GENERATOR_EXPRESSIONS )
 if( MSVC )
 	option( ZDOOM_GENERATE_MAPFILE "Generate .map file for debugging." OFF )
 	if( ZDOOM_GENERATE_MAPFILE )
-		set_target_properties(zdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO /DELAYLOAD:\"fmodex${X64}.dll\" /DELAYLOAD:\"openal32.dll\" /DELAYLOAD:\"libmpg123-0.dll\" /DELAYLOAD:\"libsndfile-1.dll\" /MAP")
+		set_target_properties(zdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO /DELAYLOAD:\"openal32.dll\" /DELAYLOAD:\"libmpg123-0.dll\" /DELAYLOAD:\"libsndfile-1.dll\" /MAP")
 	else( ZDOOM_GENERATE_MAPFILE )
-		set_target_properties(zdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO /DELAYLOAD:\"fmodex${X64}.dll\" /DELAYLOAD:\"openal32.dll\" /DELAYLOAD:\"libmpg123-0.dll\" /DELAYLOAD:\"libsndfile-1.dll\"")
+		set_target_properties(zdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO /DELAYLOAD:\"openal32.dll\" /DELAYLOAD:\"libmpg123-0.dll\" /DELAYLOAD:\"libsndfile-1.dll\"")
 	endif( ZDOOM_GENERATE_MAPFILE )
 
 	if( NO_GENERATOR_EXPRESSIONS )
@@ -1259,29 +1098,6 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	endif( SSE_MATTERS )
 endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 
-if( APPLE )
-	set_target_properties(zdoom PROPERTIES
-		LINK_FLAGS "-framework Carbon -framework Cocoa -framework IOKit -framework OpenGL"
-		MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/posix/osx/zdoom-info.plist" )
-
-	if( NOT NO_FMOD )
-		# Fix fmod link so that it can be found in the app bundle.
-		find_program( OTOOL otool HINTS "/usr/bin" "${OSX_DEVELOPER_ROOT}/usr/bin" )
-		find_program( INSTALL_NAME_TOOL install_name_tool HINTS "/usr/bin" "${OSX_DEVELOPER_ROOT}/usr/bin" )
-		execute_process( COMMAND "${OTOOL}" -L "${FMOD_LIBRARY}"
-			COMMAND grep "libfmodex.dylib (compat"
-			COMMAND head -n1
-			COMMAND awk "{print $1}"
-			OUTPUT_VARIABLE FMOD_LINK
-			OUTPUT_STRIP_TRAILING_WHITESPACE )
-		add_custom_command( TARGET zdoom POST_BUILD
-			COMMAND "${INSTALL_NAME_TOOL}" -change "${FMOD_LINK}" @executable_path/../Frameworks/libfmodex.dylib "$<TARGET_FILE:zdoom>"
-			COMMENT "Relinking FMOD Ex" )
-	endif( NOT NO_FMOD )
-endif( APPLE )
-
-source_group("Assembly Files\\ia32" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/asm_ia32/.+")
-source_group("Assembly Files\\x86_64" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/asm_x86_64/.+")
 source_group("Audio Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/.+")
 source_group("Audio Files\\OPL Synth" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/oplsynth/.+")
 source_group("Audio Files\\OPL Synth\\DOSBox" FILES oplsynth/dosbox/opl.cpp oplsynth/dosbox/opl.h)

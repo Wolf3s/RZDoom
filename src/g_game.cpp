@@ -2201,10 +2201,10 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 
 	SaveVersion = SAVEVER;
 	PutSavePic (stdfile, SAVEPICWIDTH, SAVEPICHEIGHT);
-	mysnprintf(buf, countof(buf), GAMENAME " %s", GetVersionString());
+	mysnprintf(buf, countof(buf), GAMENAME " " VERSIONSTR);
 	M_AppendPNGText (stdfile, "Software", buf);
 	M_AppendPNGText (stdfile, "Engine", GAMESIG);
-	M_AppendPNGText (stdfile, "ZDoom Save Version", SAVESIG);
+	M_AppendPNGText (stdfile, "ZedDoom Save Version", SAVESIG);
 	M_AppendPNGText (stdfile, "Title", description);
 	M_AppendPNGText (stdfile, "Current Map", level.MapName);
 	PutSaveWads (stdfile);
