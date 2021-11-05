@@ -582,7 +582,6 @@ else( WIN32 )
 endif( WIN32 )
 file( GLOB HEADER_FILES
 	${EXTRA_HEADER_DIRS}
-	fragglescript/*.h
 	g_doom/*.h
 	g_heretic/*.h
 	g_hexen/*.h
@@ -993,16 +992,6 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	wildmidi/wildmidi_lib.cpp
 	wildmidi/wm_error.cpp
 	xlat/parse_xlat.cpp
-	fragglescript/t_fspic.cpp
-	fragglescript/t_func.cpp
-	fragglescript/t_load.cpp
-	fragglescript/t_oper.cpp
-	fragglescript/t_parse.cpp
-	fragglescript/t_prepro.cpp
-	fragglescript/t_script.cpp
-	fragglescript/t_spec.cpp
-	fragglescript/t_variable.cpp
-	fragglescript/t_cmd.cpp
 	r_data/colormaps.cpp
 	r_data/sprites.cpp
 	r_data/voxels.cpp
@@ -1106,7 +1095,6 @@ source_group("Audio Files\\Timidity\\Source" REGULAR_EXPRESSION "^${CMAKE_CURREN
 source_group("Audio Files\\WildMidi\\Headers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/wildmidi/.+\\.h$")
 source_group("Audio Files\\WildMidi\\Source" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/wildmidi/.+\\.cpp$")
 source_group("Decorate++" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/thingdef/.+")
-source_group("FraggleScript" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/fragglescript/.+")
 source_group("Games\\Doom Game" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_doom/.+")
 source_group("Games\\Heretic Game" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_heretic/.+")
 source_group("Games\\Hexen Game" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_hexen/.+")

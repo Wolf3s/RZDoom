@@ -69,8 +69,6 @@
 #include "r_renderer.h"
 #include "r_data/colormaps.h"
 
-#include "fragglescript/t_fs.h"
-
 #define MISSING_TEXTURE_WARN_LIMIT		20
 
 void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt, const int *oldvertextable);
@@ -1667,7 +1665,6 @@ AActor *SpawnMapThing(int index, FMapThing *mt, int position)
 			index, mt->x>>FRACBITS, mt->y>>FRACBITS, mt->z>>FRACBITS, mt->EdNum, mt->flags, 
 			spawned? spawned->GetClass()->TypeName.GetChars() : "(none)");
 	}
-	T_AddSpawnedThing(spawned);
 	return spawned;
 }
 
@@ -3653,7 +3650,6 @@ void P_SetupLevel (const char *lumpname, int position)
 		{
 			ForceNodeBuild = true;
 		}
-		T_LoadScripts(map);
 
 		if (!map->HasBehavior || map->isText)
 		{
@@ -4056,8 +4052,6 @@ void P_SetupLevel (const char *lumpname, int position)
 			}
 		}
 	}
-
-	T_PreprocessScripts();        // preprocess FraggleScript scripts
 
 	// build subsector connect matrix
 	//	UNUSED P_ConnectSubsectors ();
