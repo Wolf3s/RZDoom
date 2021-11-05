@@ -531,24 +531,16 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			SpawnEAXWindow = false;
 			ShowEAXEditor ();
 		}
-		return DefWindowProc(hWnd, message, wParam, lParam);
+		break;
 
 	case WM_GETMINMAXINFO:
 		if (screen && !VidResizing)
 		{
 			LPMINMAXINFO mmi = (LPMINMAXINFO)lParam;
-			if (screen->IsFullscreen())
-			{
-				RECT rect = { 0, 0, screen->GetWidth(), screen->GetHeight() };
-				AdjustWindowRectEx(&rect, WS_VISIBLE | WS_OVERLAPPEDWINDOW, FALSE, WS_EX_APPWINDOW);
-				mmi->ptMinTrackSize.x = rect.right - rect.left;
-				mmi->ptMinTrackSize.y = rect.bottom - rect.top;
-			}
-			else
-			{
-				mmi->ptMinTrackSize.x = 320;
-				mmi->ptMinTrackSize.y = 200;
-			}
+			RECT rect = { 0, 0, screen->GetWidth(), screen->GetHeight() };
+			AdjustWindowRectEx(&rect, WS_VISIBLE|WS_OVERLAPPEDWINDOW, FALSE, WS_EX_APPWINDOW);
+			mmi->ptMinTrackSize.x = rect.right - rect.left;
+			mmi->ptMinTrackSize.y = rect.bottom - rect.top;
 			return 0;
 		}
 		break;

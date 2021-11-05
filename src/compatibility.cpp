@@ -80,7 +80,6 @@ enum
 	CP_CLEARSPECIAL,
 	CP_SETACTIVATION,
 	CP_SECTORFLOOROFFSET,
-	CP_SETSECTORSPECIAL,
 	CP_SETWALLYSCALE,
 	CP_SETTHINGZ,
 	CP_SETTAG,
@@ -110,8 +109,8 @@ static FCompatOption Options[] =
 	{ "ignoreteleporttags",		BCOMPATF_BADTELEPORTERS, SLOT_BCOMPAT },
 	{ "rebuildnodes",			BCOMPATF_REBUILDNODES, SLOT_BCOMPAT },
 	{ "linkfrozenprops",		BCOMPATF_LINKFROZENPROPS, SLOT_BCOMPAT },
+	{ "disablepushwindowcheck",	BCOMPATF_NOWINDOWCHECK, SLOT_BCOMPAT },
 	{ "floatbob",				BCOMPATF_FLOATBOB, SLOT_BCOMPAT },
-	{ "noslopeid",				BCOMPATF_NOSLOPEID, SLOT_BCOMPAT },
 
 	// list copied from g_mapinfo.cpp
 	{ "shorttex",				COMPATF_SHORTTEX, SLOT_COMPAT },
@@ -147,9 +146,6 @@ static FCompatOption Options[] =
 	{ "floormove",				COMPATF2_FLOORMOVE, SLOT_COMPAT2 },
 	{ "soundcutoff",			COMPATF2_SOUNDCUTOFF, SLOT_COMPAT2 },
 	{ "pointonline",			COMPATF2_POINTONLINE, SLOT_COMPAT2 },
-	{ "multiexit",				COMPATF2_MULTIEXIT, SLOT_COMPAT2 },
-	{ "teleport",				COMPATF2_TELEPORT, SLOT_COMPAT2 },
-	{ "disablepushwindowcheck",	COMPATF2_PUSHWINDOW, SLOT_COMPAT2 },
 
 	{ NULL, 0, 0 }
 };
@@ -293,16 +289,7 @@ void ParseCompatibility()
 				sc.MustGetNumber();
 				CompatParams.Push(sc.Number);
 				sc.MustGetFloat();
-				CompatParams.Push(int(sc.Float*65536.));
-			}
-			else if (sc.Compare("setsectorspecial"))
-			{
-				if (flags.ExtCommandIndex == ~0u) flags.ExtCommandIndex = CompatParams.Size();
-				CompatParams.Push(CP_SETSECTORSPECIAL);
-				sc.MustGetNumber();
-				CompatParams.Push(sc.Number);
-				sc.MustGetNumber();
-				CompatParams.Push(sc.Number);
+				CompatParams.Push(FLOAT2FIXED(sc.Float));
 			}
 			else if (sc.Compare("setwallyscale"))
 			{
@@ -315,7 +302,7 @@ void ParseCompatibility()
 				sc.MustGetString();
 				CompatParams.Push(sc.MustMatchString(WallTiers));
 				sc.MustGetFloat();
-				CompatParams.Push(int(sc.Float*65536.));
+				CompatParams.Push(FLOAT2FIXED(sc.Float));
 			}
 			else if (sc.Compare("setthingz"))
 			{
@@ -324,7 +311,7 @@ void ParseCompatibility()
 				sc.MustGetNumber();
 				CompatParams.Push(sc.Number);
 				sc.MustGetFloat();
-				CompatParams.Push(int(sc.Float*256));	// do not use full fixed here so that it can eventually handle larger levels
+				CompatParams.Push(FLOAT2FIXED(sc.Float));
 			}
 			else if (sc.Compare("setsectortag"))
 			{
@@ -409,7 +396,7 @@ void CheckCompatibility(MapData *map)
 
 	flags = BCompatMap.CheckKey(md5);
 
-	if (developer >= DMSG_NOTIFY)
+	if (developer)
 	{
 		Printf("MD5 = ");
 		for (size_t j = 0; j < sizeof(md5.Bytes); ++j)
@@ -533,19 +520,8 @@ void SetCompatibilityParams()
 					if (CompatParams[i+1] < numsectors)
 					{
 						sector_t *sec = &sectors[CompatParams[i+1]];
-						const double delta = CompatParams[i + 2] / 65536.0;
-						sec->floorplane.ChangeHeight(delta);
-						sec->ChangePlaneTexZ(sector_t::floor, delta);
-					}
-					i += 3;
-					break;
-				}
-				case CP_SETSECTORSPECIAL:
-				{
-					const int index = CompatParams[i + 1];
-					if (index < numsectors)
-					{
-						sectors[index].special = CompatParams[i + 2];
+						sec->floorplane.ChangeHeight(CompatParams[i+2]);
+						sec->ChangePlaneTexZ(sector_t::floor, CompatParams[i+2]);
 					}
 					i += 3;
 					break;
@@ -557,7 +533,7 @@ void SetCompatibilityParams()
 						side_t *side = lines[CompatParams[i+1]].sidedef[CompatParams[i+2]];
 						if (side != NULL)
 						{
-							side->SetTextureYScale(CompatParams[i+3], CompatParams[i+4] / 65536.);
+							side->SetTextureYScale(CompatParams[i+3], CompatParams[i+4]);
 						}
 					}
 					i += 5;
@@ -568,7 +544,7 @@ void SetCompatibilityParams()
 					// When this is called, the things haven't been spawned yet so we can alter the position inside the MapThings array.
 					if ((unsigned)CompatParams[i+1] < MapThingsConverted.Size())
 					{
-						MapThingsConverted[CompatParams[i+1]].pos.Z = CompatParams[i+2]/256.;
+						MapThingsConverted[CompatParams[i+1]].z = CompatParams[i+2];
 					}
 					i += 3;
 					break;
@@ -578,14 +554,7 @@ void SetCompatibilityParams()
 					if ((unsigned)CompatParams[i + 1] < (unsigned)numsectors)
 					{
 						// this assumes that the sector does not have any tags yet!
-						if (CompatParams[i + 2] == 0)
-						{
-							tagManager.RemoveSectorTags(CompatParams[i + 1]);
-						}
-						else
-						{
-							tagManager.AddSectorTag(CompatParams[i + 1], CompatParams[i + 2]);
-						}
+						tagManager.AddSectorTag(CompatParams[i + 1],  CompatParams[i + 2]);
 					}
 					i += 3;
 					break;

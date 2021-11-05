@@ -32,6 +32,7 @@
 **
 */
 
+#include "farchive.h"
 #include "templates.h"
 #include "renderstyle.h"
 #include "c_cvars.h"
@@ -98,16 +99,10 @@ static struct LegacyInit
 
 #endif
 
-double GetAlpha(int type, double alpha)
+FArchive &operator<< (FArchive &arc, FRenderStyle &style)
 {
-	switch (type)
-	{
-	case STYLEALPHA_Zero:		return 0;
-	case STYLEALPHA_One:		return OPAQUE;
-	case STYLEALPHA_Src:		return alpha;
-	case STYLEALPHA_InvSrc:		return 1. - alpha;
-	default:					return 0;
-	}
+	arc << style.BlendOp << style.SrcAlpha << style.DestAlpha << style.Flags;
+	return arc;
 }
 
 //==========================================================================
@@ -119,7 +114,7 @@ double GetAlpha(int type, double alpha)
 //
 //==========================================================================
 
-bool FRenderStyle::IsVisible(double alpha) const throw()
+bool FRenderStyle::IsVisible(fixed_t alpha) const throw()
 {
 	if (BlendOp == STYLEOP_None)
 	{
@@ -129,13 +124,13 @@ bool FRenderStyle::IsVisible(double alpha) const throw()
 	{
 		if (Flags & STYLEF_Alpha1)
 		{
-			alpha = 1.;
+			alpha = FRACUNIT;
 		}
 		else
 		{
-			alpha = clamp(alpha, 0., 1.);
+			alpha = clamp(alpha, 0, FRACUNIT);
 		}
-		return GetAlpha(SrcAlpha, alpha) != 0 || GetAlpha(DestAlpha, alpha) != 1;
+		return GetAlpha(SrcAlpha, alpha) != 0 || GetAlpha(DestAlpha, alpha) != FRACUNIT;
 	}
 	// Treat anything else as visible.
 	return true;
@@ -191,3 +186,16 @@ void FRenderStyle::CheckFuzz()
 		BlendOp = STYLEOP_Fuzz;
 	}
 }
+
+fixed_t GetAlpha(int type, fixed_t alpha)
+{
+	switch (type)
+	{
+	case STYLEALPHA_Zero:		return 0;
+	case STYLEALPHA_One:		return FRACUNIT;
+	case STYLEALPHA_Src:		return alpha;
+	case STYLEALPHA_InvSrc:		return FRACUNIT - alpha;
+	default:					return 0;
+	}
+}
+

@@ -37,7 +37,6 @@
 *		Cleaned up the source
 */
 
-#include <math.h>
 #ifdef _WIN32
 #include <dos.h>
 #include <conio.h>
@@ -46,7 +45,7 @@
 #include "opl.h"
 #include "c_cvars.h"
 
-const double HALF_PI = (M_PI*0.5);
+#define HALF_PI (PI*0.5)
 
 EXTERN_CVAR(Int, opl_core)
 extern int current_opl_core;

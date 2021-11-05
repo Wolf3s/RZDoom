@@ -62,6 +62,7 @@
 #include "cmdlib.h"
 #include "p_terrain.h"
 #include "decallib.h"
+#include "a_doomglobal.h"
 #include "autosegs.h"
 #include "i_cd.h"
 #include "stats.h"
@@ -70,7 +71,7 @@
 #include "r_sky.h"
 #include "p_lnspec.h"
 #include "m_crc32.h"
-#include "serializer.h"
+#include "farchive.h"
 
 CVAR(Int, savestatistics, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(String, statfile, "zdoomstat.txt", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -87,7 +88,7 @@ struct OneLevel
 	int totalkills, killcount;
 	int totalsecrets, secretcount;
 	int leveltime;
-	FString Levelname;
+	char levelname[9];
 };
 
 // Current game's statistics
@@ -209,7 +210,7 @@ void ReadStatistics()
 //
 // ====================================================================
 
-int compare_episode_names(const void *a, const void *b)
+int STACK_ARGS compare_episode_names(const void *a, const void *b)
 {
 	FStatistics *A = (FStatistics*)a;
 	FStatistics *B = (FStatistics*)b;
@@ -217,7 +218,7 @@ int compare_episode_names(const void *a, const void *b)
 	return strnatcasecmp(A->epi_header, B->epi_header);
 }
 
-int compare_level_names(const void *a, const void *b)
+int STACK_ARGS compare_level_names(const void *a, const void *b)
 {
 	FLevelStatistics *A = (FLevelStatistics*)a;
 	FLevelStatistics *B = (FLevelStatistics*)b;
@@ -225,7 +226,7 @@ int compare_level_names(const void *a, const void *b)
 	return strnatcasecmp(A->name, B->name);
 }
 
-int compare_dates(const void *a, const void *b)
+int STACK_ARGS compare_dates(const void *a, const void *b)
 {
 	FLevelStatistics *A = (FLevelStatistics*)a;
 	FLevelStatistics *B = (FLevelStatistics*)b;
@@ -408,12 +409,13 @@ static void StoreLevelStats()
 	{
 		for(i=0;i<LevelData.Size();i++)
 		{
-			if (!LevelData[i].Levelname.CompareNoCase(level.MapName)) break;
+			if (!stricmp(LevelData[i].levelname, level.MapName)) break;
 		}
 		if (i==LevelData.Size())
 		{
 			LevelData.Reserve(1);
-			LevelData[i].Levelname = level.MapName;
+			strncpy(LevelData[i].levelname, level.MapName, 8);
+			LevelData[i].levelname[8] = 0;
 		}
 		LevelData[i].totalkills = level.total_monsters;
 		LevelData[i].killcount = level.killed_monsters;
@@ -493,7 +495,7 @@ void STAT_ChangeLevel(const char *newl)
 
 			for(unsigned i = 0; i < LevelData.Size(); i++)
 			{
-				FString lsection = LevelData[i].Levelname;
+				FString lsection = LevelData[i].levelname;
 				lsection.ToUpper();
 				infostring.Format("%4d/%4d, %3d/%3d",
 					 LevelData[i].killcount, LevelData[i].totalkills, LevelData[i].secretcount, LevelData[i].totalsecrets);
@@ -515,52 +517,64 @@ void STAT_ChangeLevel(const char *newl)
 //
 //==========================================================================
 
-FSerializer &Serialize(FSerializer &arc, const char *key, OneLevel &l, OneLevel *def)
-{
-	if (arc.BeginObject(key))
-	{
-		arc("totalkills", l.totalkills)
-			("killcount", l.killcount)
-			("totalsecrets", l.totalsecrets)
-			("secretcount", l.secretcount)
-			("leveltime", l.leveltime)
-			("levelname", l.Levelname)
-			.EndObject();
-	}
-	return arc;
-}
-
-void STAT_Serialize(FSerializer &arc)
+static void SerializeStatistics(FArchive &arc)
 {
 	FString startlevel;
 	int i = LevelData.Size();
 
-	if (arc.BeginObject("statistics"))
+	arc << i;
+
+	if (arc.IsLoading()) 
 	{
-		if (arc.isReading())
+		arc << startlevel;
+		StartEpisode = NULL;
+		for(unsigned int j=0;j<AllEpisodes.Size();j++)
 		{
-			arc("startlevel", startlevel);
-			StartEpisode = NULL;
-			for (unsigned int j = 0; j < AllEpisodes.Size(); j++)
+			if (!AllEpisodes[j].mEpisodeMap.CompareNoCase(startlevel))
 			{
-				if (!AllEpisodes[j].mEpisodeMap.CompareNoCase(startlevel))
-				{
-					StartEpisode = &AllEpisodes[j];
-					break;
-				}
+				StartEpisode = &AllEpisodes[j];
+				break;
 			}
-			LevelData.Resize(i);
 		}
-		else
-		{
-			if (StartEpisode != NULL) startlevel = StartEpisode->mEpisodeMap;
-			arc("startlevel", startlevel);
-		}
-		arc("levels", LevelData);
-		arc.EndObject();
+		LevelData.Resize(i);
+	}
+	else
+	{
+		if (StartEpisode != NULL) startlevel = StartEpisode->mEpisodeMap;
+		arc << startlevel;
+	}
+	for(int j = 0; j < i; j++)
+	{
+		OneLevel &l = LevelData[j];
+
+		arc << l.totalkills 
+			<< l.killcount  
+			<< l.totalsecrets
+			<< l.secretcount
+			<< l.leveltime;
+
+		if (arc.IsStoring()) arc.WriteName(l.levelname);
+		else strcpy(l.levelname, arc.ReadName());
 	}
 }
 
+#define STAT_ID			MAKE_ID('s','T','a','t')
+
+void STAT_Write(FILE *file)
+{
+	FPNGChunkArchive arc (file, STAT_ID);
+	SerializeStatistics(arc);
+}
+
+void STAT_Read(PNGHandle *png)
+{
+	DWORD chunkLen = (DWORD)M_FindPNGChunk (png, STAT_ID);
+	if (chunkLen != 0)
+	{
+		FPNGChunkArchive arc (png->File->GetFile(), STAT_ID, chunkLen);
+		SerializeStatistics(arc);
+	}
+}
 
 //==========================================================================
 //
@@ -575,7 +589,7 @@ FString GetStatString()
 	{
 		OneLevel *l = &LevelData[i];
 		compose.AppendFormat("Level %s - Kills: %d/%d - Secrets: %d/%d - Time: %d:%02d\n", 
-			l->Levelname.GetChars(), l->killcount, l->totalkills, l->secretcount, l->totalsecrets,
+			l->levelname, l->killcount, l->totalkills, l->secretcount, l->totalsecrets,
 			l->leveltime/(60*TICRATE), (l->leveltime/TICRATE)%60);
 	}
 	return compose;

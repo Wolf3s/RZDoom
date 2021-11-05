@@ -71,9 +71,6 @@ extern	bool			netgame;
 // Bot game? Like netgame, but doesn't involve network communication.
 extern	bool			multiplayer;
 
-// [SP] Map dm/coop implementation - invokes fake multiplayer without bots
-extern	bool			multiplayernext;
-
 // Flag: true only if started as net deathmatch.
 EXTERN_CVAR (Int, deathmatch)
 
@@ -124,6 +121,7 @@ extern	int 			viewwindowx;
 extern	int 			viewwindowy;
 extern	"C" int 		viewheight;
 extern	"C" int 		viewwidth;
+extern	"C"	int			halfviewwidth;		// [RH] Half view width, for plane drawing
 
 
 
@@ -207,13 +205,14 @@ extern	int 			bodyqueslot;
 
 
 // ---- [RH] ----
-EXTERN_CVAR (Int, developer)
+EXTERN_CVAR (Bool, developer)
 
 extern bool ToggleFullscreen;
 
 extern int Net_Arbitrator;
 
 EXTERN_CVAR (Bool, var_friction)
+EXTERN_CVAR (Bool, var_pushers)
 
 
 // [RH] Miscellaneous info for DeHackEd support
@@ -235,7 +234,7 @@ struct DehInfo
 	int KFAAC;
 	char PlayerSprite[5];
 	BYTE ExplosionStyle;
-	double ExplosionAlpha;
+	fixed_t ExplosionAlpha;
 	int NoAutofreeze;
 	int BFGCells;
 };

@@ -15,23 +15,20 @@
 #include "c_cvars.h"
 #include "r_3dfloors.h"
 
-CVAR(Int, r_3dfloors, true, 0);
-
-namespace swrenderer
-{
-
 // external variables
 int fake3D;
 F3DFloor *fakeFloor;
 fixed_t fakeHeight;
 fixed_t fakeAlpha;
 int fakeActive = 0;
-double sclipBottom;
-double sclipTop;
+fixed_t sclipBottom;
+fixed_t sclipTop;
 HeightLevel *height_top = NULL;
 HeightLevel *height_cur = NULL;
 int CurrentMirror = 0;
 int CurrentSkybox = 0;
+
+CVAR(Int, r_3dfloors, true, 0);
 
 // private variables
 int height_max = -1;
@@ -55,8 +52,9 @@ void R_3D_AddHeight(secplane_t *add, sector_t *sec)
 {
 	HeightLevel *near;
 	HeightLevel *curr;
+	fixed_t height;
 
-	double height = add->ZatPoint(ViewPos);
+	height = add->ZatPoint(viewx, viewy);
 	if(height >= sec->CenterCeiling()) return;
 	if(height <= sec->CenterFloor()) return;
 
@@ -163,4 +161,3 @@ void R_3D_LeaveSkybox()
 	CurrentSkybox--;
 }
 
-}

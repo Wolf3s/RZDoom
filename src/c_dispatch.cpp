@@ -53,7 +53,7 @@
 #include "v_text.h"
 #include "d_net.h"
 #include "d_main.h"
-#include "serializer.h"
+#include "farchive.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -65,7 +65,7 @@ class DWaitingCommand : public DThinker
 public:
 	DWaitingCommand (const char *cmd, int tics);
 	~DWaitingCommand ();
-	void Serialize(FSerializer &arc);
+	void Serialize (FArchive &arc);
 	void Tick ();
 
 private:
@@ -187,13 +187,12 @@ static const char *KeyConfCommands[] =
 
 // CODE --------------------------------------------------------------------
 
-IMPLEMENT_CLASS(DWaitingCommand, false, false)
+IMPLEMENT_CLASS (DWaitingCommand)
 
-void DWaitingCommand::Serialize(FSerializer &arc)
+void DWaitingCommand::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc("command", Command)
-		("ticsleft", TicsLeft);
+	arc << Command << TicsLeft;
 }
 
 DWaitingCommand::DWaitingCommand ()
@@ -225,7 +224,7 @@ void DWaitingCommand::Tick ()
 	}
 }
 
-IMPLEMENT_CLASS(DStoredCommand, false, false)
+IMPLEMENT_CLASS (DStoredCommand)
 
 DStoredCommand::DStoredCommand ()
 {
@@ -652,7 +651,8 @@ void C_DoCommand (const char *cmd, int keynum)
 			}
 			else
 			{ // Get the variable's value
-				Printf ("\"%s\" is \"%s\"\n", var->GetName(), var->GetHumanString());
+				UCVarValue val = var->GetGenericRep (CVAR_String);
+				Printf ("\"%s\" is \"%s\"\n", var->GetName(), val.String);
 			}
 		}
 		else
@@ -1203,11 +1203,11 @@ static int DumpHash (FConsoleCommand **table, bool aliases, const char *pattern=
 
 void FConsoleAlias::PrintAlias ()
 {
-	if (m_Command[0].IsNotEmpty())
+	if (m_Command[0])
 	{
 		Printf (TEXTCOLOR_YELLOW "%s : %s\n", m_Name, m_Command[0].GetChars());
 	}
-	if (m_Command[1].IsNotEmpty())
+	if (m_Command[1])
 	{
 		Printf (TEXTCOLOR_ORANGE "%s : %s\n", m_Name, m_Command[1].GetChars());
 	}

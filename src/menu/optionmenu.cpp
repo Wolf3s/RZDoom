@@ -64,7 +64,8 @@ void M_DrawConText (int color, int x, int y, const char *str)
 		TAG_DONE);
 }
 
-IMPLEMENT_CLASS(DOptionMenu, false, false)
+
+IMPLEMENT_CLASS(DOptionMenu)
 
 //=============================================================================
 //
@@ -478,6 +479,7 @@ void DOptionMenu::Drawer ()
 
 FOptionMenuItem::~FOptionMenuItem()
 {
+	if (mLabel != NULL) delete [] mLabel;
 }
 
 int FOptionMenuItem::Draw(FOptionMenuDescriptor *desc, int y, int indent, bool selected)
@@ -505,14 +507,14 @@ int  FOptionMenuItem::GetIndent()
 	{
 		return 0;
 	}
-	const char *label = mLabel.GetChars();
+	const char *label = mLabel;
 	if (*label == '$') label = GStrings(label+1);
 	return SmallFont->StringWidth(label);
 }
 
 void FOptionMenuItem::drawLabel(int indent, int y, EColorRange color, bool grayed)
 {
-	const char *label = mLabel.GetChars();
+	const char *label = mLabel;
 	if (*label == '$') label = GStrings(label+1);
 
 	int overlay = grayed? MAKEARGB(96,48,0,0) : 0;
@@ -578,7 +580,7 @@ public:
 	}
 };
 
-IMPLEMENT_CLASS(DGameplayMenu, false, false)
+IMPLEMENT_CLASS(DGameplayMenu)
 
 class DCompatibilityMenu : public DOptionMenu
 {
@@ -600,4 +602,4 @@ public:
 	}
 };
 
-IMPLEMENT_CLASS(DCompatibilityMenu, false, false)
+IMPLEMENT_CLASS(DCompatibilityMenu)

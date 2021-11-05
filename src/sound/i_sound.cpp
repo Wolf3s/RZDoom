@@ -135,15 +135,15 @@ public:
 	void SetMusicVolume (float volume)
 	{
 	}
-	std::pair<SoundHandle,bool> LoadSound(BYTE *sfxdata, int length, bool monoize)
+	SoundHandle LoadSound(BYTE *sfxdata, int length)
 	{
 		SoundHandle retval = { NULL };
-		return std::make_pair(retval, true);
+		return retval;
 	}
-	std::pair<SoundHandle,bool> LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend, bool monoize)
+	SoundHandle LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend)
 	{
 		SoundHandle retval = { NULL };
-        return std::make_pair(retval, true);
+		return retval;
 	}
 	void UnloadSound (SoundHandle sfx)
 	{
@@ -259,7 +259,7 @@ void I_InitSound ()
 	nosfx = !!Args->CheckParm ("-nosfx");
 
 	GSnd = NULL;
-	if (nosound || batchrun)
+	if (nosound)
 	{
 		GSnd = new NullSoundRenderer;
 		I_InitMusic ();
@@ -417,7 +417,7 @@ short *SoundRenderer::DecodeSample(int outlen, const void *coded, int sizebytes,
     decoder->getInfo(&srate, &chans, &type);
     if(chans != ChannelConfig_Mono || type != SampleType_Int16)
     {
-        DPrintf(DMSG_WARNING, "Sample is not 16-bit mono\n");
+        DPrintf("Sample is not 16-bit mono\n");
         delete decoder;
         return samples;
     }
@@ -456,7 +456,7 @@ FString SoundStream::GetStats()
 //
 //==========================================================================
 
-std::pair<SoundHandle,bool> SoundRenderer::LoadSoundVoc(BYTE *sfxdata, int length, bool monoize)
+SoundHandle SoundRenderer::LoadSoundVoc(BYTE *sfxdata, int length)
 {
 	BYTE * data = NULL;
 	int len, frequency, channels, bits, loopstart, loopend;
@@ -553,7 +553,7 @@ std::pair<SoundHandle,bool> SoundRenderer::LoadSoundVoc(BYTE *sfxdata, int lengt
 				break;
 			default: // Unknown block type
 				okay = false;
-				DPrintf (DMSG_ERROR, "Unknown VOC block type %i\n", blocktype);
+				DPrintf ("Unknown VOC block type %i\n", blocktype);
 				break;
 			}
 			// Move to next block
@@ -600,7 +600,7 @@ std::pair<SoundHandle,bool> SoundRenderer::LoadSoundVoc(BYTE *sfxdata, int lengt
 		}
 
 	} while (false);
-	std::pair<SoundHandle,bool> retval = LoadSoundRaw(data, len, frequency, channels, bits, loopstart, loopend, monoize);
+	SoundHandle retval = LoadSoundRaw(data, len, frequency, channels, bits, loopstart, loopend);
 	if (data) delete[] data;
 	return retval;
 }

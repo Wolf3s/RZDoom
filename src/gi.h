@@ -135,10 +135,10 @@ struct gameinfo_t
 	FString ArmorIcon2;
 	FString PauseSign;
 	FString Endoom;
-	double Armor2Percent;
+	fixed_t Armor2Percent;
 	FString quitSound;
 	gameborder_t Border;
-	double telefogheight;
+	int telefogheight;
 	int defKickback;
 	FString translator;
 	DWORD defaultbloodcolor;
@@ -163,7 +163,7 @@ struct gameinfo_t
 	FName mFontColorHighlight;
 	FName mFontColorSelection;
 	FString mBackButton;
-	double gibfactor;
+	fixed_t gibfactor;
 	int TextScreenX;
 	int TextScreenY;
 	FName DefaultEndSequence;
@@ -173,7 +173,6 @@ struct gameinfo_t
 	FGIFont mStatscreenFinishedFont;
 	FGIFont mStatscreenEnteringFont;
 	bool norandomplayerclass;
-	bool forcekillscripts;
 
 	const char *GetFinalePage(unsigned int num) const;
 };

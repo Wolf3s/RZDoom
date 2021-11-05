@@ -41,21 +41,11 @@
 #include "p_lnspec.h"
 #include "m_fixed.h"
 #include "actor.h"
-#include "doomerrors.h"
 
 #ifdef _MSC_VER
 // This pragma saves 8kb of wasted code.
 #pragma pointers_to_members( full_generality, single_inheritance )
 #endif
-
-
-class CFraggleScriptError : public CDoomError
-{
-public:
-	CFraggleScriptError() : CDoomError() {}
-	CFraggleScriptError(const char *message) : CDoomError(message) {}
-};
-
 
 class DRunningScript;
 
@@ -92,17 +82,15 @@ enum
 //
 //
 //==========================================================================
-typedef int fsfix;
 
 struct svalue_t
 {
 	int type;
-
 	FString string;
 	union
 	{
 		int i;
-		fsfix f;      // haleyjd: 8-17
+		fixed_t f;      // haleyjd: 8-17
 		AActor *mobj;
 	} value;
 
@@ -118,28 +106,10 @@ struct svalue_t
 		string = other.string;
 		value = other.value;
 	}
-
-	void setInt(int ip)
-	{
-		value.i = ip;
-		type = svt_int;
-	}
-
-	void setFixed(fsfix fp)
-	{
-		value.f = fp;
-		type = svt_fixed;
-	}
-
-	void setDouble(double dp)
-	{
-		value.f = fsfix(dp * 65536);
-		type = svt_fixed;
-	}
 };
 
 int intvalue(const svalue_t & v);
-fsfix fixedvalue(const svalue_t & v);
+fixed_t fixedvalue(const svalue_t & v);
 double floatvalue(const svalue_t & v);
 const char *stringvalue(const svalue_t & v);
 AActor *actorvalue(const svalue_t &svalue);
@@ -183,7 +153,7 @@ public:
 	union value_t
 	{
 		SDWORD i;
-		fsfix fixed;          // haleyjd: fixed-point
+		fixed_t fixed;          // haleyjd: fixed-point
 		
 		// the following are only used in the global script so we don't need to bother with them
 		// when serializing variables.
@@ -199,7 +169,7 @@ public:
 
 	void GetValue(svalue_t &result);
 	void SetValue(const svalue_t &newvalue);
-	void Serialize(FSerializer &ar);
+	void Serialize(FArchive &ar);
 };
 
 //==========================================================================
@@ -248,7 +218,7 @@ public:
 		next = NULL;
 	}
 
-	void Serialize(FSerializer &ar);
+	void Serialize(FArchive &ar);
 };
 
 
@@ -346,9 +316,8 @@ public:
 	// true or false
 
 	DFsScript();
-	~DFsScript();
-	void Destroy() override;
-	void Serialize(FSerializer &ar);
+	void Destroy();
+	void Serialize(FArchive &ar);
 
 	DFsVariable *NewVariable(const char *name, int vtype);
 	void NewFunction(const char *name, void (FParser::*handler)());
@@ -662,8 +631,8 @@ class DRunningScript : public DObject
 
 public:
 	DRunningScript(AActor *trigger=NULL, DFsScript *owner = NULL, int index = 0) ;
-	void Destroy() override;
-	void Serialize(FSerializer &arc);
+	void Destroy();
+	void Serialize(FArchive &arc);
 
 	TObjPtr<DFsScript> script;
 	
@@ -697,10 +666,10 @@ public:
 	bool nocheckposition;
 
 	DFraggleThinker();
-	void Destroy() override;
+	void Destroy();
 
 
-	void Serialize(FSerializer & arc);
+	void Serialize(FArchive & arc);
 	void Tick();
 	size_t PropagateMark();
 	size_t PointerSubstitution (DObject *old, DObject *notOld);
@@ -718,7 +687,7 @@ public:
 
 #include "t_fs.h"
 
-void script_error(const char *s, ...) GCCPRINTF(1,2);
+void script_error(const char *s, ...);
 void FS_EmulateCmd(char * string);
 
 extern AActor *trigger_obj;

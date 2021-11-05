@@ -85,7 +85,7 @@ static BYTE BitTranslate[32];
 
 CUSTOM_CVAR (Int, menu_screenratios, -1, CVAR_ARCHIVE)
 {
-	if (self < -1 || self > 6)
+	if (self < -1 || self > 4)
 	{
 		self = -1;
 	}
@@ -95,7 +95,7 @@ CUSTOM_CVAR (Int, menu_screenratios, -1, CVAR_ARCHIVE)
 	}
 	else
 	{
-		BuildModesList (screen->VideoWidth, screen->VideoHeight, DisplayBits);
+		BuildModesList (SCREENWIDTH, SCREENHEIGHT, DisplayBits);
 	}
 }
 
@@ -139,7 +139,7 @@ public:
 
 	DVideoModeMenu()
 	{
-		SetModesMenu (screen->VideoWidth, screen->VideoHeight, DisplayBits);
+		SetModesMenu (SCREENWIDTH, SCREENHEIGHT, DisplayBits);
 	}
 
 	bool MenuEvent(int mkey, bool fromcontroller)
@@ -163,13 +163,13 @@ public:
 		{
 			if (!GetSelectedSize (&NewWidth, &NewHeight))
 			{
-				NewWidth = screen->VideoWidth;
-				NewHeight = screen->VideoHeight;
+				NewWidth = SCREENWIDTH;
+				NewHeight = SCREENHEIGHT;
 			}
 			else
 			{
-				OldWidth = screen->VideoWidth;
-				OldHeight = screen->VideoHeight;
+				OldWidth = SCREENWIDTH;
+				OldHeight = SCREENHEIGHT;
 				OldBits = DisplayBits;
 				NewBits = BitTranslate[DummyDepthCvar];
 				setmodeneeded = true;
@@ -183,7 +183,7 @@ public:
 	}
 };
 
-IMPLEMENT_CLASS(DVideoModeMenu, false, false)
+IMPLEMENT_CLASS(DVideoModeMenu)
 
 
 //=============================================================================
@@ -216,7 +216,7 @@ static void BuildModesList (int hiwidth, int hiheight, int hi_bits)
 	bool letterbox=false;
 	int  ratiomatch;
 
-	if (menu_screenratios >= 0 && menu_screenratios <= 6)
+	if (menu_screenratios >= 0 && menu_screenratios <= 4)
 	{
 		ratiomatch = menu_screenratios;
 	}
@@ -297,11 +297,11 @@ void M_RestoreMode ()
 void M_SetDefaultMode ()
 {
 	// Make current resolution the default
-	vid_defwidth = screen->VideoWidth;
-	vid_defheight = screen->VideoHeight;
+	vid_defwidth = SCREENWIDTH;
+	vid_defheight = SCREENHEIGHT;
 	vid_defbits = DisplayBits;
 	testingmode = 0;
-	SetModesMenu (screen->VideoWidth, screen->VideoHeight, DisplayBits);
+	SetModesMenu (SCREENWIDTH, SCREENHEIGHT, DisplayBits);
 }
 
 
@@ -314,7 +314,7 @@ void M_SetDefaultMode ()
 
 void M_RefreshModesList ()
 {
-	BuildModesList (screen->VideoWidth, screen->VideoHeight, DisplayBits);
+	BuildModesList (SCREENWIDTH, SCREENHEIGHT, DisplayBits);
 }
 
 void M_InitVideoModesMenu ()
@@ -385,8 +385,8 @@ void M_SetVideoMode()
 {
 	if (!GetSelectedSize (&NewWidth, &NewHeight))
 	{
-		NewWidth = screen->VideoWidth;
-		NewHeight = screen->VideoHeight;
+		NewWidth = SCREENWIDTH;
+		NewHeight = SCREENHEIGHT;
 	}
 	else
 	{

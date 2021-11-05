@@ -242,18 +242,18 @@ void I_SetFPSLimit(int limit)
 	}
 	if (limit == 0)
 	{ // no limit
-		DPrintf(DMSG_NOTIFY, "FPS timer disabled\n");
+		DPrintf("FPS timer disabled\n");
 	}
 	else
 	{
 		FPSLimitTimerEnabled = true;
 		if(timer_create(CLOCK_REALTIME, &FPSLimitEvent, &FPSLimitTimer) == -1)
-			Printf(DMSG_WARNING, "Failed to create FPS limitter event\n");
+			Printf("Failed to create FPS limitter event\n");
 		itimerspec period = { {0, 0}, {0, 0} };
 		period.it_value.tv_nsec = period.it_interval.tv_nsec = 1000000000 / limit;
 		if(timer_settime(FPSLimitTimer, 0, &period, NULL) == -1)
-			Printf(DMSG_WARNING, "Failed to set FPS limitter timer\n");
-		DPrintf(DMSG_NOTIFY, "FPS timer set to %u ms\n", (unsigned int) period.it_interval.tv_nsec / 1000000);
+			Printf("Failed to set FPS limitter timer\n");
+		DPrintf("FPS timer set to %u ms\n", (unsigned int) period.it_interval.tv_nsec / 1000000);
 	}
 }
 #else
@@ -308,7 +308,7 @@ CUSTOM_CVAR (Float, vid_winscale, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 CCMD (vid_listmodes)
 {
-	static const char *ratios[7] = { "", " - 16:9", " - 16:10", "", " - 5:4", "", " - 21:9" };
+	static const char *ratios[5] = { "", " - 16:9", " - 16:10", "", " - 5:4" };
 	int width, height, bits;
 	bool letterbox;
 
@@ -325,7 +325,7 @@ CCMD (vid_listmodes)
 			int ratio = CheckRatio (width, height);
 			Printf (thisMode ? PRINT_BOLD : PRINT_HIGH,
 				"%s%4d x%5d x%3d%s%s\n",
-				thisMode || !IsRatioWidescreen(ratio) ? "" : TEXTCOLOR_GOLD,
+				thisMode || !(ratio & 3) ? "" : TEXTCOLOR_GOLD,
 				width, height, bits,
 				ratios[ratio],
 				thisMode || !letterbox ? "" : TEXTCOLOR_BROWN " LB"

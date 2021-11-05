@@ -27,12 +27,11 @@ public:
 	int AddRef();
 	int DelRef(bool force = false);
 
-	void Destroy() override;
+	virtual void Destroy();
 	virtual void UpdateInterpolation() = 0;
 	virtual void Restore() = 0;
-	virtual void Interpolate(double smoothratio) = 0;
-	
-	virtual void Serialize(FSerializer &arc);
+	virtual void Interpolate(fixed_t smoothratio) = 0;
+	virtual void Serialize(FArchive &arc);
 };
 
 //==========================================================================
@@ -59,7 +58,7 @@ public:
 	void UpdateInterpolations();
 	void AddInterpolation(DInterpolation *);
 	void RemoveInterpolation(DInterpolation *);
-	void DoInterpolations(double smoothratio);
+	void DoInterpolations(fixed_t smoothratio);
 	void RestoreInterpolations();
 	void ClearInterpolations();
 };

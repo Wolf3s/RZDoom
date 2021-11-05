@@ -195,7 +195,7 @@ void DumpCPUInfo(const CPUInfo *cpu)
 	}
 	*t = '\0';
 
-	if (cpu->VendorID[0] && !batchrun)
+	if (cpu->VendorID[0])
 	{
 		Printf("CPU Vendor ID: %s\n", cpu->VendorID);
 		if (cpustring[0])
@@ -227,9 +227,10 @@ void DumpCPUInfo(const CPUInfo *cpu)
 	}
 }
 
-#if !defined(__amd64__) && !defined(_M_X64)
-
-void DoBlending_MMX(const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a)
+#if 0
+// Compiler output for this function is crap compared to the assembly
+// version, which is why it isn't used.
+void DoBlending_MMX2(const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a)
 {
 	__m64 blendcolor;
 	__m64 blendalpha;
@@ -271,6 +272,9 @@ void DoBlending_MMX(const PalEntry *from, PalEntry *to, int count, int r, int g,
 }
 #endif
 
+#ifdef X86_ASM
+extern "C" void STACK_ARGS DoBlending_MMX(const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a);
+#endif
 
 void DoBlending_SSE2(const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a)
 {
@@ -283,6 +287,17 @@ void DoBlending_SSE2(const PalEntry *from, PalEntry *to, int count, int r, int g
 	size_t unaligned;
 
 	unaligned = ((size_t)from | (size_t)to) & 0xF;
+
+#ifdef X86_ASM
+	// For unaligned accesses, the assembly MMX version is slightly faster.
+	// Note that using unaligned SSE loads and stores is still faster than
+	// the compiler-generated MMX version.
+	if (unaligned)
+	{
+		DoBlending_MMX(from, to, count, r, g, b, a);
+		return;
+	}
+#endif
 
 #if defined(__amd64__) || defined(_M_X64)
 	long long color;
@@ -311,6 +326,7 @@ void DoBlending_SSE2(const PalEntry *from, PalEntry *to, int count, int r, int g
 
 	zero = _mm_setzero_si128();
 
+#ifndef X86_ASM
 	if (unaligned)
 	{
 		for (count >>= 2; count > 0; --count)
@@ -330,6 +346,7 @@ void DoBlending_SSE2(const PalEntry *from, PalEntry *to, int count, int r, int g
 		}
 	}
 	else
+#endif
 	{
 		for (count >>= 2; count > 0; --count)
 		{

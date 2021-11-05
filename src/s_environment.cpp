@@ -1,6 +1,7 @@
 #include "doomtype.h"
 #include "tarray.h"
 #include "s_sound.h"
+#include "farchive.h"
 #include "sc_man.h"
 #include "cmdlib.h"
 #include "templates.h"
@@ -478,6 +479,30 @@ void S_AddEnvironment (ReverbContainer *settings)
 		settings->Next = probe;
 		*ptr = settings;
 	}
+}
+
+FArchive &operator<< (FArchive &arc, ReverbContainer *&env)
+{
+	WORD id;
+
+	if (arc.IsStoring())
+	{
+		if (env != NULL)
+		{
+			arc << env->ID;
+		}
+		else
+		{
+			id = 0;
+			arc << id;
+		}
+	}
+	else
+	{
+		arc << id;
+		env = S_FindEnvironment (id);
+	}
+	return arc;
 }
 
 static void ReadReverbDef (int lump)

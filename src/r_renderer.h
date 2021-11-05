@@ -5,13 +5,12 @@
 
 struct FRenderer;
 extern FRenderer *Renderer;
-class FSerializer;
+class FArchive;
 class FTexture;
 class AActor;
 class player_t;
 struct sector_t;
 class FCanvasTexture;
-class FileWriter;
 
 struct FRenderer
 {
@@ -29,7 +28,7 @@ struct FRenderer
 	virtual bool UsesColormap() const = 0;
 
 	// precache one texture
-	virtual void Precache(BYTE *texhitlist, TMap<PClassActor*, bool> &actorhitlist) = 0;
+	virtual void PrecacheTexture(FTexture *tex, int cache) = 0;
 
 	// render 3D view
 	virtual void RenderView(player_t *player) = 0;
@@ -38,7 +37,7 @@ struct FRenderer
 	virtual void RemapVoxels() {}
 
 	// renders view to a savegame picture
-	virtual void WriteSavePic (player_t *player, FileWriter *file, int width, int height) = 0;
+	virtual void WriteSavePic (player_t *player, FILE *file, int width, int height) = 0;
 
 	// draws player sprites with hardware acceleration (only useful for software rendering)
 	virtual void DrawRemainingPlayerSprites() {}
@@ -47,8 +46,8 @@ struct FRenderer
 	virtual void StateChanged(AActor *actor) {}
 
 	// notify the renderer that serialization of the curent level is about to start/end
-	virtual void StartSerialize(FSerializer &arc) {}
-	virtual void EndSerialize(FSerializer &arc) {}
+	virtual void StartSerialize(FArchive &arc) {}
+	virtual void EndSerialize(FArchive &arc) {}
 
 	virtual int GetMaxViewPitch(bool down) = 0;	// return value is in plain degrees
 
@@ -56,7 +55,7 @@ struct FRenderer
 	virtual void ErrorCleanup () {}
 	virtual void ClearBuffer(int color) = 0;
 	virtual void Init() = 0;
-	virtual void SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight, float trueratio) {}
+	virtual void SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight, int trueratio) {}
 	virtual void SetupFrame(player_t *player) {}
 	virtual void CopyStackedViewParameters() {}
 	virtual void RenderTextureView (FCanvasTexture *tex, AActor *viewpoint, int fov) = 0;

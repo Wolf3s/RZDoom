@@ -38,7 +38,7 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "cmdlib.h"
-#include "serializer.h"
+#include "farchive.h"
 
 
 char *ReadString (BYTE **stream)
@@ -287,33 +287,27 @@ int PackUserCmd (const usercmd_t *ucmd, const usercmd_t *basis, BYTE **stream)
 	return int(*stream - start);
 }
 
-FSerializer &Serialize(FSerializer &arc, const char *key, ticcmd_t &cmd, ticcmd_t *def)
+FArchive &operator<< (FArchive &arc, ticcmd_t &cmd)
 {
-	if (arc.BeginObject(key))
-	{
-		arc("consistency", cmd.consistancy)
-			("ucmd", cmd.ucmd)
-			.EndObject();
-	}
-	return arc;
+	return arc << cmd.consistancy << cmd.ucmd;
 }
 
-FSerializer &Serialize(FSerializer &arc, const char *key, usercmd_t &cmd, usercmd_t *def)
+FArchive &operator<< (FArchive &arc, usercmd_t &cmd)
 {
-	// This used packed data with the old serializer but that's totally counterproductive when
-	// having a text format that is human-readable. So this compression has been undone here.
-	// The few bytes of file size it saves are not worth the obfuscation.
-
-	if (arc.BeginObject(key))
+	BYTE bytes[256];
+	BYTE *stream = bytes;
+	if (arc.IsStoring ())
 	{
-		arc("buttons", cmd.buttons)
-			("pitch", cmd.pitch)
-			("yaw", cmd.yaw)
-			("roll", cmd.roll)
-			("forwardmove", cmd.forwardmove)
-			("sidemove", cmd.sidemove)
-			("upmove", cmd.upmove)
-			.EndObject();
+		BYTE len = PackUserCmd (&cmd, NULL, &stream);
+		arc << len;
+		arc.Write (bytes, len);
+	}
+	else
+	{
+		BYTE len;
+		arc << len;
+		arc.Read (bytes, len);
+		UnpackUserCmd (&cmd, NULL, &stream);
 	}
 	return arc;
 }

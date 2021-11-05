@@ -9,10 +9,11 @@
 struct FStrifeDialogueReply;
 class FTexture;
 struct FBrokenLines;
+struct PClass;
 
 struct FStrifeDialogueItemCheck
 {
-	PClassInventory *Item;
+	const PClass *Item;
 	int Amount;
 };
 
@@ -20,17 +21,16 @@ struct FStrifeDialogueItemCheck
 struct FStrifeDialogueNode
 {
 	~FStrifeDialogueNode ();
-	PClassActor *DropType;
+	const PClass *DropType;
 	TArray<FStrifeDialogueItemCheck> ItemCheck;
 	int ThisNodeNum;	// location of this node in StrifeDialogues
 	int ItemCheckNode;	// index into StrifeDialogues
 
-	PClassActor *SpeakerType;
+	const PClass *SpeakerType;
 	char *SpeakerName;
 	FSoundID SpeakerVoice;
 	FTextureID Backdrop;
 	char *Dialogue;
-	char *Goodbye = nullptr; // must init to null for binary scripts to work as intended
 
 	FStrifeDialogueReply *Children;
 };
@@ -41,12 +41,10 @@ struct FStrifeDialogueReply
 	~FStrifeDialogueReply ();
 
 	FStrifeDialogueReply *Next;
-	PClassActor *GiveType;
+	const PClass *GiveType;
 	int ActionSpecial;
 	int Args[5];
 	TArray<FStrifeDialogueItemCheck> ItemCheck;
-	TArray<FStrifeDialogueItemCheck> ItemCheckRequire;
-	TArray<FStrifeDialogueItemCheck> ItemCheckExclude;
 	char *Reply;
 	char *QuickYes;
 	int NextNode;	// index into StrifeDialogues
@@ -60,9 +58,9 @@ extern TArray<FStrifeDialogueNode *> StrifeDialogues;
 
 struct MapData;
 
-void SetStrifeType(int convid, PClassActor *Class);
-void SetConversation(int convid, PClassActor *Class, int dlgindex);
-PClassActor *GetStrifeType (int typenum);
+void SetStrifeType(int convid, const PClass *Class);
+void SetConversation(int convid, const PClass *Class, int dlgindex);
+const PClass *GetStrifeType (int typenum);
 int GetConversation(int conv_id);
 int GetConversation(FName classname);
 

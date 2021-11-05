@@ -42,19 +42,15 @@
 #include "r_3dfloors.h"
 #include "textures/textures.h"
 #include "r_data/voxels.h"
-#include "r_thread.h"
 
-namespace swrenderer
-{
 
-void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight, float trueratio);
+class FArchive;
+void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight, int trueratio);
 void R_SetupColormap(player_t *);
 void R_SetupFreelook();
 void R_InitRenderer();
 
-}
-
-using namespace swrenderer;
+extern float LastFOV;
 
 //==========================================================================
 //
@@ -104,55 +100,6 @@ void FSoftwareRenderer::PrecacheTexture(FTexture *tex, int cache)
 	}
 }
 
-void FSoftwareRenderer::Precache(BYTE *texhitlist, TMap<PClassActor*, bool> &actorhitlist)
-{
-	BYTE *spritelist = new BYTE[sprites.Size()];
-	TMap<PClassActor*, bool>::Iterator it(actorhitlist);
-	TMap<PClassActor*, bool>::Pair *pair;
-
-	memset(spritelist, 0, sprites.Size());
-
-	while (it.NextPair(pair))
-	{
-		PClassActor *cls = pair->Key;
-
-		for (int i = 0; i < cls->NumOwnedStates; i++)
-		{
-			spritelist[cls->OwnedStates[i].sprite] = true;
-		}
-	}
-
-	// Precache textures (and sprites).
-
-	for (int i = (int)(sprites.Size() - 1); i >= 0; i--)
-	{
-		if (spritelist[i])
-		{
-			int j, k;
-			for (j = 0; j < sprites[i].numframes; j++)
-			{
-				const spriteframe_t *frame = &SpriteFrames[sprites[i].spriteframes + j];
-
-				for (k = 0; k < 16; k++)
-				{
-					FTextureID pic = frame->Texture[k];
-					if (pic.isValid())
-					{
-						texhitlist[pic.GetIndex()] = FTextureManager::HIT_Sprite;
-					}
-				}
-			}
-		}
-	}
-	delete[] spritelist;
-
-	int cnt = TexMan.NumTextures();
-	for (int i = cnt - 1; i >= 0; i--)
-	{
-		PrecacheTexture(TexMan.ByIndex(i), texhitlist[i]);
-	}
-}
-
 //===========================================================================
 //
 // Render the view 
@@ -161,11 +108,9 @@ void FSoftwareRenderer::Precache(BYTE *texhitlist, TMap<PClassActor*, bool> &act
 
 void FSoftwareRenderer::RenderView(player_t *player)
 {
-	R_BeginDrawerCommands();
 	R_RenderActorView (player->mo);
 	// [RH] Let cameras draw onto textures that were visible this frame.
 	FCanvasTextureInfo::UpdateAll ();
-	R_EndDrawerCommands();
 }
 
 //==========================================================================
@@ -188,7 +133,7 @@ void FSoftwareRenderer::RemapVoxels()
 //
 //===========================================================================
 
-void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, int height)
+void FSoftwareRenderer::WriteSavePic (player_t *player, FILE *file, int width, int height)
 {
 	DCanvas *pic = new DSimpleCanvas (width, height);
 	PalEntry palette[256];
@@ -283,7 +228,7 @@ void FSoftwareRenderer::ClearBuffer(int color)
 //
 //===========================================================================
 
-void FSoftwareRenderer::SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight, float trueratio)
+void FSoftwareRenderer::SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight, int trueratio)
 {
 	R_SWRSetWindow(windowSize, fullWidth, fullHeight, stHeight, trueratio);
 }
@@ -327,8 +272,8 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 	unsigned char *savecolormap = fixedcolormap;
 	FSpecialColormap *savecm = realfixedcolormap;
 
-	DAngle savedfov = FieldOfView;
-	R_SetFOV ((double)fov);
+	float savedfov = LastFOV;
+	R_SetFOV ((float)fov);
 	R_RenderViewToCanvas (viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), tex->bFirstUpdate);
 	R_SetFOV (savedfov);
 	if (Pixels == Canvas->GetBuffer())

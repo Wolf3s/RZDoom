@@ -9,34 +9,74 @@
 #include "r_sky.h"
 #include "g_level.h"
 #include "r_state.h"
-#include "serializer.h"
+#include "farchive.h"
 
 static FRandom pr_lightning ("Lightning");
 
-IMPLEMENT_CLASS(DLightningThinker, false, false)
+IMPLEMENT_CLASS (DLightningThinker)
 
 DLightningThinker::DLightningThinker ()
 	: DThinker (STAT_LIGHTNING)
 {
 	Stopped = false;
+	LightningLightLevels = NULL;
 	LightningFlashCount = 0;
 	NextLightningFlash = ((pr_lightning()&15)+5)*35; // don't flash at level start
 
-	LightningLightLevels.Resize(numsectors);
-	fillshort(&LightningLightLevels[0], numsectors, SHRT_MAX);
+	LightningLightLevels = new short[numsectors];
+	clearbufshort(LightningLightLevels, numsectors, SHRT_MAX);
 }
 
 DLightningThinker::~DLightningThinker ()
 {
+	if (LightningLightLevels != NULL)
+	{
+		delete[] LightningLightLevels;
+	}
 }
 
-void DLightningThinker::Serialize(FSerializer &arc)
+void DLightningThinker::Serialize (FArchive &arc)
 {
+	int i;
+	short *lights;
+
 	Super::Serialize (arc);
-	arc("stopped", Stopped)
-		("next", NextLightningFlash)
-		("count", LightningFlashCount)
-		("levels", LightningLightLevels);
+
+	arc << Stopped << NextLightningFlash << LightningFlashCount;
+
+	if (SaveVersion < 3243)
+	{ 
+		// Do nothing with old savegames and just keep whatever the constructor made
+		// but read the obsolete data from the savegame 
+		for (i = (numsectors + (numsectors+7)/8); i > 0; --i)
+		{
+			if (SaveVersion < 3223)
+			{
+				BYTE bytelight;
+				arc << bytelight;
+			}
+			else
+			{
+				short shortlight;
+				arc << shortlight;
+			}
+		}
+		return;
+	}
+
+	if (arc.IsLoading ())
+	{
+		if (LightningLightLevels != NULL)
+		{
+			delete[] LightningLightLevels;
+		}
+		LightningLightLevels = new short[numsectors];
+	}
+	lights = LightningLightLevels;
+	for (i = numsectors; i > 0; ++lights, --i)
+	{
+		arc << *lights;
+	}
 }
 
 void DLightningThinker::Tick ()
@@ -87,7 +127,7 @@ void DLightningThinker::LightningFlash ()
 					tempSec->SetLightLevel(LightningLightLevels[j]);
 				}
 			}
-			fillshort(&LightningLightLevels[0], numsectors, SHRT_MAX);
+			clearbufshort(LightningLightLevels, numsectors, SHRT_MAX);
 			level.flags &= ~LEVEL_SWAPSKIES;
 		}
 		return;

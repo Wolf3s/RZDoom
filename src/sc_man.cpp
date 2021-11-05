@@ -119,8 +119,6 @@ FScanner &FScanner::operator=(const FScanner &other)
 	LastGotLine = other.LastGotLine;
 	CMode = other.CMode;
 	Escape = other.Escape;
-	StateMode = other.StateMode;
-	StateOptions = other.StateOptions;
 
 	// Copy public members
 	if (other.String == other.StringBuffer)
@@ -277,8 +275,6 @@ void FScanner::PrepareScript ()
 	LastGotLine = 1;
 	CMode = false;
 	Escape = true;
-	StateMode = 0;
-	StateOptions = false;
 	StringBuffer[0] = '\0';
 	BigStringBuffer = "";
 }
@@ -392,38 +388,6 @@ void FScanner::SetCMode (bool cmode)
 void FScanner::SetEscape (bool esc)
 {
 	Escape = esc;
-}
-
-//==========================================================================
-//
-// FScanner :: SetStateMode
-//
-// Enters state mode. This mode is very permissive for identifiers, which
-// it returns as TOK_NonWhitespace. The only character sequences that are
-// not returned as such are these:
-//
-//   * stop
-//   * wait
-//   * fail
-//   * loop
-//   * goto - Automatically exits state mode after it's seen.
-//   * :
-//   * ;
-//   * } - Automatically exits state mode after it's seen.
-//
-// Quoted strings are returned as TOK_NonWhitespace, minus the quotes. Once
-// two consecutive sequences of TOK_NonWhitespace have been encountered
-// (which would be the state's sprite and frame specifiers), nearly normal
-// processing resumes, with the exception that various identifiers
-// used for state options will be returned as tokens and not identifiers.
-// This ends once a ';' or '{' character is encountered.
-//
-//==========================================================================
-
-void FScanner::SetStateMode(bool stately)
-{
-	StateMode = stately ? 2 : 0;
-	StateOptions = stately;
 }
 
 //==========================================================================
@@ -549,19 +513,8 @@ bool FScanner::GetToken ()
 		else if (TokenType == TK_IntConst)
 		{
 			char *stopper;
-			// Check for unsigned
-			if (String[StringLen - 1] == 'u' || String[StringLen - 1] == 'U' ||
-				String[StringLen - 2] == 'u' || String[StringLen - 2] == 'U')
-			{
-				TokenType = TK_UIntConst;
-				Number = strtoul(String, &stopper, 0);
-				Float = (unsigned)Number;
-			}
-			else
-			{
-				Number = strtol(String, &stopper, 0);
-				Float = Number;
-			}
+			Number = strtol(String, &stopper, 0);
+			Float = Number;
 		}
 		else if (TokenType == TK_FloatConst)
 		{
@@ -862,7 +815,7 @@ int FScanner::MustMatchString (const char * const *strings, size_t stride)
 	i = MatchString (strings, stride);
 	if (i == -1)
 	{
-		ScriptError ("Unknown keyword '%s'", String);
+		ScriptError (NULL);
 	}
 	return i;
 }
@@ -925,7 +878,7 @@ FString FScanner::TokenName (int token, const char *string)
 
 //==========================================================================
 //
-// FScanner::GetMessageLine
+// FScanner::ScriptError
 //
 //==========================================================================
 
@@ -940,7 +893,7 @@ int FScanner::GetMessageLine()
 //
 //==========================================================================
 
-void FScanner::ScriptError (const char *message, ...)
+void STACK_ARGS FScanner::ScriptError (const char *message, ...)
 {
 	FString composed;
 
@@ -966,7 +919,7 @@ void FScanner::ScriptError (const char *message, ...)
 //
 //==========================================================================
 
-void FScanner::ScriptMessage (const char *message, ...)
+void STACK_ARGS FScanner::ScriptMessage (const char *message, ...)
 {
 	FString composed;
 
@@ -1006,8 +959,6 @@ void FScanner::CheckOpen()
 //
 //==========================================================================
 int FScriptPosition::ErrorCounter;
-int FScriptPosition::WarnCounter;
-bool FScriptPosition::StrictErrors;	// makes all OPTERROR messages real errors.
 
 FScriptPosition::FScriptPosition(const FScriptPosition &other)
 {
@@ -1040,20 +991,11 @@ FScriptPosition &FScriptPosition::operator=(const FScriptPosition &other)
 //
 //==========================================================================
 
-CVAR(Bool, strictdecorate, false, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
-
-void FScriptPosition::Message (int severity, const char *message, ...) const
+void STACK_ARGS FScriptPosition::Message (int severity, const char *message, ...) const
 {
 	FString composed;
 
-	if (severity == MSG_DEBUGLOG && developer < DMSG_NOTIFY) return;
-	if (severity == MSG_DEBUGERROR && developer < DMSG_ERROR) return;
-	if (severity == MSG_DEBUGWARN && developer < DMSG_WARNING) return;
-	if (severity == MSG_DEBUGMSG && developer < DMSG_NOTIFY) return;
-	if (severity == MSG_OPTERROR)
-	{
-		severity = StrictErrors || strictdecorate ? MSG_ERROR : MSG_WARNING;
-	}
+	if ((severity == MSG_DEBUG || severity == MSG_DEBUGLOG) && !developer) return;
 
 	if (message == NULL)
 	{
@@ -1076,11 +1018,8 @@ void FScriptPosition::Message (int severity, const char *message, ...) const
 		return;
 
 	case MSG_WARNING:
-	case MSG_DEBUGWARN:
-	case MSG_DEBUGERROR:	// This is intentionally not being printed as an 'error', the difference to MSG_DEBUGWARN is only the severity level at which it gets triggered.
-		WarnCounter++;
 		type = "warning";
-		color = TEXTCOLOR_ORANGE;
+		color = TEXTCOLOR_YELLOW;
 		break;
 
 	case MSG_ERROR:
@@ -1090,7 +1029,7 @@ void FScriptPosition::Message (int severity, const char *message, ...) const
 		break;
 
 	case MSG_MESSAGE:
-	case MSG_DEBUGMSG:
+	case MSG_DEBUG:
 		type = "message";
 		color = TEXTCOLOR_GREEN;
 		break;

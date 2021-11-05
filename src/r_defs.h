@@ -23,11 +23,9 @@
 #ifndef __R_DEFS_H__
 #define __R_DEFS_H__
 
-#include <forward_list>
 #include "doomdef.h"
 #include "templates.h"
 #include "memarena.h"
-#include "m_bbox.h"
 
 // Some more or less basic data types
 // we depend on.
@@ -56,8 +54,8 @@ enum
 	SIL_BOTH
 };
 
-namespace swrenderer { extern size_t MaxDrawSegs; }
-struct FDisplacement;
+extern size_t MaxDrawSegs;
+
 
 //
 // INTERNAL MAP TYPES
@@ -76,79 +74,21 @@ enum
 };
 struct vertexdata_t
 {
-	double zCeiling, zFloor;
+	fixed_t zCeiling, zFloor;
 	DWORD flags;
 };
-
-#ifdef USE_FLOAT
-typedef float vtype;
-#elif !defined USE_FIXED
-typedef double vtype;
-#endif
-
-
 struct vertex_t
 {
-private:
-	DVector2 p;
-
-public:
-
-	void set(fixed_t x, fixed_t y)
-	{
-		p.X = x / 65536.;
-		p.Y = y / 65536.;
-	}
-
-	void set(double x, double y)
-	{
-		p.X = x;
-		p.Y = y;
-	}
-
-	void set(const DVector2 &pos)
-	{
-		p = pos;
-	}
-
-	double fX() const
-	{
-		return p.X;
-	}
-
-	double fY() const
-	{
-		return p.Y;
-	}
-
-	fixed_t fixX() const
-	{
-		return FLOAT2FIXED(p.X);
-	}
-
-	fixed_t fixY() const
-	{
-		return FLOAT2FIXED(p.Y);
-	}
-
-	DVector2 fPos()
-	{
-		return { p.X, p.Y };
-	}
+	fixed_t x, y;
 
 	bool operator== (const vertex_t &other)
 	{
-		return p == other.p;
-	}
-
-	bool operator!= (const vertex_t &other)
-	{
-		return p != other.p;
+		return x == other.x && y == other.y;
 	}
 
 	void clear()
 	{
-		p.Zero();
+		x = y = 0;
 	}
 };
 
@@ -160,6 +100,7 @@ class FScanner;
 class FBitmap;
 struct FCopyInfo;
 class DInterpolation;
+class FArchive;
 
 enum
 {
@@ -210,8 +151,8 @@ struct FUDMFKey
 	FUDMFKey& operator =(const FString &val)
 	{
 		Type = UDMF_String;
-		IntVal = strtol(val.GetChars(), NULL, 0);
-		FloatVal = strtod(val.GetChars(), NULL);
+		IntVal = strtol(val, NULL, 0);
+		FloatVal = strtod(val, NULL);
 		StringVal = val;
 		return *this;
 	}
@@ -220,7 +161,6 @@ struct FUDMFKey
 
 class FUDMFKeys : public TArray<FUDMFKey>
 {
-	bool mSorted = false;
 public:
 	void Sort();
 	FUDMFKey *Find(FName key);
@@ -232,6 +172,7 @@ public:
 //
 class DSectorEffect;
 struct sector_t;
+struct line_t;
 struct FRemapTable;
 
 enum
@@ -254,7 +195,7 @@ class ASectorAction : public AActor
 	DECLARE_CLASS (ASectorAction, AActor)
 public:
 	ASectorAction (bool activatedByUse = false);
-	void Destroy () override;
+	void Destroy ();
 	void BeginPlay ();
 	void Activate (AActor *source);
 	void Deactivate (AActor *source);
@@ -275,166 +216,118 @@ struct secplane_t
 	// the plane is defined as a*x + b*y + c*z + d = 0
 	// ic is 1/c, for faster Z calculations
 
-	DVector3 normal;
-	double  D, negiC;	// negative iC because that also saves a negation in all methods using this.
-public:
-	friend FSerializer &Serialize(FSerializer &arc, const char *key, secplane_t &p, secplane_t *def);
-
-	void set(double aa, double bb, double cc, double dd)
-	{
-		normal.X = aa;
-		normal.Y = bb;
-		normal.Z = cc;
-		D = dd;
-		negiC = -1 / cc;
-	}
-
-	void setD(double dd)
-	{
-		D = dd;
-	}
-
-	double fC() const
-	{
-		return normal.Z;
-	}
-	double fD() const
-	{
-		return D;
-	}
-	
-	bool isSlope() const
-	{
-		return !normal.XY().isZero();
-	}
-
-	DVector3 Normal() const
-	{
-		return normal;
-	}
+	fixed_t a, b, c, d, ic;
 
 	// Returns < 0 : behind; == 0 : on; > 0 : in front
-	int PointOnSide(const DVector3 &pos) const
+	int PointOnSide (fixed_t x, fixed_t y, fixed_t z) const
 	{
-		double v = (normal | pos) + D;
-		return v < -EQUAL_EPSILON ? -1 : v > EQUAL_EPSILON ? 1 : 0;
+		return TMulScale16(a,x, b,y, c,z) + d;
 	}
 
 	// Returns the value of z at (0,0) This is used by the 3D floor code which does not handle slopes
-	double Zat0() const
+	fixed_t Zat0 () const
 	{
-		return negiC*D;
+		return ic < 0 ? d : -d;
 	}
 
 	// Returns the value of z at (x,y)
-	fixed_t ZatPoint(fixed_t x, fixed_t y) const = delete;	// it is not allowed to call this.
+	fixed_t ZatPoint (fixed_t x, fixed_t y) const
+	{
+		return FixedMul (ic, -d - DMulScale16 (a, x, b, y));
+	}
 
 	// Returns the value of z at (x,y) as a double
 	double ZatPoint (double x, double y) const
 	{
-		return (D + normal.X*x + normal.Y*y) * negiC;
+		return (d + a*x + b*y) * ic / (-65536.0 * 65536.0);
 	}
 
-	double ZatPoint(const DVector2 &pos) const
+	// Returns the value of z at vertex v
+	fixed_t ZatPoint (const vertex_t *v) const
 	{
-		return (D + normal.X*pos.X + normal.Y*pos.Y) * negiC;
+		return FixedMul (ic, -d - DMulScale16 (a, v->x, b, v->y));
 	}
 
-	double ZatPoint(const FVector2 &pos) const
+	fixed_t ZatPoint (const AActor *ac) const
 	{
-		return (D + normal.X*pos.X + normal.Y*pos.Y) * negiC;
+		return FixedMul (ic, -d - DMulScale16 (a, ac->X(), b, ac->Y()));
 	}
 
-	double ZatPoint(const vertex_t *v) const
+	// Returns the value of z at (x,y) if d is equal to dist
+	fixed_t ZatPointDist (fixed_t x, fixed_t y, fixed_t dist) const
 	{
-		return (D + normal.X*v->fX() + normal.Y*v->fY()) * negiC;
-	}
-
-	double ZatPoint(const AActor *ac) const
-	{
-		return (D + normal.X*ac->X() + normal.Y*ac->Y()) * negiC;
+		return FixedMul (ic, -dist - DMulScale16 (a, x, b, y));
 	}
 
 	// Returns the value of z at vertex v if d is equal to dist
-	double ZatPointDist(const vertex_t *v, double dist)
+	fixed_t ZatPointDist (const vertex_t *v, fixed_t dist)
 	{
-		return (dist + normal.X*v->fX() + normal.Y*v->fY()) * negiC;
+		return FixedMul (ic, -dist - DMulScale16 (a, v->x, b, v->y));
 	}
+
 	// Flips the plane's vertical orientiation, so that if it pointed up,
 	// it will point down, and vice versa.
 	void FlipVert ()
 	{
-		normal = -normal;
-		D = -D;
-		negiC = -negiC;
+		a = -a;
+		b = -b;
+		c = -c;
+		d = -d;
+		ic = -ic;
 	}
 
 	// Returns true if 2 planes are the same
 	bool operator== (const secplane_t &other) const
 	{
-		return normal == other.normal && D == other.D;
+		return a == other.a && b == other.b && c == other.c && d == other.d;
 	}
 
 	// Returns true if 2 planes are different
 	bool operator!= (const secplane_t &other) const
 	{
-		return normal != other.normal || D != other.D;
+		return a != other.a || b != other.b || c != other.c || d != other.d;
 	}
 
 	// Moves a plane up/down by hdiff units
-	void ChangeHeight(double hdiff)
+	void ChangeHeight (fixed_t hdiff)
 	{
-		D = D - hdiff * normal.Z;
+		d = d - FixedMul (hdiff, c);
 	}
 
 	// Moves a plane up/down by hdiff units
-	double GetChangedHeight(double hdiff)
+	fixed_t GetChangedHeight (fixed_t hdiff)
 	{
-		return D - hdiff * normal.Z;
+		return d - FixedMul (hdiff, c);
 	}
 
 	// Returns how much this plane's height would change if d were set to oldd
-	double HeightDiff(double oldd) const
+	fixed_t HeightDiff (fixed_t oldd) const
 	{
-		return (D - oldd) * negiC;
+		return FixedMul (oldd - d, ic);
 	}
 
 	// Returns how much this plane's height would change if d were set to oldd
-	double HeightDiff(double oldd, double newd) const
+	fixed_t HeightDiff (fixed_t oldd, fixed_t newd) const
 	{
-		return (newd - oldd) * negiC;
+		return FixedMul (oldd - newd, ic);
 	}
 
-	double PointToDist(const DVector2 &xy, double z) const
+	fixed_t PointToDist (fixed_t x, fixed_t y, fixed_t z) const
 	{
-		return -(normal.X * xy.X + normal.Y * xy.Y + normal.Z * z);
+		return -TMulScale16 (a, x, y, b, z, c);
 	}
 
-	double PointToDist(const vertex_t *v, double z) const
+	fixed_t PointToDist (const vertex_t *v, fixed_t z) const
 	{
-		return -(normal.X * v->fX() + normal.Y * v->fY() + normal.Z * z);
-	}
-
-	void SetAtHeight(double height, int ceiling)
-	{
-		normal.X = normal.Y = 0;
-		if (ceiling)
-		{
-			normal.Z = -1;
-			negiC = 1;
-			D = height;
-		}
-		else
-		{
-			normal.Z = 1;
-			negiC = -1;
-			D = -height;
-		}
+		return -TMulScale16 (a, v->x, b, v->y, z, c);
 	}
 
 	bool CopyPlaneIfValid (secplane_t *dest, const secplane_t *opp) const;
 
 };
+
+FArchive &operator<< (FArchive &arc, secplane_t &plane);
+
 
 #include "p_3dfloors.h"
 // Ceiling/floor flags
@@ -443,14 +336,6 @@ enum
 	PLANEF_ABSLIGHTING	= 1,	// floor/ceiling light is absolute, not relative
 	PLANEF_BLOCKED		= 2,	// can not be moved anymore.
 	PLANEF_ADDITIVE		= 4,	// rendered additive
-
-	// linked portal stuff
-	PLANEF_NORENDER		= 8,
-	PLANEF_NOPASS		= 16,
-	PLANEF_BLOCKSOUND	= 32,
-	PLANEF_DISABLED		= 64,
-	PLANEF_OBSTRUCTED	= 128,	// if the portal plane is beyond the sector's floor or ceiling.
-	PLANEF_LINKED		= 256	// plane is flagged as a linked portal
 };
 
 // Internal sector flags
@@ -465,6 +350,8 @@ enum
 	SECF_UNDERWATERMASK	= 32+64,
 	SECF_DRAWN			= 128,	// sector has been drawn at least once
 	SECF_HIDDEN			= 256,	// Do not draw on textured automap
+	SECF_NOFLOORSKYBOX	= 512,	// force use of regular sky 
+	SECF_NOCEILINGSKYBOX	= 1024,	// force use of regular sky (do not separate from NOFLOORSKYBOX!!!)
 };
 
 enum
@@ -540,29 +427,23 @@ struct extsector_t
 		TArray<lightlist_t>				lightlist;		// 3D light list
 		TArray<sector_t*>				attached;		// 3D floors attached to this sector
 	} XFloor;
+	
+	void Serialize(FArchive &arc);
 };
 
 struct FTransform
 {
 	// killough 3/7/98: floor and ceiling texture offsets
-	double xOffs, yOffs, baseyOffs;
+	fixed_t xoffs, yoffs;
 
 	// [RH] floor and ceiling texture scales
-	double xScale, yScale;
+	fixed_t xscale, yscale;
 
 	// [RH] floor and ceiling texture rotation
-	DAngle Angle, baseAngle;
+	angle_t angle;
 
-	finline bool operator == (const FTransform &other) const
-	{
-		return xOffs == other.xOffs && yOffs + baseyOffs == other.yOffs + other.baseyOffs &&
-			xScale == other.xScale && yScale == other.yScale && Angle + baseAngle == other.Angle + other.baseAngle;
-	}
-	finline bool operator != (const FTransform &other) const
-	{
-		return !(*this == other);
-	}
-
+	// base values
+	fixed_t base_angle, base_yoffs;
 };
 
 struct secspecial_t
@@ -585,62 +466,39 @@ struct secspecial_t
 	}
 };
 
-FSerializer &Serialize(FSerializer &arc, const char *key, secspecial_t &spec, secspecial_t *def);
-
-enum class EMoveResult { ok, crushed, pastdest };
+FArchive &operator<< (FArchive &arc, secspecial_t &p);
 
 struct sector_t
 {
 	// Member functions
-
-private:
-	bool MoveAttached(int crush, double move, int floorOrCeiling, bool resetfailed);
-public:
-	EMoveResult MoveFloor(double speed, double dest, int crush, int direction, bool hexencrush);
-	EMoveResult MoveCeiling(double speed, double dest, int crush, int direction, bool hexencrush);
-
-	inline EMoveResult MoveFloor(double speed, double dest, int direction)
-	{
-		return MoveFloor(speed, dest, -1, direction, false);
-	}
-
-	inline EMoveResult MoveCeiling(double speed, double dest, int direction)
-	{
-		return MoveCeiling(speed, dest, -1, direction, false);
-	}
-
 	bool IsLinked(sector_t *other, bool ceiling) const;
-	double FindLowestFloorSurrounding(vertex_t **v) const;
-	double FindHighestFloorSurrounding(vertex_t **v) const;
-	double FindNextHighestFloor(vertex_t **v) const;
-	double FindNextLowestFloor(vertex_t **v) const;
-	double FindLowestCeilingSurrounding(vertex_t **v) const;			// jff 2/04/98
-	double FindHighestCeilingSurrounding(vertex_t **v) const;			// jff 2/04/98
-	double FindNextLowestCeiling(vertex_t **v) const;					// jff 2/04/98
-	double FindNextHighestCeiling(vertex_t **v) const;					// jff 2/04/98
-	double FindShortestTextureAround() const;							// jff 2/04/98
-	double FindShortestUpperAround() const;								// jff 2/04/98
-	sector_t *FindModelFloorSector(double floordestheight) const;		// jff 2/04/98
-	sector_t *FindModelCeilingSector(double floordestheight) const;		// jff 2/04/98
+	fixed_t FindLowestFloorSurrounding (vertex_t **v) const;
+	fixed_t FindHighestFloorSurrounding (vertex_t **v) const;
+	fixed_t FindNextHighestFloor (vertex_t **v) const;
+	fixed_t FindNextLowestFloor (vertex_t **v) const;
+	fixed_t FindLowestCeilingSurrounding (vertex_t **v) const;			// jff 2/04/98
+	fixed_t FindHighestCeilingSurrounding (vertex_t **v) const;			// jff 2/04/98
+	fixed_t FindNextLowestCeiling (vertex_t **v) const;					// jff 2/04/98
+	fixed_t FindNextHighestCeiling (vertex_t **v) const;				// jff 2/04/98
+	fixed_t FindShortestTextureAround () const;							// jff 2/04/98
+	fixed_t FindShortestUpperAround () const;							// jff 2/04/98
+	sector_t *FindModelFloorSector (fixed_t floordestheight) const;		// jff 2/04/98
+	sector_t *FindModelCeilingSector (fixed_t floordestheight) const;	// jff 2/04/98
 	int FindMinSurroundingLight (int max) const;
 	sector_t *NextSpecialSector (int type, sector_t *prev) const;		// [RH]
-	double FindLowestCeilingPoint(vertex_t **v) const;
-	double FindHighestFloorPoint(vertex_t **v) const;
-	void RemoveForceField();
-
+	fixed_t FindLowestCeilingPoint (vertex_t **v) const;
+	fixed_t FindHighestFloorPoint (vertex_t **v) const;
 	void AdjustFloorClip () const;
 	void SetColor(int r, int g, int b, int desat);
 	void SetFade(int r, int g, int b);
-	void ClosestPoint(const DVector2 &pos, DVector2 &out) const;
+	void ClosestPoint(fixed_t x, fixed_t y, fixed_t &ox, fixed_t &oy) const;
 	int GetFloorLight () const;
 	int GetCeilingLight () const;
 	sector_t *GetHeightSec() const;
-	double GetFriction(int plane = sector_t::floor, double *movefac = NULL) const;
 
 	DInterpolation *SetInterpolation(int position, bool attach);
 
-	FSectorPortal *ValidatePortal(int which);
-	void CheckPortalPlane(int plane);
+	ASkyViewpoint *GetSkyBox(int which);
 
 	enum
 	{
@@ -653,113 +511,107 @@ public:
 		FTransform xform;
 		int Flags;
 		int Light;
-		double alpha;
+		fixed_t alpha;
 		FTextureID Texture;
-		double TexZ;
+		fixed_t TexZ;
 	};
 
 
 	splane planes[2];
 
-	void SetXOffset(int pos, double o)
+	void SetXOffset(int pos, fixed_t o)
 	{
-		planes[pos].xform.xOffs = o;
+		planes[pos].xform.xoffs = o;
 	}
 
-	void AddXOffset(int pos, double o)
+	void AddXOffset(int pos, fixed_t o)
 	{
-		planes[pos].xform.xOffs += o;
+		planes[pos].xform.xoffs += o;
 	}
 
-	double GetXOffset(int pos) const
+	fixed_t GetXOffset(int pos) const
 	{
-		return planes[pos].xform.xOffs;
+		return planes[pos].xform.xoffs;
 	}
 
-	void SetYOffset(int pos, double o)
+	void SetYOffset(int pos, fixed_t o)
 	{
-		planes[pos].xform.yOffs = o;
+		planes[pos].xform.yoffs = o;
 	}
 
-	void AddYOffset(int pos, double o)
+	void AddYOffset(int pos, fixed_t o)
 	{
-		planes[pos].xform.yOffs += o;
+		planes[pos].xform.yoffs += o;
 	}
 
-	double GetYOffset(int pos, bool addbase = true) const
-	{
-		if (!addbase)
-		{
-			return planes[pos].xform.yOffs;
-		}
-		else
-		{
-			return planes[pos].xform.yOffs + planes[pos].xform.baseyOffs;
-		}
-	}
-
-	void SetXScale(int pos, double o)
-	{
-		planes[pos].xform.xScale = o;
-	}
-
-	double GetXScale(int pos) const
-	{
-		return planes[pos].xform.xScale;
-	}
-
-	void SetYScale(int pos, double o)
-	{
-		planes[pos].xform.yScale = o;
-	}
-
-	double GetYScale(int pos) const
-	{
-		return planes[pos].xform.yScale;
-	}
-
-	void SetAngle(int pos, DAngle o)
-	{
-		planes[pos].xform.Angle = o;
-	}
-
-	DAngle GetAngle(int pos, bool addbase = true) const
+	fixed_t GetYOffset(int pos, bool addbase = true) const
 	{
 		if (!addbase)
 		{
-			return planes[pos].xform.Angle;
+			return planes[pos].xform.yoffs;
 		}
 		else
 		{
-			return planes[pos].xform.Angle + planes[pos].xform.baseAngle;
+			return planes[pos].xform.yoffs + planes[pos].xform.base_yoffs;
 		}
 	}
 
-	void SetBase(int pos, double y, DAngle o)
+	void SetXScale(int pos, fixed_t o)
 	{
-		planes[pos].xform.baseyOffs = y;
-		planes[pos].xform.baseAngle = o;
+		planes[pos].xform.xscale = o;
 	}
 
-	void SetAlpha(int pos, double o)
+	fixed_t GetXScale(int pos) const
+	{
+		return planes[pos].xform.xscale;
+	}
+
+	void SetYScale(int pos, fixed_t o)
+	{
+		planes[pos].xform.yscale = o;
+	}
+
+	fixed_t GetYScale(int pos) const
+	{
+		return planes[pos].xform.yscale;
+	}
+
+	void SetAngle(int pos, angle_t o)
+	{
+		planes[pos].xform.angle = o;
+	}
+
+	angle_t GetAngle(int pos, bool addbase = true) const
+	{
+		if (!addbase)
+		{
+			return planes[pos].xform.angle;
+		}
+		else
+		{
+			return planes[pos].xform.angle + planes[pos].xform.base_angle;
+		}
+	}
+
+	void SetBase(int pos, fixed_t y, angle_t o)
+	{
+		planes[pos].xform.base_yoffs = y;
+		planes[pos].xform.base_angle = o;
+	}
+
+	void SetAlpha(int pos, fixed_t o)
 	{
 		planes[pos].alpha = o;
 	}
 
-	double GetAlpha(int pos) const
+	fixed_t GetAlpha(int pos) const
 	{
 		return planes[pos].alpha;
 	}
 
-	int GetFlags(int pos) const
+	int GetFlags(int pos) const 
 	{
 		return planes[pos].Flags;
-	}
-
-	// like the previous one but masks out all flags which are not relevant for rendering.
-	int GetVisFlags(int pos) const
-	{
-		return planes[pos].Flags & ~(PLANEF_BLOCKED | PLANEF_NOPASS | PLANEF_BLOCKSOUND | PLANEF_LINKED);
 	}
 
 	void ChangeFlags(int pos, int And, int Or)
@@ -790,17 +642,17 @@ public:
 		if (floorclip && pos == floor && tex != old) AdjustFloorClip();
 	}
 
-	double GetPlaneTexZ(int pos) const
+	fixed_t GetPlaneTexZ(int pos) const
 	{
 		return planes[pos].TexZ;
 	}
 
-	void SetPlaneTexZ(int pos, double val)
+	void SetPlaneTexZ(int pos, fixed_t val)
 	{
 		planes[pos].TexZ = val;
 	}
 
-	void ChangePlaneTexZ(int pos, double val)
+	void ChangePlaneTexZ(int pos, fixed_t val)
 	{
 		planes[pos].TexZ += val;
 	}
@@ -830,6 +682,17 @@ public:
 		return pos == floor? floorplane:ceilingplane;
 	}
 
+	fixed_t HighestCeiling(AActor *a) const
+	{
+		return ceilingplane.ZatPoint(a);
+	}
+
+	fixed_t LowestFloor(AActor *a) const
+	{
+		return floorplane.ZatPoint(a);
+	}
+
+
 	bool isSecret() const
 	{
 		return !!(Flags & SECF_SECRET);
@@ -856,62 +719,6 @@ public:
 		Flags &= ~SECF_SPECIALFLAGS;
 	}
 
-	bool PortalBlocksView(int plane)
-	{
-		if (GetPortalType(plane) != PORTS_LINKEDPORTAL) return false;
-		return !!(planes[plane].Flags & (PLANEF_NORENDER | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
-	}
-
-	bool PortalBlocksSight(int plane)
-	{
-		return PLANEF_LINKED != (planes[plane].Flags & (PLANEF_NORENDER | PLANEF_NOPASS | PLANEF_DISABLED | PLANEF_OBSTRUCTED | PLANEF_LINKED));
-	}
-
-	bool PortalBlocksMovement(int plane)
-	{
-		return PLANEF_LINKED != (planes[plane].Flags & (PLANEF_NOPASS | PLANEF_DISABLED | PLANEF_OBSTRUCTED | PLANEF_LINKED));
-	}
-
-	bool PortalBlocksSound(int plane)
-	{
-		return PLANEF_LINKED != (planes[plane].Flags & (PLANEF_BLOCKSOUND | PLANEF_DISABLED | PLANEF_OBSTRUCTED | PLANEF_LINKED));
-	}
-
-	bool PortalIsLinked(int plane)
-	{
-		return (GetPortalType(plane) == PORTS_LINKEDPORTAL);
-	}
-
-	void ClearPortal(int plane)
-	{
-		Portals[plane] = 0;
-	}
-
-	FSectorPortal *GetPortal(int plane)
-	{
-		return &sectorPortals[Portals[plane]];
-	}
-
-	double GetPortalPlaneZ(int plane)
-	{
-		return sectorPortals[Portals[plane]].mPlaneZ;
-	}
-
-	DVector2 GetPortalDisplacement(int plane)
-	{
-		return sectorPortals[Portals[plane]].mDisplacement;
-	}
-
-	int GetPortalType(int plane)
-	{
-		return sectorPortals[Portals[plane]].mType;
-	}
-
-	int GetOppositePortalGroup(int plane)
-	{
-		return sectorPortals[Portals[plane]].mDestination->PortalGroup;
-	}
-
 	int GetTerrain(int pos) const;
 
 	void TransferSpecial(sector_t *model);
@@ -919,27 +726,10 @@ public:
 	void SetSpecial(const secspecial_t *spec);
 	bool PlaneMoving(int pos);
 
-	// Portal-aware height calculation
-	double HighestCeilingAt(const DVector2 &a, sector_t **resultsec = NULL);
-	double LowestFloorAt(const DVector2 &a, sector_t **resultsec = NULL);
-
-
-	double HighestCeilingAt(AActor *a, sector_t **resultsec = NULL)
-	{
-		return HighestCeilingAt(a->Pos(), resultsec);
-	}
-
-	double LowestFloorAt(AActor *a, sector_t **resultsec = NULL)
-	{
-		return LowestFloorAt(a->Pos(), resultsec);
-	}
-
-	double NextHighestCeilingAt(double x, double y, double bottomz, double topz, int flags = 0, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL);
-	double NextLowestFloorAt(double x, double y, double z, int flags = 0, double steph = 0, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL);
 
 	// Member variables
-	double		CenterFloor() const { return floorplane.ZatPoint(centerspot); }
-	double		CenterCeiling() const { return ceilingplane.ZatPoint(centerspot); }
+	fixed_t		CenterFloor () const { return floorplane.ZatPoint (soundorg[0], soundorg[1]); }
+	fixed_t		CenterCeiling () const { return ceilingplane.ZatPoint (soundorg[0], soundorg[1]); }
 
 	// [RH] store floor and ceiling planes instead of heights
 	secplane_t	floorplane, ceilingplane;
@@ -957,14 +747,14 @@ public:
 	int			sky;
 	FNameNoInit	SeqName;		// Sound sequence name. Setting seqType non-negative will override this.
 
-	DVector2	centerspot;		// origin for any sounds played by the sector
+	fixed_t		soundorg[2];	// origin for any sounds played by the sector
 	int 		validcount;		// if == validcount, already checked
 	AActor* 	thinglist;		// list of mobjs in sector
 
 	// killough 8/28/98: friction is a sector property, not an mobj property.
 	// these fields used to be in AActor, but presented performance problems
 	// when processed as mobj properties. Fix is to make them sector properties.
-	double		friction, movefactor;
+	fixed_t		friction, movefactor;
 
 	int			terrainnum[2];
 
@@ -985,8 +775,8 @@ public:
 	BYTE 		soundtraversed;	// 0 = untraversed, 1,2 = sndlines -1
 	// jff 2/26/98 lockout machinery for stairbuilding
 	SBYTE stairlock;	// -2 on first locked -1 after thinker done 0 normally
-	int prevsec;		// -1 or number of sector for previous step
-		int nextsec;		// -1 or number of next step sector
+	SWORD prevsec;		// -1 or number of sector for previous step
+	SWORD nextsec;		// -1 or number of next step sector
 
 	short linecount;
 	struct line_t **lines;		// [linecount] size
@@ -1001,10 +791,8 @@ public:
 	// list of mobjs that are at least partially in the sector
 	// thinglist is a subset of touching_thinglist
 	struct msecnode_t *touching_thinglist;				// phares 3/14/98
-	struct msecnode_t *render_thinglist;				// for cross-portal rendering.
-	struct msecnode_t *touching_renderthings; // this is used to allow wide things to be rendered not only from their main sector.
 
-	double gravity;			// [RH] Sector gravity (1.0 is normal)
+	float gravity;			// [RH] Sector gravity (1.0 is normal)
 	FNameNoInit damagetype;		// [RH] Means-of-death for applied damage
 	int damageamount;			// [RH] Damage to do while standing on floor
 	short damageinterval;	// Interval for damage application
@@ -1020,14 +808,17 @@ public:
 	// occurs, SecActTarget's TriggerAction method is called.
 	TObjPtr<ASectorAction> SecActTarget;
 
-	// [RH] The portal or skybox to render for this sector.
-	unsigned Portals[2];
-	int PortalGroup;
+	// [RH] The sky box to render for this sector. NULL means use a
+	// regular sky.
+	TObjPtr<ASkyViewpoint> SkyBoxes[2];
 
 	int							sectornum;			// for comparing sector copies
 
 	extsector_t	*				e;		// This stores data that requires construction/destruction. Such data must not be copied by R_FakeFlat.
 };
+
+FArchive &operator<< (FArchive &arc, sector_t::splane &p);
+
 
 struct ReverbContainer;
 struct zone_t
@@ -1064,10 +855,10 @@ struct side_t
 	};
 	struct part
 	{
-		double xOffset;
-		double yOffset;
-		double xScale;
-		double yScale;
+		fixed_t xoffset;
+		fixed_t yoffset;
+		fixed_t xscale;
+		fixed_t yscale;
 		FTextureID texture;
 		TObjPtr<DInterpolation> interpolation;
 		//int Light;
@@ -1084,7 +875,7 @@ struct side_t
 	BYTE		Flags;
 	int			Index;		// needed to access custom UDMF fields which are stored in loading order.
 
-	int GetLightLevel (bool foggy, int baselight, bool is3dlight=false, int *pfakecontrast_usedbygzdoom=NULL) const;
+	int GetLightLevel (bool foggy, int baselight, bool noabsolute=false, int *pfakecontrast_usedbygzdoom=NULL) const;
 
 	void SetLight(SWORD l)
 	{
@@ -1100,88 +891,77 @@ struct side_t
 		textures[which].texture = tex;
 	}
 
-	void SetTextureXOffset(int which, double offset)
+	void SetTextureXOffset(int which, fixed_t offset)
 	{
-		textures[which].xOffset = offset;;
+		textures[which].xoffset = offset;
 	}
-	
-	void SetTextureXOffset(double offset)
+	void SetTextureXOffset(fixed_t offset)
 	{
-		textures[top].xOffset =
-		textures[mid].xOffset =
-		textures[bottom].xOffset = offset;
+		textures[top].xoffset =
+		textures[mid].xoffset =
+		textures[bottom].xoffset = offset;
 	}
-
-	double GetTextureXOffset(int which) const
+	fixed_t GetTextureXOffset(int which) const
 	{
-		return textures[which].xOffset;
+		return textures[which].xoffset;
 	}
-
-	void AddTextureXOffset(int which, double delta)
+	void AddTextureXOffset(int which, fixed_t delta)
 	{
-		textures[which].xOffset += delta;
+		textures[which].xoffset += delta;
 	}
 
-	void SetTextureYOffset(int which, double offset)
+	void SetTextureYOffset(int which, fixed_t offset)
 	{
-		textures[which].yOffset = offset;
+		textures[which].yoffset = offset;
+	}
+	void SetTextureYOffset(fixed_t offset)
+	{
+		textures[top].yoffset =
+		textures[mid].yoffset =
+		textures[bottom].yoffset = offset;
+	}
+	fixed_t GetTextureYOffset(int which) const
+	{
+		return textures[which].yoffset;
+	}
+	void AddTextureYOffset(int which, fixed_t delta)
+	{
+		textures[which].yoffset += delta;
 	}
 
-	void SetTextureYOffset(double offset)
+	void SetTextureXScale(int which, fixed_t scale)
 	{
-		textures[top].yOffset =
-		textures[mid].yOffset =
-		textures[bottom].yOffset = offset;
+		textures[which].xscale = scale == 0 ? FRACUNIT : scale;
+	}
+	void SetTextureXScale(fixed_t scale)
+	{
+		textures[top].xscale = textures[mid].xscale = textures[bottom].xscale = scale == 0 ? FRACUNIT : scale;
+	}
+	fixed_t GetTextureXScale(int which) const
+	{
+		return textures[which].xscale;
+	}
+	void MultiplyTextureXScale(int which, fixed_t delta)
+	{
+		textures[which].xscale = FixedMul(textures[which].xscale, delta);
 	}
 
-	double GetTextureYOffset(int which) const
-	{
-		return textures[which].yOffset;
-	}
 
-	void AddTextureYOffset(int which, double delta)
+	void SetTextureYScale(int which, fixed_t scale)
 	{
-		textures[which].yOffset += delta;
+		textures[which].yscale = scale == 0 ? FRACUNIT : scale;
 	}
-
-	void SetTextureXScale(int which, double scale)
+	void SetTextureYScale(fixed_t scale)
 	{
-		textures[which].xScale = scale == 0 ? 1. : scale;
+		textures[top].yscale = textures[mid].yscale = textures[bottom].yscale = scale == 0 ? FRACUNIT : scale;
 	}
-
-	void SetTextureXScale(double scale)
+	fixed_t GetTextureYScale(int which) const
 	{
-		textures[top].xScale = textures[mid].xScale = textures[bottom].xScale = scale == 0 ? 1. : scale;
+		return textures[which].yscale;
 	}
-
-	double GetTextureXScale(int which) const
+	void MultiplyTextureYScale(int which, fixed_t delta)
 	{
-		return textures[which].xScale;
-	}
-
-	void MultiplyTextureXScale(int which, double delta)
-	{
-		textures[which].xScale *= delta;
-	}
-
-	void SetTextureYScale(int which, double scale)
-	{
-		textures[which].yScale = scale == 0 ? 1. : scale;
-	}
-
-	void SetTextureYScale(double scale)
-	{
-		textures[top].yScale = textures[mid].yScale = textures[bottom].yScale = scale == 0 ? 1. : scale;
-	}
-
-	double GetTextureYScale(int which) const
-	{
-		return textures[which].yScale;
-	}
-
-	void MultiplyTextureYScale(int which, double delta)
-	{
-		textures[which].yScale *= delta;
+		textures[which].yscale = FixedMul(textures[which].yscale, delta);
 	}
 
 	DInterpolation *SetInterpolation(int position);
@@ -1191,62 +971,26 @@ struct side_t
 	vertex_t *V2() const;
 };
 
+FArchive &operator<< (FArchive &arc, side_t::part &p);
+
 struct line_t
 {
 	vertex_t	*v1, *v2;	// vertices, from v1 to v2
-	DVector2	delta;		// precalculated v2 - v1 for side checking
-	uint32_t	flags;
-	uint32_t	activation;	// activation type
+	fixed_t 	dx, dy;		// precalculated v2 - v1 for side checking
+	DWORD		flags;
+	DWORD		activation;	// activation type
 	int			special;
+	fixed_t		Alpha;		// <--- translucency (0=invisibile, FRACUNIT=opaque)
 	int			args[5];	// <--- hexen-style arguments (expanded to ZDoom's full width)
-	double		alpha;		// <--- translucency (0=invisibile, FRACUNIT=opaque)
 	side_t		*sidedef[2];
-	double		bbox[4];	// bounding box, for the extent of the LineDef.
+	fixed_t		bbox[4];	// bounding box, for the extent of the LineDef.
 	sector_t	*frontsector, *backsector;
 	int 		validcount;	// if == validcount, already checked
 	int			locknumber;	// [Dusk] lock number for special
-	unsigned	portalindex;
 
-	DVector2 Delta() const
-	{
-		return delta;
-	}
-
-	void setDelta(double x, double y)
-	{
-		delta = { x, y };
-	}
-
-	void setAlpha(double a)
-	{
-		alpha = a;
-	}
-
-	FLinePortal *getPortal() const
-	{
-		return portalindex >= linePortals.Size() ? (FLinePortal*)NULL : &linePortals[portalindex];
-	}
-
-	// returns true if the portal is crossable by actors
 	bool isLinePortal() const
 	{
-		return portalindex >= linePortals.Size() ? false : !!(linePortals[portalindex].mFlags & PORTF_PASSABLE);
-	}
-
-	// returns true if the portal needs to be handled by the renderer
-	bool isVisualPortal() const
-	{
-		return portalindex >= linePortals.Size() ? false : !!(linePortals[portalindex].mFlags & PORTF_VISIBLE);
-	}
-
-	line_t *getPortalDestination() const
-	{
-		return portalindex >= linePortals.Size() ? (line_t*)NULL : linePortals[portalindex].mDestination;
-	}
-
-	int getPortalAlignment() const
-	{
-		return portalindex >= linePortals.Size() ? 0 : linePortals[portalindex].mAlign;
+		return false;
 	}
 };
 
@@ -1275,18 +1019,6 @@ struct msecnode_t
 	struct msecnode_t	*m_sprev;	// prev msecnode_t for this sector
 	struct msecnode_t	*m_snext;	// next msecnode_t for this sector
 	bool visited;	// killough 4/4/98, 4/7/98: used in search algorithms
-};
-
-// use the same memory layout as msecnode_t so both can be used from the same freelist.
-struct portnode_t
-{
-	FLinePortal			*m_portal;	// a portal containing this object
-	AActor				*m_thing;	// this object
-	struct portnode_t	*m_tprev;	// prev msecnode_t for this thing
-	struct portnode_t	*m_tnext;	// next msecnode_t for this thing
-	struct portnode_t	*m_sprev;	// prev msecnode_t for this portal
-	struct portnode_t	*m_snext;	// next msecnode_t for this portal
-	bool visited;
 };
 
 struct FPolyNode;
@@ -1354,11 +1086,7 @@ struct node_t
 	fixed_t		y;
 	fixed_t		dx;
 	fixed_t		dy;
-	union
-	{
-		float	bbox[2][4];		// Bounding box for each child.
-		fixed_t	nb_bbox[2][4];	// Used by nodebuilder.
-	};
+	fixed_t		bbox[2][4];		// Bounding box for each child.
 	float		len;
 	union
 	{
@@ -1392,71 +1120,9 @@ typedef BYTE lighttable_t;	// This could be wider for >8 bit display.
 struct visstyle_t
 {
 	lighttable_t	*colormap;
-	float			Alpha;
+	fixed_t			alpha;
 	FRenderStyle	RenderStyle;
 };
-
-
-//----------------------------------------------------------------------------------
-//
-// The playsim can use different nodes than the renderer so this is
-// not the same as R_PointInSubsector
-//
-//----------------------------------------------------------------------------------
-subsector_t *P_PointInSubsector(double x, double y);
-
-inline sector_t *P_PointInSector(const DVector2 &pos)
-{
-	return P_PointInSubsector(pos.X, pos.Y)->sector;
-}
-
-inline sector_t *P_PointInSector(double X, double Y)
-{
-	return P_PointInSubsector(X, Y)->sector;
-}
-
-inline DVector3 AActor::PosRelative(int portalgroup) const
-{
-	return Pos() + Displacements.getOffset(Sector->PortalGroup, portalgroup);
-}
-
-inline DVector3 AActor::PosRelative(const AActor *other) const
-{
-	return Pos() + Displacements.getOffset(Sector->PortalGroup, other->Sector->PortalGroup);
-}
-
-inline DVector3 AActor::PosRelative(sector_t *sec) const
-{
-	return Pos() + Displacements.getOffset(Sector->PortalGroup, sec->PortalGroup);
-}
-
-inline DVector3 AActor::PosRelative(line_t *line) const
-{
-	return Pos() + Displacements.getOffset(Sector->PortalGroup, line->frontsector->PortalGroup);
-}
-
-inline DVector3 PosRelative(const DVector3 &pos, line_t *line, sector_t *refsec = NULL)
-{
-	return pos + Displacements.getOffset(refsec->PortalGroup, line->frontsector->PortalGroup);
-}
-
-
-inline void AActor::ClearInterpolation()
-{
-	Prev = Pos();
-	PrevAngles = Angles;
-	if (Sector) PrevPortalGroup = Sector->PortalGroup;
-	else PrevPortalGroup = 0;
-}
-
-inline bool FBoundingBox::inRange(const line_t *ld) const
-{
-	return Left() < ld->bbox[BOXRIGHT] &&
-		Right() > ld->bbox[BOXLEFT] &&
-		Top() > ld->bbox[BOXBOTTOM] &&
-		Bottom() < ld->bbox[BOXTOP];
-}
-
 
 
 #endif

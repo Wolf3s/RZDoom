@@ -43,7 +43,7 @@
 #include "templates.h"
 #include "w_wad.h"
 #include "g_level.h"
-#include "serializer.h"
+#include "farchive.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -161,16 +161,6 @@ FAnimDef *FTextureManager::AddComplexAnim (FTextureID picnum, const TArray<FAnim
 // [RH] Rewritten to support BOOM ANIMATED lump but also make absolutely
 //		no assumptions about how the compiler packs the animdefs array.
 //
-// Since animdef_t no longer exists in ZDoom, here is some documentation
-// of the format:
-//
-//   This is an array of <n> entries, terminated by a 0xFF byte. Each entry
-//   is 23 bytes long and consists of the following fields:
-//     Byte      0: Bit 1 set for wall texture, clear for flat texture.
-//     Bytes   1-9: '\0'-terminated name of first texture.
-//     Bytes 10-18: '\0'-terminated name of last texture.
-//     Bytes 19-22: Tics per frame (stored in little endian order).
-//
 //==========================================================================
 
 CVAR(Bool, debuganimated, false, 0)
@@ -229,7 +219,7 @@ void FTextureManager::InitAnimated (void)
 			// SMMU-style swirly hack? Don't apply on already-warping texture
 			if (animspeed > 65535 && tex1 != NULL && !tex1->bWarped)
 			{
-				FTexture *warper = new FWarpTexture (tex1, 2);
+				FTexture *warper = new FWarp2Texture (tex1);
 				ReplaceTexture (pic1, warper, false);
 			}
 			// These tests were not really relevant for swirling textures, or even potentially
@@ -627,7 +617,9 @@ void FTextureManager::ParseWarp(FScanner &sc)
 		// don't warp a texture more than once
 		if (!warper->bWarped)
 		{
-			warper = new FWarpTexture (warper, type2? 2:1);
+			if (type2) warper = new FWarp2Texture (warper);
+			else warper = new FWarpTexture (warper);
+
 			ReplaceTexture (picnum, warper, false);
 		}
 
@@ -1000,13 +992,17 @@ void FTextureManager::UpdateAnimations (DWORD mstime)
 //
 //==========================================================================
 
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, FDoorAnimation *&p, FDoorAnimation **def)
+template<> FArchive &operator<< (FArchive &arc, FDoorAnimation* &Doorani)
 {
-	FTextureID tex = p? p->BaseTexture : FNullTextureID();
-	Serialize(arc, key, tex, def ? &(*def)->BaseTexture : nullptr);
-	if (arc.isReading())
+	if (arc.IsStoring())
 	{
-		p = TexMan.FindAnimatedDoor(tex);
+		arc << Doorani->BaseTexture;
+	}
+	else
+	{
+		FTextureID tex;
+		arc << tex;
+		Doorani = TexMan.FindAnimatedDoor(tex);
 	}
 	return arc;
 }

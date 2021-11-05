@@ -64,8 +64,8 @@ FColorMatcher ColorMatcher;
 /* Current color blending values */
 int		BlendR, BlendG, BlendB, BlendA;
 
-static int sortforremap (const void *a, const void *b);
-static int sortforremap2 (const void *a, const void *b);
+static int STACK_ARGS sortforremap (const void *a, const void *b);
+static int STACK_ARGS sortforremap2 (const void *a, const void *b);
 
 /**************************/
 /* Gamma correction stuff */
@@ -106,11 +106,20 @@ CCMD (bumpgamma)
 /* Palette management stuff */
 /****************************/
 
+extern "C" BYTE BestColor_MMX (DWORD rgb, const DWORD *pal);
+
 int BestColor (const uint32 *pal_in, int r, int g, int b, int first, int num)
 {
+#ifdef X86_ASM
+	if (CPU.bMMX)
+	{
+		int pre = 256 - num - first;
+		return BestColor_MMX (((first+pre)<<24)|(r<<16)|(g<<8)|b, pal_in-pre) - pre;
+	}
+#endif
 	const PalEntry *pal = (const PalEntry *)pal_in;
 	int bestcolor = first;
-	int bestdist = 257 * 257 + 257 * 257 + 257 * 257;
+	int bestdist = 257*257+257*257+257*257;
 
 	for (int color = first; color < num; color++)
 	{
@@ -213,7 +222,7 @@ void FPalette::MakeGoodRemap ()
 	// 256 entries are different. :-)
 }
 
-static int sortforremap (const void *a, const void *b)
+static int STACK_ARGS sortforremap (const void *a, const void *b)
 {
 	return (*(const DWORD *)a & 0xFFFFFF) - (*(const DWORD *)b & 0xFFFFFF);
 }
@@ -289,7 +298,7 @@ void FPalette::MakeRemap (const DWORD *colors, BYTE *remap, const BYTE *useful, 
 	}
 }
 
-static int sortforremap2 (const void *a, const void *b)
+static int STACK_ARGS sortforremap2 (const void *a, const void *b)
 {
 	const RemappingWork *ap = (const RemappingWork *)a;
 	const RemappingWork *bp = (const RemappingWork *)b;
@@ -375,8 +384,8 @@ void InitPalette ()
 	R_InitColormaps ();
 }
 
-void DoBlending_MMX (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a);
-void DoBlending_SSE2 (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a);
+extern "C" void STACK_ARGS DoBlending_MMX (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a);
+extern void DoBlending_SSE2 (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a);
 
 void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a)
 {
@@ -386,7 +395,6 @@ void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, in
 		{
 			memcpy (to, from, count * sizeof(DWORD));
 		}
-		return;
 	}
 	else if (a == 256)
 	{
@@ -397,7 +405,6 @@ void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, in
 		{
 			to[i] = t;
 		}
-		return;
 	}
 #if defined(_M_X64) || defined(_M_IX86) || defined(__i386__) || defined(__amd64__)
 	else if (CPU.bSSE2)
@@ -416,7 +423,7 @@ void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, in
 		}
 	}
 #endif
-#if defined(_M_IX86) || defined(__i386__)
+#ifdef X86_ASM
 	else if (CPU.bMMX)
 	{
 		if (count >= 4)

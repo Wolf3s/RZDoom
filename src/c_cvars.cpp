@@ -132,11 +132,6 @@ FBaseCVar::~FBaseCVar ()
 	}
 }
 
-const char *FBaseCVar::GetHumanString(int precision) const
-{
-	return GetGenericRep(CVAR_String).String;
-}
-
 void FBaseCVar::ForceSet (UCVarValue value, ECVarType type, bool nouserinfosend)
 {
 	DoSet (value, type);
@@ -286,9 +281,7 @@ const char *FBaseCVar::ToString (UCVarValue value, ECVarType type)
 		break;
 
 	case CVAR_Float:
-		IGNORE_FORMAT_PRE
-		mysnprintf (cstrbuf, countof(cstrbuf), "%H", value.Float);
-		IGNORE_FORMAT_POST
+		mysnprintf (cstrbuf, countof(cstrbuf), "%g", value.Float);
 		break;
 
 	case CVAR_GUID:
@@ -406,9 +399,7 @@ UCVarValue FBaseCVar::FromFloat (float value, ECVarType type)
 		break;
 
 	case CVAR_String:
-		IGNORE_FORMAT_PRE
-		mysnprintf (cstrbuf, countof(cstrbuf), "%H", value);
-		IGNORE_FORMAT_POST
+		mysnprintf (cstrbuf, countof(cstrbuf), "%g", value);
 		ret.String = cstrbuf;
 		break;
 
@@ -755,16 +746,6 @@ ECVarType FFloatCVar::GetRealType () const
 	return CVAR_Float;
 }
 
-const char *FFloatCVar::GetHumanString(int precision) const
-{
-	if (precision < 0)
-	{
-		precision = 6;
-	}
-	mysnprintf(cstrbuf, countof(cstrbuf), "%.*g", precision, Value);
-	return cstrbuf;
-}
-
 UCVarValue FFloatCVar::GetGenericRep (ECVarType type) const
 {
 	return FromFloat (Value, type);
@@ -1093,7 +1074,7 @@ BitVal (bitval)
 
 ECVarType FFlagCVar::GetRealType () const
 {
-	return CVAR_DummyBool;
+	return CVAR_Dummy;
 }
 
 UCVarValue FFlagCVar::GetGenericRep (ECVarType type) const
@@ -1197,7 +1178,7 @@ BitVal (bitval)
 
 ECVarType FMaskCVar::GetRealType () const
 {
-	return CVAR_DummyInt;
+	return CVAR_Dummy;
 }
 
 UCVarValue FMaskCVar::GetGenericRep (ECVarType type) const
@@ -1278,7 +1259,7 @@ void FMaskCVar::DoSet (UCVarValue value, ECVarType type)
 
 
 ////////////////////////////////////////////////////////////////////////
-static int sortcvars (const void *a, const void *b)
+static int STACK_ARGS sortcvars (const void *a, const void *b)
 {
 	return strcmp (((*(FBaseCVar **)a))->GetName(), ((*(FBaseCVar **)b))->GetName());
 }
@@ -1488,44 +1469,6 @@ FBaseCVar *FindCVarSub (const char *var_name, int namelen)
 	return var;
 }
 
-FBaseCVar *GetCVar(AActor *activator, const char *cvarname)
-{
-	FBaseCVar *cvar = FindCVar(cvarname, nullptr);
-	// Either the cvar doesn't exist, or it's for a mod that isn't loaded, so return nullptr.
-	if (cvar == nullptr || (cvar->GetFlags() & CVAR_IGNORE))
-	{
-		return nullptr;
-	}
-	else
-	{
-		// For userinfo cvars, redirect to GetUserCVar
-		if (cvar->GetFlags() & CVAR_USERINFO)
-		{
-			if (activator == nullptr || activator->player == nullptr)
-			{
-				return nullptr;
-			}
-			return GetUserCVar(int(activator->player - players), cvarname);
-		}
-		return cvar;
-	}
-}
-
-FBaseCVar *GetUserCVar(int playernum, const char *cvarname)
-{
-	if ((unsigned)playernum >= MAXPLAYERS || !playeringame[playernum])
-	{
-		return nullptr;
-	}
-	FBaseCVar **cvar_p = players[playernum].userinfo.CheckKey(FName(cvarname, true));
-	FBaseCVar *cvar;
-	if (cvar_p == nullptr || (cvar = *cvar_p) == nullptr || (cvar->GetFlags() & CVAR_IGNORE))
-	{
-		return nullptr;
-	}
-	return cvar;
-}
-
 //===========================================================================
 //
 // C_CreateCVar
@@ -1728,7 +1671,7 @@ void FBaseCVar::ListVars (const char *filter, bool plain)
 				if (!(flags & CVAR_UNSETTABLE))
 				{
 					++count;
-					Printf ("%s : %s\n", var->GetName(), var->GetHumanString());
+					Printf ("%s : %s\n", var->GetName(), var->GetGenericRep(CVAR_String).String);
 				}
 			}
 			else
@@ -1745,7 +1688,7 @@ void FBaseCVar::ListVars (const char *filter, bool plain)
 					flags & CVAR_MOD ? 'M' : ' ',
 					flags & CVAR_IGNORE ? 'X' : ' ',
 					var->GetName(),
-					var->GetHumanString());
+					var->GetGenericRep(CVAR_String).String);
 			}
 		}
 		var = var->m_Next;

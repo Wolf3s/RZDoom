@@ -69,7 +69,6 @@ const char *SpecialMapthingNames[] = {
 	"$CopyCeilingPlane",
 	"$VertexFloorZ",
 	"$VertexCeilingZ",
-	"$EDThing",
 
 };
 //==========================================================================
@@ -100,7 +99,7 @@ static IdMap DoomEdFromMapinfo;
 
 FDoomEdMap DoomEdMap;
 
-static int sortnums (const void *a, const void *b)
+static int STACK_ARGS sortnums (const void *a, const void *b)
 {
 	return (*(const FDoomEdMap::Pair**)a)->Key - (*(const FDoomEdMap::Pair**)b)->Key;
 }
@@ -246,7 +245,7 @@ void FMapInfoParser::ParseDoomEdNums()
 	}
 	if (error > 0)
 	{
-		sc.ScriptError("%d errors encountered in DoomEdNum definition", error);
+		sc.ScriptError("%d errors encountered in DoomEdNum definition");
 	}
 }
 
@@ -259,10 +258,10 @@ void InitActorNumsFromMapinfo()
 
 	while (it.NextPair(pair))
 	{
-		PClassActor *cls = NULL;
+		const PClass *cls = NULL;
 		if (pair->Value.classname != NAME_None)
 		{
-			cls = PClass::FindActor(pair->Value.classname);
+			cls = PClass::FindClass(pair->Value.classname);
 			if (cls == NULL)
 			{
 				Printf(TEXTCOLOR_RED "Script error, \"%s\" line %d:\nUnknown actor class %s\n",

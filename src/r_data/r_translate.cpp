@@ -46,10 +46,8 @@
 #include "i_system.h"
 #include "w_wad.h"
 #include "r_data/colormaps.h"
-#include "serializer.h"
+#include "farchive.h"
 #include "d_player.h"
-#include "r_data/sprites.h"
-#include "r_state.h"
 
 #include "gi.h"
 #include "stats.h"
@@ -194,62 +192,27 @@ bool FRemapTable::operator==(const FRemapTable &o)
 //
 //----------------------------------------------------------------------------
 
-void FRemapTable::Serialize(FSerializer &arc)
+void FRemapTable::Serialize(FArchive &arc)
 {
 	int n = NumEntries;
 
-	arc("numentries", NumEntries);
-	if (arc.isReading())
+	arc << NumEntries;
+	if (arc.IsStoring())
+	{
+		arc.Write (Remap, NumEntries);
+	}
+	else
 	{
 		if (n != NumEntries)
 		{
 			Free();
 			Alloc(NumEntries);
 		}
+		arc.Read (Remap, NumEntries);
 	}
-	arc.Array("remap", Remap, NumEntries);
-	arc.Array("palette", Palette, NumEntries);
-}
-
-void FRemapTable::StaticSerializeTranslations(FSerializer &arc)
-{
-	if (arc.BeginArray("translations"))
+	for (int j = 0; j < NumEntries; ++j)
 	{
-		// Does this level have custom translations?
-		FRemapTable *trans;
-		int w;
-		if (arc.isWriting())
-		{
-			for (unsigned int i = 0; i < translationtables[TRANSLATION_LevelScripted].Size(); ++i)
-			{
-				trans = translationtables[TRANSLATION_LevelScripted][i];
-				if (trans != NULL && !trans->IsIdentity())
-				{
-					if (arc.BeginObject(nullptr))
-					{
-						arc("index", i);
-						trans->Serialize(arc);
-						arc.EndObject();
-					}
-				}
-			}
-		}
-		else
-		{
-			while (arc.BeginObject(nullptr))
-			{
-				arc("index", w);
-				trans = translationtables[TRANSLATION_LevelScripted].GetVal(w);
-				if (trans == NULL)
-				{
-					trans = new FRemapTable;
-					translationtables[TRANSLATION_LevelScripted].SetVal(w, trans);
-				}
-				trans->Serialize(arc);
-				arc.EndObject();
-			}
-		}
-		arc.EndArray();
+		arc << Palette[j];
 	}
 }
 
@@ -347,7 +310,7 @@ FNativePalette *FRemapTable::GetNative()
 
 void FRemapTable::AddIndexRange(int start, int end, int pal1, int pal2)
 {
-	double palcol, palstep;
+	fixed_t palcol, palstep;
 
 	if (start > end)
 	{
@@ -363,11 +326,11 @@ void FRemapTable::AddIndexRange(int start, int end, int pal1, int pal2)
 		Palette[start].a = start == 0 ? 0 : 255;
 		return;
 	}
-	palcol = pal1;
-	palstep = (pal2 - palcol) / (end - start);
+	palcol = pal1 << FRACBITS;
+	palstep = ((pal2 << FRACBITS) - palcol) / (end - start);
 	for (int i = start; i <= end; palcol += palstep, ++i)
 	{
-		int j = GPalette.Remap[i], k = GPalette.Remap[int(palcol)];
+		int j = GPalette.Remap[i], k = GPalette.Remap[palcol >> FRACBITS];
 		Remap[j] = k;
 		Palette[j] = GPalette.BaseColors[k];
 		Palette[j].a = j == 0 ? 0 : 255;
@@ -382,14 +345,14 @@ void FRemapTable::AddIndexRange(int start, int end, int pal1, int pal2)
 
 void FRemapTable::AddColorRange(int start, int end, int _r1,int _g1, int _b1, int _r2, int _g2, int _b2)
 {
-	double r1 = _r1;
-	double g1 = _g1;
-	double b1 = _b1;
-	double r2 = _r2;
-	double g2 = _g2;
-	double b2 = _b2;
-	double r, g, b;
-	double rs, gs, bs;
+	fixed_t r1 = _r1 << FRACBITS;
+	fixed_t g1 = _g1 << FRACBITS;
+	fixed_t b1 = _b1 << FRACBITS;
+	fixed_t r2 = _r2 << FRACBITS;
+	fixed_t g2 = _g2 << FRACBITS;
+	fixed_t b2 = _b2 << FRACBITS;
+	fixed_t r, g, b;
+	fixed_t rs, gs, bs;
 
 	if (start > end)
 	{
@@ -413,8 +376,9 @@ void FRemapTable::AddColorRange(int start, int end, int _r1,int _g1, int _b1, in
 	if (start == end)
 	{
 		start = GPalette.Remap[start];
-		Palette[start] = PalEntry(start == 0 ? 0 : 255, int(r), int(g), int(b));
-		Remap[start] = ColorMatcher.Pick(Palette[start]);
+		Remap[start] = ColorMatcher.Pick(r >> FRACBITS, g >> FRACBITS, b >> FRACBITS);
+		Palette[start] = PalEntry(r >> FRACBITS, g >> FRACBITS, b >> FRACBITS);
+		Palette[start].a = start == 0 ? 0 : 255;
 	}
 	else
 	{
@@ -424,8 +388,8 @@ void FRemapTable::AddColorRange(int start, int end, int _r1,int _g1, int _b1, in
 		for (int i = start; i <= end; ++i)
 		{
 			int j = GPalette.Remap[i];
-			Palette[j] = PalEntry(j == 0 ? 0 : 255, int(r), int(g), int(b));
-			Remap[j] = ColorMatcher.Pick(Palette[j]);
+			Remap[j] = ColorMatcher.Pick(r >> FRACBITS, g >> FRACBITS, b >> FRACBITS);
+			Palette[j] = PalEntry(j == 0 ? 0 : 255, r >> FRACBITS, g >> FRACBITS, b >> FRACBITS);
 			r += rs;
 			g += gs;
 			b += bs;
@@ -609,26 +573,26 @@ void FRemapTable::AddToTranslation(const char *range)
 //
 //----------------------------------------------------------------------------
 
-int FRemapTable::StoreTranslation(int slot)
+int FRemapTable::StoreTranslation()
 {
 	unsigned int i;
 
-	for (i = 0; i < translationtables[slot].Size(); i++)
+	for (i = 0; i < translationtables[TRANSLATION_Decorate].Size(); i++)
 	{
-		if (*this == *translationtables[slot][i])
+		if (*this == *translationtables[TRANSLATION_Decorate][i])
 		{
 			// A duplicate of this translation already exists
-			return TRANSLATION(slot, i);
+			return TRANSLATION(TRANSLATION_Decorate, i);
 		}
 	}
-	if (translationtables[slot].Size() >= MAX_DECORATE_TRANSLATIONS)
+	if (translationtables[TRANSLATION_Decorate].Size() >= MAX_DECORATE_TRANSLATIONS)
 	{
 		I_Error("Too many DECORATE translations");
 	}
 	FRemapTable *newtrans = new FRemapTable;
 	*newtrans = *this;
-	i = translationtables[slot].Push(newtrans);
-	return TRANSLATION(slot, i);
+	i = translationtables[TRANSLATION_Decorate].Push(newtrans);
+	return TRANSLATION(TRANSLATION_Decorate, i);
 }
 
 
@@ -1187,112 +1151,4 @@ void R_GetPlayerTranslation (int color, const FPlayerColorSet *colorset, FPlayer
 		&h, &s, &v);
 
 	R_CreatePlayerTranslation (h, s, v, colorset, skin, table, NULL, NULL);
-}
-
-//----------------------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------------------
-static TMap<FName, int> customTranslationMap;
-
-int R_FindCustomTranslation(FName name)
-{
-	switch (name)
-	{
-	case NAME_Ice:
-		// Ice is a special case which will remain in its original slot.
-		return TRANSLATION(TRANSLATION_Standard, 7);
-
-	case NAME_None:
-		return 0;
-
-	case NAME_RainPillar1:
-	case NAME_RainPillar2:
-	case NAME_RainPillar3:
-	case NAME_RainPillar4:
-	case NAME_RainPillar5:
-	case NAME_RainPillar6:
-	case NAME_RainPillar7:
-	case NAME_RainPillar8:
-		return TRANSLATION(TRANSLATION_RainPillar, name.GetIndex() - NAME_RainPillar1);
-
-	case NAME_Player1:
-	case NAME_Player2:
-	case NAME_Player3:
-	case NAME_Player4:
-	case NAME_Player5:
-	case NAME_Player6:
-	case NAME_Player7:
-	case NAME_Player8:
-		return TRANSLATION(TRANSLATION_Players, name.GetIndex() - NAME_Player1);
-
-	}
-	int *t = customTranslationMap.CheckKey(FName(name, true));
-	return (t != nullptr)? *t : -1;
-}
-
-//----------------------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------------------
-
-void R_ParseTrnslate()
-{
-	customTranslationMap.Clear();
-	translationtables[TRANSLATION_Custom].Clear();
-
-	int lump;
-	int lastlump = 0;
-	while (-1 != (lump = Wads.FindLump("TRNSLATE", &lastlump)))
-	{
-		FScanner sc(lump);
-		while (sc.GetToken())
-		{
-			sc.TokenMustBe(TK_Identifier);
-
-			FName newtrans = sc.String;
-			FRemapTable *base = nullptr;
-			if (sc.CheckToken(':'))
-			{
-				sc.MustGetAnyToken();
-				if (sc.TokenType == TK_IntConst)
-				{
-					int max = 6;
-					if (sc.Number < 0 || sc.Number > max)
-					{
-						sc.ScriptError("Translation must be in the range [0,%d]", max);
-					}
-					base = translationtables[TRANSLATION_Standard][sc.Number];
-				}
-				else if (sc.TokenType == TK_Identifier)
-				{
-					int tnum = R_FindCustomTranslation(sc.String);
-					if (tnum == -1)
-					{
-						sc.ScriptError("Base translation '%s' not found in '%s'", sc.String, newtrans.GetChars());
-					}
-					base = translationtables[GetTranslationType(tnum)][GetTranslationIndex(tnum)];
-				}
-				else
-				{
-					// error out.
-					sc.TokenMustBe(TK_Identifier);
-				}
-			}
-			sc.MustGetToken('=');
-			FRemapTable NewTranslation;
-			if (base != nullptr)  NewTranslation = *base;
-			else NewTranslation.MakeIdentity();
-			do
-			{
-				sc.MustGetToken(TK_StringConst);
-				NewTranslation.AddToTranslation(sc.String);
-			} while (sc.CheckToken(','));
-
-			int trans = NewTranslation.StoreTranslation(TRANSLATION_Custom);
-			customTranslationMap[newtrans] = trans;
-		}
-	}
 }

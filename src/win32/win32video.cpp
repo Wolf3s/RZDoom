@@ -74,13 +74,11 @@
 
 #include "win32iface.h"
 
-#include "optwin32.h"
-
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
 
-IMPLEMENT_CLASS(BaseWinFB, true, false)
+IMPLEMENT_ABSTRACT_CLASS(BaseWinFB)
 
 typedef IDirect3D9 *(WINAPI *DIRECT3DCREATE9FUNC)(UINT SDKVersion);
 typedef HRESULT (WINAPI *DIRECTDRAWCREATEFUNC)(GUID FAR *lpGUID, LPDIRECTDRAW FAR *lplpDD, IUnknown FAR *pUnkOuter);
@@ -389,8 +387,6 @@ void Win32Video::BlankForGDI ()
 
 void Win32Video::DumpAdapters()
 {
-	using OptWin32::GetMonitorInfoA;
-
 	if (D3D == NULL)
 	{
 		Printf("Multi-monitor support requires Direct3D.\n");
@@ -419,8 +415,9 @@ void Win32Video::DumpAdapters()
 		MONITORINFOEX mi;
 		mi.cbSize = sizeof(mi);
 
-		assert(GetMonitorInfo); // Missing in NT4, but so is D3D
-		if (GetMonitorInfo(hm, &mi))
+		TOptWin32Proc<BOOL(WINAPI*)(HMONITOR, LPMONITORINFO)> GetMonitorInfo("user32.dll", "GetMonitorInfoW");
+		assert(GetMonitorInfo != NULL); // Missing in NT4, but so is D3D
+		if (GetMonitorInfo.Call(hm, &mi))
 		{
 			mysnprintf(moreinfo, countof(moreinfo), " [%ldx%ld @ (%ld,%ld)]%s",
 				mi.rcMonitor.right - mi.rcMonitor.left,
@@ -796,7 +793,7 @@ void I_SetFPSLimit(int limit)
 			CloseHandle(FPSLimitEvent);
 			FPSLimitEvent = NULL;
 		}
-		DPrintf(DMSG_NOTIFY, "FPS timer disabled\n");
+		DPrintf("FPS timer disabled\n");
 	}
 	else
 	{
@@ -805,7 +802,7 @@ void I_SetFPSLimit(int limit)
 			FPSLimitEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
 			if (FPSLimitEvent == NULL)
 			{ // Could not create event, so cannot use timer.
-				Printf(DMSG_WARNING, "Failed to create FPS limitter event\n");
+				Printf("Failed to create FPS limitter event\n");
 				return;
 			}
 		}
@@ -820,7 +817,7 @@ void I_SetFPSLimit(int limit)
 			Printf("Failed to create FPS limitter timer\n");
 			return;
 		}
-		DPrintf(DMSG_NOTIFY, "FPS timer set to %u ms\n", period);
+		DPrintf("FPS timer set to %u ms\n", period);
 	}
 }
 

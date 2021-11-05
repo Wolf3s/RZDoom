@@ -46,7 +46,7 @@ public:
 		return *this;
 	}
 
-	FileReaderBase &operator>> (int &v)
+	FileReaderBase &operator>> (fixed_t &v)
 	{
 		Read (&v, 4);
 		v = LittleLong(v);
@@ -171,7 +171,7 @@ public:
 		return *this;
 	}
 
-	FileReaderZ &operator>> (int &v)
+	FileReaderZ &operator>> (fixed_t &v)
 	{
 		Read (&v, 4);
 		v = LittleLong(v);
@@ -233,7 +233,7 @@ public:
 		return *this;
 	}
 
-	FileReaderBZ2 &operator>> (int &v)
+	FileReaderBZ2 &operator>> (fixed_t &v)
 	{
 		Read (&v, 4);
 		v = LittleLong(v);
@@ -297,7 +297,7 @@ public:
 		return *this;
 	}
 
-	FileReaderLZMA &operator>> (int &v)
+	FileReaderLZMA &operator>> (fixed_t &v)
 	{
 		Read (&v, 4);
 		v = LittleLong(v);
@@ -354,48 +354,6 @@ public:
 protected:
     TArray<BYTE> buf;
 };
-
-
-class FileWriter
-{
-protected:
-	bool OpenDirect(const char *filename);
-
-	FileWriter()
-	{
-		File = NULL;
-	}
-public:
-	virtual ~FileWriter()
-	{
-		if (File != NULL) fclose(File);
-	}
-
-	static FileWriter *Open(const char *filename);
-
-	virtual size_t Write(const void *buffer, size_t len);
-	size_t Printf(const char *fmt, ...) GCCPRINTF(2,3);
-
-protected:
-
-	FILE *File;
-
-protected:
-	bool CloseOnDestruct;
-};
-
-class BufferWriter : public FileWriter
-{
-protected:
-	TArray<unsigned char> mBuffer;
-public:
-
-	BufferWriter() {}
-	virtual size_t Write(const void *buffer, size_t len) override;
-	TArray<unsigned char> *GetBuffer() { return &mBuffer; }
-};
-
-
 
 
 #endif

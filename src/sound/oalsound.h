@@ -1,20 +1,13 @@
 #ifndef OALSOUND_H
 #define OALSOUND_H
 
-#include <thread>
-#include <mutex>
-#include <atomic>
-#include <condition_variable>
-
 #include "i_sound.h"
 #include "s_sound.h"
 #include "menu/menu.h"
 
 #ifndef NO_OPENAL
 
-#ifdef DYN_OPENAL
 #define AL_NO_PROTOTYPES
-#endif // DYN_OPENAL
 
 #include "al.h"
 #include "alc.h"
@@ -65,11 +58,6 @@
 #define AL_FORMAT_71CHN32                        0x1212
 #endif
 
-#ifndef AL_EXT_SOURCE_RADIUS
-#define AL_EXT_SOURCE_RADIUS 1
-#define AL_SOURCE_RADIUS                         0x1031
-#endif
-
 #include "efx.h"
 
 
@@ -83,8 +71,8 @@ public:
 
 	virtual void SetSfxVolume(float volume);
 	virtual void SetMusicVolume(float volume);
-	virtual std::pair<SoundHandle,bool> LoadSound(BYTE *sfxdata, int length, bool monoize);
-	virtual std::pair<SoundHandle,bool> LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend = -1, bool monoize = false);
+	virtual SoundHandle LoadSound(BYTE *sfxdata, int length);
+	virtual SoundHandle LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend = -1);
 	virtual void UnloadSound(SoundHandle sfx);
 	virtual unsigned int GetMSLength(SoundHandle sfx);
 	virtual unsigned int GetSampleLength(SoundHandle sfx);
@@ -121,6 +109,7 @@ public:
 
 	virtual void UpdateListener(SoundListener *);
 	virtual void UpdateSounds();
+	virtual void UpdateMusic();
 
 	virtual void MarkStartTime(FISoundChannel*);
 	virtual float GetAudibility(FISoundChannel*);
@@ -135,11 +124,9 @@ private:
     struct {
         bool EXT_EFX;
         bool EXT_disconnect;
-        bool SOFT_pause_device;
     } ALC;
     struct {
         bool EXT_source_distance_model;
-        bool EXT_SOURCE_RADIUS;
         bool SOFT_deferred_updates;
         bool SOFT_loop_points;
     } AL;
@@ -187,21 +174,9 @@ private:
     ALvoid (AL_APIENTRY*alDeferUpdatesSOFT)(void);
     ALvoid (AL_APIENTRY*alProcessUpdatesSOFT)(void);
 
-    void (ALC_APIENTRY*alcDevicePauseSOFT)(ALCdevice *device);
-    void (ALC_APIENTRY*alcDeviceResumeSOFT)(ALCdevice *device);
-
-    void BackgroundProc();
-    void AddStream(OpenALSoundStream *stream);
-    void RemoveStream(OpenALSoundStream *stream);
-
 	void LoadReverb(const ReverbContainer *env);
 	void PurgeStoppedSources();
 	static FSoundChan *FindLowestChannel();
-
-    std::thread StreamThread;
-    std::mutex StreamLock;
-    std::condition_variable StreamWake;
-    std::atomic<bool> QuitThread;
 
 	ALCdevice *Device;
 	ALCcontext *Context;

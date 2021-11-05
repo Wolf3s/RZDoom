@@ -25,27 +25,21 @@
 
 #include "tarray.h"
 #include <stddef.h>
-#include "r_defs.h"
-
-EXTERN_CVAR (Bool, r_drawflat)		// [RH] Don't texture segs?
-
-namespace swrenderer
-{
 
 // The 3072 below is just an arbitrary value picked to avoid
 // drawing lines the player is too close to that would overflow
 // the texture calculations.
-#define TOO_CLOSE_Z (3072.0 / (1<<12))
+#define TOO_CLOSE_Z 3072
 
 struct FWallCoords
 {
-	FVector2	tleft;		// coords at left of wall in view space				rx1,ry1
-	FVector2	tright;		// coords at right of wall in view space			rx2,ry2
+	fixed_t		tx1, tx2;	// x coords at left, right of wall in view space	rx1,rx2
+	fixed_t		ty1, ty2;	// y coords at left, right of wall in view space	ry1,ry2
 
-	float		sz1, sz2;	// depth at left, right of wall in screen space		yb1,yb2
 	short		sx1, sx2;	// x coords at left, right of wall in screen space	xb1,xb2
+	fixed_t		sz1, sz2;	// depth at left, right of wall in screen space		yb1,yb2
 
-	bool Init(const DVector2 &pt1, const DVector2 &pt2, double too_close);
+	bool Init(int x1, int y1, int x2, int y2, int too_close);
 };
 
 struct FWallTmapVals
@@ -54,7 +48,7 @@ struct FWallTmapVals
 	float		InvZorg, InvZstep;
 
 	void InitFromWallCoords(const FWallCoords *wallc);
-	void InitFromLine(const DVector2 &left, const DVector2 &right);
+	void InitFromLine(int x1, int y1, int x2, int y2);
 };
 
 extern FWallCoords WallC;
@@ -70,14 +64,14 @@ enum
 struct drawseg_t
 {
 	seg_t*		curline;
-	float		light, lightstep;
-	float		iscale, iscalestep;
+	fixed_t		light, lightstep;
+	fixed_t		iscale, iscalestep;
 	short 		x1, x2;			// Same as sx1 and sx2, but clipped to the drawseg
 	short		sx1, sx2;		// left, right of parent seg on screen
-	float		sz1, sz2;		// z for left, right of parent seg on screen
-	float		siz1, siz2;		// 1/z for left, right of parent seg on screen
-	float		cx, cy, cdx, cdy;
-	float		yscale;
+	fixed_t		sz1, sz2;		// z for left, right of parent seg on screen
+	fixed_t		siz1, siz2;		// 1/z for left, right of parent seg on screen
+	fixed_t		cx, cy, cdx, cdy;
+	fixed_t		yrepeat;
 	BYTE 		silhouette;		// 0=none, 1=bottom, 2=top, 3=both
 	BYTE		bFogBoundary;
 	BYTE		bFakeBoundary;		// for fake walls
@@ -87,12 +81,11 @@ struct drawseg_t
 	ptrdiff_t	sprtopclip; 		// type short
 	ptrdiff_t	sprbottomclip;		// type short
 	ptrdiff_t	maskedtexturecol;	// type short
-	ptrdiff_t	swall;				// type float
+	ptrdiff_t	swall;				// type fixed_t
 	int fake;	// ident fake drawseg, don't draw and clip sprites
 // backups
 	ptrdiff_t	bkup;	// sprtopclip backup, for mid and fake textures
 	FWallTmapVals tmapvals;
-	int			CurrentPortalUniq; // [ZZ] to identify the portal that this drawseg is in. used for sprite clipping.
 };
 
 
@@ -111,8 +104,13 @@ extern size_t			FirstInterestingDrawseg;
 
 extern int			WindowLeft, WindowRight;
 extern WORD			MirrorFlags;
+extern seg_t*		ActiveWallMirror;
+
+extern TArray<size_t>	WallMirrors;
 
 typedef void (*drawfunc_t) (int start, int stop);
+
+EXTERN_CVAR (Bool, r_drawflat)		// [RH] Don't texture segs?
 
 // BSP?
 void R_ClearClipSegs (short left, short right);
@@ -122,6 +120,5 @@ void R_RenderBSPNode (void *node);
 // killough 4/13/98: fake floors/ceilings for deep water / fake ceilings:
 sector_t *R_FakeFlat(sector_t *, sector_t *, int *, int *, bool);
 
-}
 
 #endif

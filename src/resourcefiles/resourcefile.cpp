@@ -40,7 +40,6 @@
 #include "doomerrors.h"
 #include "gi.h"
 #include "doomstat.h"
-#include "w_zip.h"
 
 
 //==========================================================================
@@ -95,8 +94,7 @@ void FResourceLump::LumpNameSetup(FString iname)
 {
 	long slash = iname.LastIndexOf('/');
 	FString base = (slash >= 0) ? iname.Mid(slash + 1) : iname;
-	auto dot = base.LastIndexOf('.');
-	if (dot >= 0) base.Truncate(dot);
+	base.Truncate(base.LastIndexOf('.'));
 	uppercopy(Name, base);
 	Name[8] = 0;
 	FullName = iname;
@@ -195,23 +193,6 @@ void FResourceLump::CheckEmbedded()
 
 //==========================================================================
 //
-// this is just for completeness. For non-Zips only an uncompressed lump can
-// be returned.
-//
-//==========================================================================
-
-FCompressedBuffer FResourceLump::GetRawData()
-{
-	FCompressedBuffer cbuf = { (unsigned)LumpSize, (unsigned)LumpSize, METHOD_STORED, 0, 0, new char[LumpSize] };
-	memcpy(cbuf.mBuffer, CacheLump(), LumpSize);
-	cbuf.mCRC32 = crc32(0, (BYTE*)cbuf.mBuffer, LumpSize);
-	ReleaseCache();
-	return cbuf;
-}
-
-
-//==========================================================================
-//
 // Returns the owner's FileReader if it can be used to access this lump
 //
 //==========================================================================
@@ -289,7 +270,7 @@ FResourceFile *CheckDir(const char *filename, FileReader *file, bool quiet);
 
 static CheckFunc funcs[] = { CheckWad, CheckZip, Check7Z, CheckPak, CheckGRP, CheckRFF, CheckLump };
 
-FResourceFile *FResourceFile::OpenResourceFile(const char *filename, FileReader *file, bool quiet, bool containeronly)
+FResourceFile *FResourceFile::OpenResourceFile(const char *filename, FileReader *file, bool quiet)
 {
 	if (file == NULL)
 	{
@@ -302,7 +283,7 @@ FResourceFile *FResourceFile::OpenResourceFile(const char *filename, FileReader 
 			return NULL;
 		}
 	}
-	for(size_t i = 0; i < countof(funcs) - containeronly; i++)
+	for(size_t i = 0; i < countof(funcs); i++)
 	{
 		FResourceFile *resfile = funcs[i](filename, file, quiet);
 		if (resfile != NULL) return resfile;
@@ -335,7 +316,7 @@ FResourceFile::~FResourceFile()
 	delete Reader;
 }
 
-int lumpcmp(const void * a, const void * b)
+int STACK_ARGS lumpcmp(const void * a, const void * b)
 {
 	FResourceLump * rec1 = (FResourceLump *)a;
 	FResourceLump * rec2 = (FResourceLump *)b;
@@ -579,24 +560,6 @@ void FResourceFile::FindStrifeTeaserVoices ()
 {
 }
 
-//==========================================================================
-//
-// Finds a lump by a given name. Used for savegames
-//
-//==========================================================================
-
-FResourceLump *FResourceFile::FindLump(const char *name)
-{
-	for (unsigned i = 0; i < NumLumps; i++)
-	{
-		FResourceLump *lump = GetLump(i);
-		if (!stricmp(name, lump->FullName))
-		{
-			return lump;
-		}
-	}
-	return nullptr;
-}
 
 //==========================================================================
 //

@@ -59,8 +59,6 @@ Everything that is changed is marked (maybe commented) with "Added by MC"
 #include "i_system.h"
 #include "d_net.h"
 #include "d_netinf.h"
-#include "d_player.h"
-#include "doomerrors.h"
 
 static FRandom pr_botspawn ("BotSpawn");
 
@@ -118,24 +116,23 @@ void FCajunMaster::Main ()
 	}
 
 	//Check if player should go observer. Or un observe
-	FLinkContext ctx;
 	if (bot_observer && !observer && !netgame)
 	{
 		Printf ("%s is now observer\n", players[consoleplayer].userinfo.GetName());
 		observer = true;
-		players[consoleplayer].mo->UnlinkFromWorld (&ctx);
+		players[consoleplayer].mo->UnlinkFromWorld ();
 		players[consoleplayer].mo->flags = MF_DROPOFF|MF_NOBLOCKMAP|MF_NOCLIP|MF_NOTDMATCH|MF_NOGRAVITY|MF_FRIENDLY;
 		players[consoleplayer].mo->flags2 |= MF2_FLY;
-		players[consoleplayer].mo->LinkToWorld (&ctx);
+		players[consoleplayer].mo->LinkToWorld ();
 	}
 	else if (!bot_observer && observer && !netgame) //Go back
 	{
 		Printf ("%s returned to the fray\n", players[consoleplayer].userinfo.GetName());
 		observer = false;
-		players[consoleplayer].mo->UnlinkFromWorld (&ctx);
+		players[consoleplayer].mo->UnlinkFromWorld ();
 		players[consoleplayer].mo->flags = MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_PICKUP|MF_NOTDMATCH|MF_FRIENDLY;
 		players[consoleplayer].mo->flags2 &= ~MF2_FLY;
-		players[consoleplayer].mo->LinkToWorld (&ctx);
+		players[consoleplayer].mo->LinkToWorld ();
 	}
 }
 
@@ -495,18 +492,10 @@ bool FCajunMaster::LoadBots ()
 	tmp = M_GetCajunPath(BOTFILENAME);
 	if (tmp.IsEmpty())
 	{
-		DPrintf (DMSG_ERROR, "No " BOTFILENAME ", so no bots\n");
+		DPrintf ("No " BOTFILENAME ", so no bots\n");
 		return false;
 	}
-	try
-	{
-		sc.OpenFile(tmp);
-	}
-	catch (CRecoverableError &err)
-	{
-		Printf("%s. So no bots\n", err.GetMessage());
-		return false;
-	}
+	sc.OpenFile(tmp);
 
 	while (sc.GetString ())
 	{

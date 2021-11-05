@@ -38,16 +38,16 @@
 #include "doomdef.h"
 #include "sc_man.h"
 #include "s_sound.h"
-#include "p_acs.h"
 #include "textures/textures.h"
-#include "resourcefiles/file_zip.h"
 
 struct level_info_t;
 struct cluster_info_t;
 class FScanner;
 
 #if defined(_MSC_VER)
-#pragma section(".yreg$u",read)
+#pragma data_seg(".yreg$u")
+#pragma data_seg()
+
 #define MSVC_YSEG __declspec(allocate(".yreg$u"))
 #define GCC_YSEG
 #else
@@ -110,7 +110,6 @@ struct FMapInfoParser
 	void ParseAMColors(bool);
 	FName CheckEndSequence();
 	FName ParseEndGame();
-	void ParseDamageDefinition();
 };
 
 #define DEFINE_MAP_OPTION(name, old) \
@@ -128,7 +127,7 @@ struct FMapOptInfo
 	bool old;
 };
 
-enum ELevelFlags : unsigned int
+enum ELevelFlags
 {
 	LEVEL_NOINTERMISSION		= 0x00000001,
 	LEVEL_NOINVENTORYBAR		= 0x00000002,	// This effects Doom only, since it's the only one without a standard inventory bar.
@@ -226,6 +225,8 @@ enum ELevelFlags : unsigned int
 };
 
 
+struct acsdefered_t;
+
 struct FSpecialAction
 {
 	FName Type;					// this is initialized before the actors...
@@ -233,6 +234,7 @@ struct FSpecialAction
 	int Args[5];				// must allow 16 bit tags for 666 & 667!
 };
 
+class FCompressedMemFile;
 class DScroller;
 
 class FScanner;
@@ -260,7 +262,7 @@ struct FOptionalMapinfoDataPtr
 typedef TMap<FName, FOptionalMapinfoDataPtr> FOptData;
 typedef TMap<int, FName> FMusicMap;
 
-enum EMapType : int
+enum EMapType
 {
 	MAPTYPE_UNKNOWN = 0,
 	MAPTYPE_DOOM,
@@ -295,16 +297,17 @@ struct level_info_t
 	FString		LevelName;
 	SBYTE		WallVertLight, WallHorizLight;
 	int			musicorder;
-	FCompressedBuffer	Snapshot;
-	TArray<acsdefered_t> deferred;
+	FCompressedMemFile	*snapshot;
+	DWORD		snapshotVer;
+	struct acsdefered_t *defered;
 	float		skyspeed1;
 	float		skyspeed2;
 	DWORD		fadeto;
 	DWORD		outsidefog;
 	int			cdtrack;
 	unsigned int cdid;
-	double		gravity;
-	double		aircontrol;
+	float		gravity;
+	float		aircontrol;
 	int			WarpTrans;
 	int			airsupply;
 	DWORD		compatflags, compatflags2;
@@ -328,7 +331,7 @@ struct level_info_t
 	FString		SoundInfo;
 	FString		SndSeq;
 
-	double		teamdamage;
+	float		teamdamage;
 
 	FOptData	optdata;
 	FMusicMap	MusicMap;
@@ -337,7 +340,6 @@ struct level_info_t
 
 	TArray<FSoundID> PrecacheSounds;
 	TArray<FString> PrecacheTextures;
-	TArray<FName> PrecacheClasses;
 
 	level_info_t() 
 	{ 
@@ -345,16 +347,14 @@ struct level_info_t
 	}
 	~level_info_t()
 	{
-		Snapshot.Clean();
+		ClearSnapshot(); 
 		ClearDefered();
 	}
 	void Reset();
 	bool isValid();
 	FString LookupLevelName ();
-	void ClearDefered()
-	{
-		deferred.Clear();
-	}
+	void ClearSnapshot();
+	void ClearDefered();
 	level_info_t *CheckLevelRedirect ();
 
 	template<class T>
@@ -376,12 +376,17 @@ struct level_info_t
 	}
 };
 
+// [RH] These get zeroed every tic and are updated by thinkers.
+struct FSectorScrollValues
+{
+	fixed_t ScrollX, ScrollY;
+};
+
 struct FLevelLocals
 {
 	void Tick ();
-	void AddScroller (int secnum);
+	void AddScroller (DScroller *, int secnum);
 
-	BYTE		md5[16];			// for savegame validation. If the MD5 does not match the savegame won't be loaded.
 	int			time;			// time in the hub
 	int			maptime;		// time in the map
 	int			totaltime;		// time in the game
@@ -426,20 +431,22 @@ struct FLevelLocals
 	int			total_monsters;
 	int			killed_monsters;
 
-	double		gravity;
-	double		aircontrol;
-	double		airfriction;
+	float		gravity;
+	fixed_t		aircontrol;
+	fixed_t		airfriction;
 	int			airsupply;
 	int			DefaultEnvironment;		// Default sound environment.
 
-	TArray<DVector2>	Scrolls;		// NULL if no DScrollers in this level
+	TObjPtr<class ASkyViewpoint> DefaultSkybox;
+
+	FSectorScrollValues	*Scrolls;		// NULL if no DScrollers in this level
 
 	SBYTE		WallVertLight;			// Light diffs for vert/horiz walls
 	SBYTE		WallHorizLight;
 
 	bool		FromSnapshot;			// The current map was restored from a snapshot
 
-	double		teamdamage;
+	float		teamdamage;
 
 	bool		IsJumpingAllowed() const;
 	bool		IsCrouchingAllowed() const;
@@ -533,41 +540,35 @@ void G_ClearSnapshots (void);
 void P_RemoveDefereds ();
 void G_SnapshotLevel (void);
 void G_UnSnapshotLevel (bool keepPlayers);
-void G_ReadSnapshots (FResourceFile *);
-void G_WriteSnapshots (TArray<FString> &, TArray<FCompressedBuffer> &);
-void G_WriteVisited(FSerializer &arc);
-void G_ReadVisited(FSerializer &arc);
+struct PNGHandle;
+void G_ReadSnapshots (PNGHandle *png);
+void G_WriteSnapshots (FILE *file);
 void G_ClearHubInfo();
 
 enum ESkillProperty
 {
+	SKILLP_AmmoFactor,
+	SKILLP_DropAmmoFactor,
+	SKILLP_DamageFactor,
 	SKILLP_FastMonsters,
 	SKILLP_Respawn,
 	SKILLP_RespawnLimit,
+	SKILLP_Aggressiveness,
 	SKILLP_DisableCheats,
 	SKILLP_AutoUseHealth,
 	SKILLP_SpawnFilter,
 	SKILLP_EasyBossBrain,
 	SKILLP_ACSReturn,
+	SKILLP_MonsterHealth,
+	SKILLP_FriendlyHealth,
 	SKILLP_NoPain,
+	SKILLP_ArmorFactor,
+	SKILLP_HealthFactor,
 	SKILLP_EasyKey,
 	SKILLP_SlowMonsters,
 	SKILLP_Infight,
 };
-enum EFSkillProperty	// floating point properties
-{
-	SKILLP_AmmoFactor,
-	SKILLP_DropAmmoFactor,
-	SKILLP_ArmorFactor,
-	SKILLP_HealthFactor,
-	SKILLP_DamageFactor,
-	SKILLP_Aggressiveness,
-	SKILLP_MonsterHealth,
-	SKILLP_FriendlyHealth,
-};
-
 int G_SkillProperty(ESkillProperty prop);
-double G_SkillProperty(EFSkillProperty prop);
 const char * G_SkillName();
 
 typedef TMap<FName, FString> SkillMenuNames;
@@ -577,11 +578,8 @@ typedef TMap<FName, FName> SkillActorReplacement;
 struct FSkillInfo
 {
 	FName Name;
-	double AmmoFactor, DoubleAmmoFactor, DropAmmoFactor;
-	double DamageFactor;
-	double ArmorFactor;
-	double HealthFactor;
-
+	fixed_t AmmoFactor, DoubleAmmoFactor, DropAmmoFactor;
+	fixed_t DamageFactor;
 	bool FastMonsters;
 	bool SlowMonsters;
 	bool DisableCheats;
@@ -591,7 +589,7 @@ struct FSkillInfo
 	bool EasyKey;
 	int RespawnCounter;
 	int RespawnLimit;
-	double Aggressiveness;
+	fixed_t Aggressiveness;
 	int SpawnFilter;
 	int ACSReturn;
 	FString MenuName;
@@ -603,10 +601,12 @@ struct FSkillInfo
 	FString TextColor;
 	SkillActorReplacement Replace;
 	SkillActorReplacement Replaced;
-	double MonsterHealth;
-	double FriendlyHealth;
+	fixed_t MonsterHealth;
+	fixed_t FriendlyHealth;
 	bool NoPain;
 	int Infighting;
+	fixed_t ArmorFactor;
+	fixed_t HealthFactor;
 
 	FSkillInfo() {}
 	FSkillInfo(const FSkillInfo &other)

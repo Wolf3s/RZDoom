@@ -51,6 +51,30 @@ typedef enum {
 
 extern os_t OSPlatform;
 
+// Helper template so that we can access newer Win32 functions with a single static
+// variable declaration. If this were C++11 it could be totally transparent.
+template<typename Proto>
+class TOptWin32Proc
+{
+	static Proto GetOptionalWin32Proc(const char* module, const char* function)
+	{
+		HMODULE hmodule = GetModuleHandle(module);
+		if (hmodule == NULL)
+			return NULL;
+
+		return (Proto)GetProcAddress(hmodule, function);
+	}
+
+public:
+	const Proto Call;
+
+	TOptWin32Proc(const char* module, const char* function)
+		: Call(GetOptionalWin32Proc(module, function)) {}
+
+	// Wrapper object can be tested against NULL, but not directly called.
+	operator const void*() const { return Call; }
+};
+
 // Called by DoomMain.
 void I_Init (void);
 
@@ -66,7 +90,7 @@ extern int (*I_WaitForTic) (int);
 // tic will never arrive (unless it's the current one).
 extern void (*I_FreezeTime) (bool frozen);
 
-double I_GetTimeFrac (uint32 *ms);
+fixed_t I_GetTimeFrac (uint32 *ms);
 
 // Return a seed value for the RNG.
 unsigned int I_MakeRNGSeed();
@@ -108,8 +132,8 @@ void I_Quit (void);
 
 void I_Tactile (int on, int off, int total);
 
-void I_Error (const char *error, ...) GCCPRINTF(1,2);
-void I_FatalError (const char *error, ...) GCCPRINTF(1,2);
+void STACK_ARGS I_Error (const char *error, ...) GCCPRINTF(1,2);
+void STACK_ARGS I_FatalError (const char *error, ...) GCCPRINTF(1,2);
 
 void atterm (void (*func)(void));
 void popterm ();
@@ -120,8 +144,6 @@ bool I_SetCursor(FTexture *cursor);
 
 // Repaint the pre-game console
 void I_PaintConsole (void);
-
-void I_DebugPrint (const char *cp);
 
 // Print a console string
 void I_PrintStr (const char *cp);

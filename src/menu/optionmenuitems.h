@@ -103,13 +103,9 @@ public:
 class FOptionMenuItemSafeCommand : public FOptionMenuItemCommand
 {
 	// action is a CCMD
-protected:
-	FString mPrompt;
-
 public:
-	FOptionMenuItemSafeCommand(const char *label, const char *menu, const char *prompt)
+	FOptionMenuItemSafeCommand(const char *label, const char *menu)
 		: FOptionMenuItemCommand(label, menu)
-		, mPrompt(prompt)
 	{
 	}
 
@@ -125,25 +121,7 @@ public:
 
 	bool Activate()
 	{
-		const char *msg = mPrompt.IsNotEmpty() ? mPrompt.GetChars() : "$SAFEMESSAGE";
-		if (*msg == '$')
-		{
-			msg = GStrings(msg + 1);
-		}
-
-		const char *actionLabel = mLabel.GetChars();
-		if (actionLabel != NULL)
-		{
-			if (*actionLabel == '$')
-			{
-				actionLabel = GStrings(actionLabel + 1);
-			}
-		}
-
-		FString FullString;
-		FullString.Format(TEXTCOLOR_WHITE "%s" TEXTCOLOR_NORMAL "\n\n" "%s", actionLabel != NULL ? actionLabel : "", msg);
-
-		if (msg && FullString) M_StartMessage(FullString, 0);
+		M_StartMessage("Do you really want to do this?", 0);
 		return true;
 	}
 };
@@ -251,10 +229,6 @@ public:
 			SetSelection(Selection);
 			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 		}
-		else
-		{
-			return FOptionMenuItem::MenuEvent(mkey, fromcontroller);
-		}
 		return true;
 	}
 
@@ -303,10 +277,10 @@ public:
 			}
 			else
 			{
-				const char *cv = mCVar->GetHumanString();
+				UCVarValue cv = mCVar->GetGenericRep(CVAR_String);
 				for(unsigned i = 0; i < (*opt)->mValues.Size(); i++)
 				{
-					if ((*opt)->mValues[i].TextValue.CompareNoCase(cv) == 0)
+					if ((*opt)->mValues[i].TextValue.CompareNoCase(cv.String) == 0)
 					{
 						Selection = i;
 						break;
@@ -399,7 +373,7 @@ public:
 };
 
 #ifndef NO_IMP
-IMPLEMENT_CLASS(DEnterKey, true, false)
+IMPLEMENT_ABSTRACT_CLASS(DEnterKey)
 #endif
 
 //=============================================================================
@@ -491,13 +465,7 @@ public:
 	FOptionMenuItemStaticText(const char *label, bool header)
 		: FOptionMenuItem(label, NAME_None, true)
 	{
-		mColor = header ? OptionSettings.mFontColorHeader : OptionSettings.mFontColor;
-	}
-
-	FOptionMenuItemStaticText(const char *label, EColorRange cr)
-		: FOptionMenuItem(label, NAME_None, true)
-	{
-		mColor = cr;
+		mColor = header? OptionSettings.mFontColorHeader : OptionSettings.mFontColor;
 	}
 
 	int Draw(FOptionMenuDescriptor *desc, int y, int indent, bool selected)
@@ -526,17 +494,17 @@ class FOptionMenuItemStaticTextSwitchable : public FOptionMenuItem
 	int mCurrent;
 
 public:
-	FOptionMenuItemStaticTextSwitchable(const char *label, const char *label2, FName action, EColorRange cr)
+	FOptionMenuItemStaticTextSwitchable(const char *label, const char *label2, FName action, bool header)
 		: FOptionMenuItem(label, action, true)
 	{
-		mColor = cr;
+		mColor = header? OptionSettings.mFontColorHeader : OptionSettings.mFontColor;
 		mAltText = label2;
 		mCurrent = 0;
 	}
 
 	int Draw(FOptionMenuDescriptor *desc, int y, int indent, bool selected)
 	{
-		const char *txt = mCurrent? mAltText.GetChars() : mLabel.GetChars();
+		const char *txt = mCurrent? (const char*)mAltText : mLabel;
 		if (*txt == '$') txt = GStrings(txt + 1);
 		int w = SmallFont->StringWidth(txt) * CleanXfac_1;
 		int x = (screen->GetWidth() - w) / 2;
@@ -671,7 +639,6 @@ public:
 		{
 			return FOptionMenuItem::MenuEvent(mkey, fromcontroller);
 		}
-		if (fabs(value) < FLT_EPSILON) value = 0;
 		SetSliderValue(clamp(value, mMin, mMax));
 		S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 		return true;
@@ -1010,7 +977,7 @@ public:
 		if ( mCVar == NULL )
 			return "";
 
-		return mCVar->GetHumanString();
+		return mCVar->GetGenericRep( CVAR_String ).String;
 	}
 
 	virtual FString Represent()

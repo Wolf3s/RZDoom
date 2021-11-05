@@ -64,7 +64,7 @@ EXTERN_CVAR (Bool, cl_run)
 FPlayerNameBox::FPlayerNameBox(int x, int y, int height, int frameofs, const char *text, FFont *font, EColorRange color, FName action)
 : FListMenuItemSelectable(x, y, height, action)
 {
-	mText = text;
+	mText = copystring(text);
 	mFont = font;
 	mFontColor = color;
 	mFrameSize = frameofs;
@@ -74,6 +74,7 @@ FPlayerNameBox::FPlayerNameBox(int x, int y, int height, int frameofs, const cha
 
 FPlayerNameBox::~FPlayerNameBox()
 {
+	if (mText != NULL) delete [] mText;
 }
 
 //=============================================================================
@@ -219,7 +220,7 @@ bool FPlayerNameBox::MenuEvent(int mkey, bool fromcontroller)
 FValueTextItem::FValueTextItem(int x, int y, int height, const char *text, FFont *font, EColorRange color, EColorRange valuecolor, FName action, FName values)
 : FListMenuItemSelectable(x, y, height, action)
 {
-	mText = text;
+	mText = copystring(text);
 	mFont = font;
 	mFontColor = color;
 	mFontColor2 = valuecolor;
@@ -239,6 +240,7 @@ FValueTextItem::FValueTextItem(int x, int y, int height, const char *text, FFont
 
 FValueTextItem::~FValueTextItem()
 {
+	if (mText != NULL) delete [] mText;
 }
 
 //=============================================================================
@@ -339,7 +341,7 @@ void FValueTextItem::Drawer(bool selected)
 FSliderItem::FSliderItem(int x, int y, int height, const char *text, FFont *font, EColorRange color, FName action, int min, int max, int step)
 : FListMenuItemSelectable(x, y, height, action)
 {
-	mText = text;
+	mText = copystring(text);
 	mFont = font;
 	mFontColor = color;
 	mSelection = 0;
@@ -350,6 +352,7 @@ FSliderItem::FSliderItem(int x, int y, int height, const char *text, FFont *font
 
 FSliderItem::~FSliderItem()
 {
+	if (mText != NULL) delete [] mText;
 }
 
 //=============================================================================
@@ -526,7 +529,7 @@ public:
 	void Drawer ();
 };
 
-IMPLEMENT_CLASS(DPlayerMenu, false, false)
+IMPLEMENT_CLASS(DPlayerMenu)
 
 //=============================================================================
 //
@@ -689,7 +692,8 @@ void DPlayerMenu::UpdateTranslation()
 	if (PlayerClass != NULL)
 	{
 		PlayerSkin = R_FindSkin (skins[PlayerSkin].name, int(PlayerClass - &PlayerClasses[0]));
-		R_GetPlayerTranslation(PlayerColor, PlayerClass->Type->GetColorSet(PlayerColorset),
+		R_GetPlayerTranslation(PlayerColor,
+			P_GetPlayerColorSet(PlayerClass->Type->TypeName, PlayerColorset),
 			&skins[PlayerSkin], translationtables[TRANSLATION_Players][MAXPLAYERS]);
 	}
 }
@@ -758,11 +762,11 @@ void DPlayerMenu::UpdateColorsets()
 	if (li != NULL)
 	{
 		int sel = 0;
-		PlayerClass->Type->EnumColorSets(&PlayerColorSets);
+		P_EnumPlayerColorSets(PlayerClass->Type->TypeName, &PlayerColorSets);
 		li->SetString(0, "Custom");
 		for(unsigned i=0;i<PlayerColorSets.Size(); i++)
 		{
-			FPlayerColorSet *colorset = PlayerClass->Type->GetColorSet(PlayerColorSets[i]);
+			FPlayerColorSet *colorset = P_GetPlayerColorSet(PlayerClass->Type->TypeName, PlayerColorSets[i]);
 			li->SetString(i+1, colorset->Name);
 		}
 		int mycolorset = players[consoleplayer].userinfo.GetColorSet();
@@ -908,7 +912,7 @@ void DPlayerMenu::ClassChanged (FListMenuItem *li)
 		players[consoleplayer].userinfo.PlayerClassNumChanged(gameinfo.norandomplayerclass ? sel : sel-1);
 		PickPlayerClass();
 
-		cvar_set ("playerclass", sel == 0 && !gameinfo.norandomplayerclass ? "Random" : PlayerClass->Type->DisplayName.GetChars());
+		cvar_set ("playerclass", sel == 0 && !gameinfo.norandomplayerclass ? "Random" : PlayerClass->Type->Meta.GetMetaString (APMETA_DisplayName));
 
 		UpdateSkins();
 		UpdateColorsets();

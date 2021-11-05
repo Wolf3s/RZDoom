@@ -52,7 +52,7 @@
 //
 // Write a single character using the given font
 //
-void DCanvas::DrawChar (FFont *font, int normalcolor, int x, int y, BYTE character, int tag_first, ...)
+void STACK_ARGS DCanvas::DrawChar (FFont *font, int normalcolor, int x, int y, BYTE character, ...)
 {
 	if (font == NULL)
 		return;
@@ -65,17 +65,11 @@ void DCanvas::DrawChar (FFont *font, int normalcolor, int x, int y, BYTE charact
 
 	if (NULL != (pic = font->GetChar (character, &dummy)))
 	{
-		DrawParms parms;
-		va_list tags;
-		va_start(tags, tag_first);
-		bool res = ParseDrawTextureTags(pic, x, y, tag_first, tags, &parms, false);
-		va_end(tags);
-		if (!res)
-		{
-			return;
-		}
-		parms.remap = font->GetColorTranslation((EColorRange)normalcolor);
-		DrawTextureParms(pic, parms);
+		const FRemapTable *range = font->GetColorTranslation ((EColorRange)normalcolor);
+		va_list taglist;
+		va_start (taglist, character);
+		DrawTexture (pic, x, y, DTA_Translation, range, TAG_MORE, &taglist);
+		va_end (taglist);
 	}
 }
 
@@ -84,50 +78,135 @@ void DCanvas::DrawChar (FFont *font, int normalcolor, int x, int y, BYTE charact
 //
 // Write a string using the given font
 //
-void DCanvas::DrawText(FFont *font, int normalcolor, int x, int y, const char *string, int tag_first, ...)
+void DCanvas::DrawTextV(FFont *font, int normalcolor, int x, int y, const char *string, va_list taglist)
 {
-	int 		w;
+	INTBOOL boolval;
+	va_list tags;
+	uint32 tag;
+
+	int			maxstrlen = INT_MAX;
+	int 		w, maxwidth;
 	const BYTE *ch;
 	int 		c;
 	int 		cx;
 	int 		cy;
 	int			boldcolor;
-	FRemapTable *range;
+	const FRemapTable *range;
+	int			height;
+	int			forcedwidth = 0;
+	int			scalex, scaley;
 	int			kerning;
 	FTexture *pic;
-	DrawParms parms;
-
-	va_list tags;
 
 	if (font == NULL || string == NULL)
 		return;
-
-	va_start(tags, tag_first);
-	bool res = ParseDrawTextureTags(nullptr, 0, 0, tag_first, tags, &parms, true);
-	va_end(tags);
-	if (!res)
-	{
-		return;
-	}
-
-
-	if (parms.celly == 0) parms.celly = font->GetHeight() + 1;
-	parms.celly *= parms.scaley;
 
 	if (normalcolor >= NumTextColors)
 		normalcolor = CR_UNTRANSLATED;
 	boldcolor = normalcolor ? normalcolor - 1 : NumTextColors - 1;
 
 	range = font->GetColorTranslation ((EColorRange)normalcolor);
-
+	height = font->GetHeight () + 1;
 	kerning = font->GetDefaultKerning ();
 
 	ch = (const BYTE *)string;
 	cx = x;
 	cy = y;
 
+	// Parse the tag list to see if we need to adjust for scaling.
+ 	maxwidth = Width;
+	scalex = scaley = 1;
+
+#ifndef NO_VA_COPY
+	va_copy(tags, taglist);
+#else
+	tags = taglist;
+#endif
+	tag = va_arg(tags, uint32);
+
+	while (tag != TAG_DONE)
+	{
+		va_list *more_p;
+		DWORD data;
+
+		switch (tag)
+		{
+		case TAG_IGNORE:
+		default:
+			data = va_arg (tags, DWORD);
+			break;
+
+		case TAG_MORE:
+			more_p = va_arg (tags, va_list*);
+			va_end (tags);
+#ifndef NO_VA_COPY
+			va_copy (tags, *more_p);
+#else
+			tags = *more_p;
+#endif
+			break;
+
+		// We don't handle these. :(
+		case DTA_DestWidth:
+		case DTA_DestHeight:
+		case DTA_Translation:
+			assert("Bad parameter for DrawText" && false);
+			return;
+
+		case DTA_CleanNoMove_1:
+			boolval = va_arg (tags, INTBOOL);
+			if (boolval)
+			{
+				scalex = CleanXfac_1;
+				scaley = CleanYfac_1;
+				maxwidth = Width - (Width % scalex);
+			}
+			break;
+
+		case DTA_CleanNoMove:
+			boolval = va_arg (tags, INTBOOL);
+			if (boolval)
+			{
+				scalex = CleanXfac;
+				scaley = CleanYfac;
+				maxwidth = Width - (Width % scalex);
+			}
+			break;
+
+		case DTA_Clean:
+		case DTA_320x200:
+			boolval = va_arg (tags, INTBOOL);
+			if (boolval)
+			{
+				scalex = scaley = 1;
+				maxwidth = 320;
+			}
+			break;
+
+		case DTA_VirtualWidth:
+			maxwidth = va_arg (tags, int);
+			scalex = scaley = 1;
+			break;
+
+		case DTA_TextLen:
+			maxstrlen = va_arg (tags, int);
+			break;
+
+		case DTA_CellX:
+			forcedwidth = va_arg (tags, int);
+			break;
+
+		case DTA_CellY:
+			height = va_arg (tags, int);
+			break;
+		}
+		tag = va_arg (tags, uint32);
+	}
+	va_end(tags);
+
+	height *= scaley;
 		
-	while ((const char *)ch - string < parms.maxstrlen)
+	while ((const char *)ch - string < maxstrlen)
 	{
 		c = *ch++;
 		if (!c)
@@ -146,26 +225,53 @@ void DCanvas::DrawText(FFont *font, int normalcolor, int x, int y, const char *s
 		if (c == '\n')
 		{
 			cx = x;
-			cy += parms.celly;
+			cy += height;
 			continue;
 		}
 
 		if (NULL != (pic = font->GetChar (c, &w)))
 		{
-			parms.remap = range;
-			SetTextureParms(&parms, pic, cx, cy);
-			if (parms.cellx)
+#ifndef NO_VA_COPY
+			va_copy(tags, taglist);
+#else
+			tags = taglist;
+#endif
+			if (forcedwidth)
 			{
-				w = parms.cellx;
-				parms.destwidth = parms.cellx;
-				parms.destheight = parms.celly;
+				w = forcedwidth;
+				DrawTexture (pic, cx, cy,
+					DTA_Translation, range,
+					DTA_DestWidth, forcedwidth,
+					DTA_DestHeight, height,
+					TAG_MORE, &tags);
 			}
-			DrawTextureParms(pic, parms);
+			else
+			{
+				DrawTexture (pic, cx, cy,
+					DTA_Translation, range,
+					TAG_MORE, &tags);
+			}
+			va_end (tags);
 		}
-		cx += (w + kerning) * parms.scalex;
+		cx += (w + kerning) * scalex;
 	}
+	va_end(taglist);
 }
 
+void STACK_ARGS DCanvas::DrawText (FFont *font, int normalcolor, int x, int y, const char *string, ...)
+{
+	va_list tags;
+	va_start(tags, string);
+	DrawTextV(font, normalcolor, x, y, string, tags);
+}
+
+// A synonym so that this can still be used in files that #include Windows headers
+void STACK_ARGS DCanvas::DrawTextA (FFont *font, int normalcolor, int x, int y, const char *string, ...)
+{
+	va_list tags;
+	va_start(tags, string);
+	DrawTextV(font, normalcolor, x, y, string, tags);
+}
 
 //
 // Find string width using this font

@@ -2,6 +2,7 @@
 #include "info.h"
 #include "gi.h"
 #include "m_random.h"
+#include "thingdef/thingdef.h"
 
 static FRandom pr_orbit ("Orbit");
 
@@ -37,23 +38,23 @@ class ACustomBridge : public AActor
 	DECLARE_CLASS (ACustomBridge, AActor)
 public:
 	void BeginPlay ();
-	void Destroy() override;
+	void Destroy();
 };
 
-IMPLEMENT_CLASS(ACustomBridge, false, false)
+IMPLEMENT_CLASS(ACustomBridge)
 
 void ACustomBridge::BeginPlay ()
 {
 	if (args[2]) // Hexen bridge if there are balls
 	{
 		SetState(SeeState);
-		radius = args[0] ? args[0] : 32;
-		Height = args[1] ? args[1] : 2;
+		radius = args[0] ? args[0] << FRACBITS : 32 * FRACUNIT;
+		height = args[1] ? args[1] << FRACBITS : 2 * FRACUNIT;
 	}
 	else // No balls? Then a Doom bridge.
 	{
-		radius = args[0] ? args[0] : 36;
-		Height = args[1] ? args[1] : 4;
+		radius = args[0] ? args[0] << FRACBITS : 36 * FRACUNIT;
+		height = args[1] ? args[1] << FRACBITS : 4 * FRACUNIT;
 		RenderStyle = STYLE_Normal;
 	}
 }
@@ -89,7 +90,7 @@ void ACustomBridge::Destroy()
 //		target		pointer to center mobj
 //		angle		angle of ball
 
-static void BridgeOrbit(AActor *self)
+DEFINE_ACTION_FUNCTION(AActor, A_BridgeOrbit)
 {
 	if (self->target == NULL)
 	{ // Don't crash if somebody spawned this into the world
@@ -98,43 +99,34 @@ static void BridgeOrbit(AActor *self)
 	}
 	// Set default values
 	// Every five tics, Hexen moved the ball 3/256th of a revolution.
-	DAngle rotationspeed = 45. / 32 * 3 / 5;
-	double rotationradius = ORBIT_RADIUS;
+	int rotationspeed  = ANGLE_45/32*3/5;
+	int rotationradius = ORBIT_RADIUS * FRACUNIT;
 	// If the bridge is custom, set non-default values if any.
 
 	// Set angular speed; 1--128: counterclockwise rotation ~=1--180°; 129--255: clockwise rotation ~= 180--1°
-	if (self->target->args[3] > 128) rotationspeed = 45. / 32 * (self->target->args[3] - 256) / TICRATE;
-	else if (self->target->args[3] > 0) rotationspeed = 45. / 32 * (self->target->args[3]) / TICRATE;
+	if (self->target->args[3] > 128) rotationspeed = ANGLE_45/32 * (self->target->args[3]-256) / TICRATE;
+	else if (self->target->args[3] > 0) rotationspeed = ANGLE_45/32 * (self->target->args[3]) / TICRATE;
 	// Set rotation radius
 	if (self->target->args[4]) rotationradius = ((self->target->args[4] * self->target->radius) / 100);
 
-	self->Angles.Yaw += rotationspeed;
-	self->SetOrigin(self->target->Vec3Angle(rotationradius, self->Angles.Yaw, 0), true);
+	self->angle += rotationspeed;
+	self->SetOrigin(self->target->Vec3Angle(rotationradius, self->angle, 0), true);
 	self->floorz = self->target->floorz;
 	self->ceilingz = self->target->ceilingz;
 }
 
-DEFINE_ACTION_FUNCTION(ABridgeBall, A_BridgeOrbit)
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BridgeInit)
 {
-	PARAM_SELF_PROLOGUE(AActor);
-	BridgeOrbit(self);
-	return 0;
-}
-
-
-DEFINE_ACTION_FUNCTION(ACustomBridge, A_BridgeInit)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS_DEF(balltype, AActor);
-
+	angle_t startangle;
 	AActor *ball;
 
-	if (balltype == NULL)
-	{
-		balltype = PClass::FindActor("BridgeBall");
-	}
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_CLASS(balltype, 0);
 
-	DAngle startangle = pr_orbit() * (360./256.);
+	if (balltype == NULL) balltype = PClass::FindClass("BridgeBall");
+
+	startangle = pr_orbit() << 24;
 
 	// Spawn triad into world -- may be more than a triad now.
 	int ballcount = self->args[2]==0 ? 3 : self->args[2];
@@ -142,11 +134,10 @@ DEFINE_ACTION_FUNCTION(ACustomBridge, A_BridgeInit)
 	for (int i = 0; i < ballcount; i++)
 	{
 		ball = Spawn(balltype, self->Pos(), ALLOW_REPLACE);
-		ball->Angles.Yaw = startangle + (45./32) * (256/ballcount) * i;
+		ball->angle = startangle + (ANGLE_45/32) * (256/ballcount) * i;
 		ball->target = self;
-		BridgeOrbit(ball);
+		CALL_ACTION(A_BridgeOrbit, ball);
 	}
-	return 0;
 }
 
 
@@ -159,14 +150,14 @@ public:
 	void BeginPlay ();
 };
 
-IMPLEMENT_CLASS(AInvisibleBridge, false, false)
+IMPLEMENT_CLASS(AInvisibleBridge)
 
 void AInvisibleBridge::BeginPlay ()
 {
 	Super::BeginPlay ();
 	if (args[0])
-		radius = args[0];
+		radius = args[0] << FRACBITS;
 	if (args[1])
-		Height = args[1];
+		height = args[1] << FRACBITS;
 }
 

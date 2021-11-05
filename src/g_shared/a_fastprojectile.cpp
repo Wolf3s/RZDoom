@@ -4,11 +4,9 @@
 #include "g_level.h"
 #include "r_sky.h"
 #include "p_lnspec.h"
-#include "b_bot.h"
-#include "p_checkposition.h"
-#include "virtual.h"
 
-IMPLEMENT_CLASS(AFastProjectile, false, false)
+
+IMPLEMENT_CLASS(AFastProjectile)
 
 
 //----------------------------------------------------------------------------
@@ -22,11 +20,16 @@ IMPLEMENT_CLASS(AFastProjectile, false, false)
 void AFastProjectile::Tick ()
 {
 	int i;
-	DVector3 frac;
+	fixed_t xfrac;
+	fixed_t yfrac;
+	fixed_t zfrac;
 	int changexy;
 
-	ClearInterpolation();
-	double oldz = Z();
+	PrevX = X();
+	PrevY = Y();
+	PrevZ = Z();
+	fixed_t oldz = Z();
+	PrevAngle = angle;
 
 	if (!(flags5 & MF5_NOTIMEFREEZE))
 	{
@@ -41,28 +44,26 @@ void AFastProjectile::Tick ()
 	// [RH] Ripping is a little different than it was in Hexen
 	FCheckPosition tm(!!(flags2 & MF2_RIP));
 
+	int shift = 3;
 	int count = 8;
 	if (radius > 0)
 	{
-		while ( fabs(Vel.X) > radius * count || fabs(Vel.Y) > radius * count)
+		while ( ((abs(velx) >> shift) > radius) || ((abs(vely) >> shift) > radius))
 		{
 			// we need to take smaller steps.
-			count += count;
+			shift++;
+			count<<=1;
 		}
 	}
 
 	// Handle movement
-	if (!Vel.isZero() || (Z() != floorz))
+	if (velx || vely || (Z() != floorz) || velz)
 	{
-		// force some lateral movement so that collision detection works as intended.
-		if ((flags & MF_MISSILE) && Vel.X == 0 && Vel.Y == 0 && !IsZeroDamage())
-		{
-			Vel.X = MinVel;
-		}
-
-		frac = Vel / count;
-		changexy = frac.X != 0 || frac.Y != 0;
-		int ripcount = count / 8;
+		xfrac = velx >> shift;
+		yfrac = vely >> shift;
+		zfrac = velz >> shift;
+		changexy = xfrac || yfrac;
+		int ripcount = count >> 3;
 		for (i = 0; i < count; i++)
 		{
 			if (changexy)
@@ -72,14 +73,14 @@ void AFastProjectile::Tick ()
 					tm.LastRipped.Clear();	// [RH] Do rip damage each step, like Hexen
 				}
 				
-				if (!P_TryMove (this, Pos() + frac, true, NULL, tm))
+				if (!P_TryMove (this, X() + xfrac,Y() + yfrac, true, NULL, tm))
 				{ // Blocked move
 					if (!(flags3 & MF3_SKYEXPLODE))
 					{
 						if (tm.ceilingline &&
 							tm.ceilingline->backsector &&
 							tm.ceilingline->backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
-							Z() >= tm.ceilingline->backsector->ceilingplane.ZatPoint(PosRelative(tm.ceilingline)))
+							Z() >= tm.ceilingline->backsector->ceilingplane.ZatPoint (this))
 						{
 							// Hack to prevent missiles exploding against the sky.
 							// Does not handle sky floors.
@@ -98,10 +99,10 @@ void AFastProjectile::Tick ()
 					return;
 				}
 			}
-			AddZ(frac.Z);
-			UpdateWaterLevel ();
+			AddZ(zfrac);
+			UpdateWaterLevel (oldz);
 			oldz = Z();
-			if (oldz <= floorz)
+			if (Z() <= floorz)
 			{ // Hit the floor
 
 				if (floorpic == skyflatnum && !(flags3 & MF3_SKYEXPLODE))
@@ -126,26 +127,28 @@ void AFastProjectile::Tick ()
 					return;
 				}
 
-				SetZ(ceilingz - Height);
+				SetZ(ceilingz - height);
 				P_ExplodeMissile (this, NULL, NULL);
 				return;
 			}
-			if (!frac.isZero() && ripcount <= 0) 
+			if (changexy && ripcount <= 0) 
 			{
 				ripcount = count >> 3;
-
-				// call the scripted 'Effect' method.
-				IFVIRTUAL(AFastProjectile, Effect)
-				{
-					// Without the type cast this picks the 'void *' assignment...
-					VMValue params[1] = { (DObject*)this };
-					GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
-				}
+				Effect();
 			}
 		}
 	}
-	if (!CheckNoDelay())
-		return;		// freed itself
+	if ((flags7 & MF7_HANDLENODELAY) && !(flags2 & MF2_DORMANT))
+	{
+		flags7 &= ~MF7_HANDLENODELAY;
+		if (state->GetNoDelay())
+		{
+			// For immediately spawned objects with the NoDelay flag set for their
+			// Spawn state, explicitly call the current state's function.
+			if (state->CallAction(this, this) && (ObjectFlags & OF_EuthanizeMe))
+				return;				// freed itself
+		}
+	}
 	// Advance the state
 	if (tics != -1)
 	{
@@ -160,4 +163,33 @@ void AFastProjectile::Tick ()
 	}
 }
 
+
+void AFastProjectile::Effect()
+{
+	//if (pr_smoke() < 128)	// [RH] I think it looks better if it's consistent
+	{
+		FName name = (ENamedName) this->GetClass()->Meta.GetMetaInt (ACMETA_MissileName, NAME_None);
+		if (name != NAME_None)
+		{
+			fixed_t hitz = Z()-8*FRACUNIT;
+
+			if (hitz < floorz)
+			{
+				hitz = floorz;
+			}
+			// Do not clip this offset to the floor.
+			hitz += GetClass()->Meta.GetMetaFixed (ACMETA_MissileHeight);
+		
+			const PClass *trail = PClass::FindClass(name);
+			if (trail != NULL)
+			{
+				AActor *act = Spawn (trail, X(), Y(), hitz, ALLOW_REPLACE);
+				if (act != NULL)
+				{
+					act->angle = this->angle;
+				}
+			}
+		}
+	}
+}
 

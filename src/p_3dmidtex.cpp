@@ -36,11 +36,8 @@
 
 
 #include "templates.h"
-#include "p_3dmidtex.h"
 #include "p_local.h"
 #include "p_terrain.h"
-#include "p_maputl.h"
-#include "p_spec.h"
 
 
 //============================================================================
@@ -51,7 +48,7 @@
 //
 //============================================================================
 
-bool P_Scroll3dMidtex(sector_t *sector, int crush, double move, bool ceiling)
+bool P_Scroll3dMidtex(sector_t *sector, int crush, fixed_t move, bool ceiling)
 {
 	extsector_t::midtex::plane &scrollplane = ceiling? sector->e->Midtex.Ceiling : sector->e->Midtex.Floor;
 
@@ -221,7 +218,7 @@ void P_Attach3dMidtexLinesToSector(sector_t *sector, int lineid, int tag, bool c
 // Retrieves top and bottom of the current line's mid texture.
 //
 //============================================================================
-bool P_GetMidTexturePosition(const line_t *line, int sideno, double *ptextop, double *ptexbot)
+bool P_GetMidTexturePosition(const line_t *line, int sideno, fixed_t *ptextop, fixed_t *ptexbot)
 {
 	if (line->sidedef[0]==NULL || line->sidedef[1]==NULL) return false;
 	
@@ -231,30 +228,31 @@ bool P_GetMidTexturePosition(const line_t *line, int sideno, double *ptextop, do
 	FTexture * tex= TexMan(texnum);
 	if (!tex) return false;
 
-	double totalscale = fabs(side->GetTextureYScale(side_t::mid)) * tex->GetScaleY();
-	double y_offset = side->GetTextureYOffset(side_t::mid);
-	double textureheight = tex->GetHeight() / totalscale;
-	if (totalscale != 1. && !tex->bWorldPanning)
+	fixed_t totalscale = abs(FixedMul(side->GetTextureYScale(side_t::mid), tex->yScale));
+	fixed_t y_offset = side->GetTextureYOffset(side_t::mid);
+	fixed_t textureheight = tex->GetScaledHeight(totalscale) << FRACBITS;
+	if (totalscale != FRACUNIT && !tex->bWorldPanning)
 	{ 
-		y_offset /= totalscale;
+		y_offset = FixedDiv(y_offset, totalscale);
 	}
 
 	if(line->flags & ML_DONTPEGBOTTOM)
 	{
 		*ptexbot = y_offset +
-			MAX(line->frontsector->GetPlaneTexZ(sector_t::floor), line->backsector->GetPlaneTexZ(sector_t::floor));
+			MAX<fixed_t>(line->frontsector->GetPlaneTexZ(sector_t::floor), line->backsector->GetPlaneTexZ(sector_t::floor));
 
 		*ptextop = *ptexbot + textureheight;
 	}
 	else
 	{
 		*ptextop = y_offset +
-		   MIN(line->frontsector->GetPlaneTexZ(sector_t::ceiling), line->backsector->GetPlaneTexZ(sector_t::ceiling));
+		   MIN<fixed_t>(line->frontsector->GetPlaneTexZ(sector_t::ceiling), line->backsector->GetPlaneTexZ(sector_t::ceiling));
 		
 		*ptexbot = *ptextop - textureheight;
 	}
 	return true;
 }
+
 
 //============================================================================
 //
@@ -273,12 +271,12 @@ bool P_LineOpening_3dMidtex(AActor *thing, const line_t *linedef, FLineOpening &
 		return false;
 	}
 
-	double tt, tb;
+	fixed_t tt, tb;
 
 	open.abovemidtex = false;
 	if (P_GetMidTexturePosition(linedef, 0, &tt, &tb))
 	{
-		if (thing->Center() < (tt + tb)/2)
+		if (thing->Z() + (thing->height/2) < (tt + tb)/2)
 		{
 			if (tb < open.top)
 			{
@@ -294,12 +292,10 @@ bool P_LineOpening_3dMidtex(AActor *thing, const line_t *linedef, FLineOpening &
 				open.abovemidtex = true;
 				open.floorpic = linedef->sidedef[0]->GetTexture(side_t::mid);
 				open.floorterrain = TerrainTypes[open.floorpic];
-				open.frontfloorplane.SetAtHeight(tt, sector_t::floor);
-				open.backfloorplane.SetAtHeight(tt, sector_t::floor);
-
+				
 			}
 			// returns true if it touches the midtexture
-			return (fabs(thing->Z() - tt) <= thing->MaxStepHeight);
+			return (abs(thing->Z() - tt) <= thing->MaxStepHeight);
 		}
 	}
 	return false;
@@ -307,7 +303,7 @@ bool P_LineOpening_3dMidtex(AActor *thing, const line_t *linedef, FLineOpening &
 	/* still have to figure out what this code from Eternity means...
 	if((linedef->flags & ML_BLOCKMONSTERS) && 
 		!(mo->flags & (MF_FLOAT | MF_DROPOFF)) &&
-		fabs(mo->Z() - tt) <= 24)
+		D_abs(mo->z - textop) <= 24*FRACUNIT)
 	{
 		opentop = openbottom;
 		openrange = 0;

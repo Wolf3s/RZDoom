@@ -65,7 +65,7 @@
 #include "s_sound.h"
 #include "m_random.h"
 #include "s_sndseq.h"
-#include "serializer.h"
+#include "farchive.h"
 
 // SoundSequenceSlot --------------------------------------------------------
 
@@ -74,17 +74,14 @@ class ASoundSequenceSlot : public AActor
 	DECLARE_CLASS (ASoundSequenceSlot, AActor)
 	HAS_OBJECT_POINTERS
 public:
-	
-	void Serialize(FSerializer &arc);
+	void Serialize (FArchive &arc);
 
 	TObjPtr<DSeqNode> Sequence;
 };
 
-IMPLEMENT_CLASS(ASoundSequenceSlot, false, true)
-
-IMPLEMENT_POINTERS_START(ASoundSequenceSlot)
-	IMPLEMENT_POINTER(Sequence)
-IMPLEMENT_POINTERS_END
+IMPLEMENT_POINTY_CLASS(ASoundSequenceSlot)
+	DECLARE_POINTER(Sequence)
+END_POINTERS
 
 //==========================================================================
 //
@@ -92,10 +89,10 @@ IMPLEMENT_POINTERS_END
 //
 //==========================================================================
 
-void ASoundSequenceSlot::Serialize(FSerializer &arc)
+void ASoundSequenceSlot::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc("sequence", Sequence);
+	arc << Sequence;
 }
 
 // SoundSequence ------------------------------------------------------------
@@ -104,14 +101,14 @@ class ASoundSequence : public AActor
 {
 	DECLARE_CLASS (ASoundSequence, AActor)
 public:
-	void Destroy() override;
+	void Destroy ();
 	void PostBeginPlay ();
 	void Activate (AActor *activator);
 	void Deactivate (AActor *activator);
 	void MarkPrecacheSounds () const;
 };
 
-IMPLEMENT_CLASS(ASoundSequence, false, false)
+IMPLEMENT_CLASS (ASoundSequence)
 
 //==========================================================================
 //
@@ -149,7 +146,7 @@ void ASoundSequence::PostBeginPlay ()
 		}
 		if (master == NULL)
 		{
-			master = Spawn<ASoundSequenceSlot> ();
+			master = Spawn<ASoundSequenceSlot> (0, 0, 0, NO_REPLACE);
 			master->Sequence = SN_StartSequence (master, slot, 0);
 			GC::WriteBarrier(master, master->Sequence);
 		}

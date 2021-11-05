@@ -27,14 +27,12 @@
 #include "templates.h"
 #include "c_dispatch.h"
 #include "g_level.h"
-#include "serializer.h"
-#include "d_player.h"
+#include "farchive.h"
 
 // MACROS ------------------------------------------------------------------
 
 #define GetCommand(a)		((a) & 255)
 #define GetData(a)			(SDWORD(a) >> 8 )
-#define GetFloatData(a)		float((SDWORD(a) >> 8 )/65536.f)
 #define MakeCommand(a,b)	((a) | ((b) << 8))
 #define HexenPlatSeq(a)		(a)
 #define HexenDoorSeq(a)		((a) | 0x40)
@@ -105,8 +103,8 @@ class DSeqActorNode : public DSeqNode
 	HAS_OBJECT_POINTERS
 public:
 	DSeqActorNode(AActor *actor, int sequence, int modenum);
-	void Destroy() override;
-	void Serialize(FSerializer &arc);
+	void Destroy();
+	void Serialize(FArchive &arc);
 	void MakeSound(int loop, FSoundID id)
 	{
 		S_Sound(m_Actor, CHAN_BODY|loop, id, clamp(m_Volume, 0.f, 1.f), m_Atten);
@@ -133,8 +131,8 @@ class DSeqPolyNode : public DSeqNode
 	DECLARE_CLASS(DSeqPolyNode, DSeqNode)
 public:
 	DSeqPolyNode(FPolyObj *poly, int sequence, int modenum);
-	void Destroy() override;
-	void Serialize(FSerializer &arc);
+	void Destroy();
+	void Serialize(FArchive &arc);
 	void MakeSound(int loop, FSoundID id)
 	{
 		S_Sound (m_Poly, CHAN_BODY|loop, id, clamp(m_Volume, 0.f, 1.f), m_Atten);
@@ -161,8 +159,8 @@ class DSeqSectorNode : public DSeqNode
 	DECLARE_CLASS(DSeqSectorNode, DSeqNode)
 public:
 	DSeqSectorNode(sector_t *sec, int chan, int sequence, int modenum);
-	void Destroy() override;
-	void Serialize(FSerializer &arc);
+	void Destroy();
+	void Serialize(FArchive &arc);
 	void MakeSound(int loop, FSoundID id)
 	{
 		Channel = (Channel & 7) | CHAN_AREA | loop;
@@ -280,19 +278,17 @@ static FRandom pr_sndseq ("SndSeq");
 
 // CODE --------------------------------------------------------------------
 
-void DSeqNode::SerializeSequences (FSerializer &arc)
+void DSeqNode::SerializeSequences (FArchive &arc)
 {
-	arc("sndseqlisthead", SequenceListHead);
+	arc << SequenceListHead;
 }
 
-IMPLEMENT_CLASS(DSeqNode, false, true)
-
-IMPLEMENT_POINTERS_START(DSeqNode)
-	IMPLEMENT_POINTER(m_ChildSeqNode)
-	IMPLEMENT_POINTER(m_ParentSeqNode)
-	IMPLEMENT_POINTER(m_Next)
-	IMPLEMENT_POINTER(m_Prev)
-IMPLEMENT_POINTERS_END
+IMPLEMENT_POINTY_CLASS (DSeqNode)
+ DECLARE_POINTER(m_ChildSeqNode)
+ DECLARE_POINTER(m_ParentSeqNode)
+ DECLARE_POINTER(m_Next)
+ DECLARE_POINTER(m_Prev)
+END_POINTERS
 
 DSeqNode::DSeqNode ()
 : m_SequenceChoices(0)
@@ -300,58 +296,55 @@ DSeqNode::DSeqNode ()
 	m_Next = m_Prev = m_ChildSeqNode = m_ParentSeqNode = NULL;
 }
 
-void DSeqNode::Serialize(FSerializer &arc)
+void DSeqNode::Serialize (FArchive &arc)
 {
 	int seqOffset;
 	unsigned int i;
-	FName seqName;
-	int delayTics = 0;
-	FSoundID id;
-	float volume;
-	float atten = ATTN_NORM;
-	int seqnum;
-	unsigned int numchoices;
 
-	// copy these to local variables so that the actual serialization code does not need to be duplicated for saving and loading.
-	if (arc.isWriting())
+	Super::Serialize (arc);
+	if (arc.IsStoring ())
 	{
-		seqOffset = (int)SN_GetSequenceOffset(m_Sequence, m_SequencePtr);
-		delayTics = m_DelayUntilTic;
-		volume = m_Volume;
-		atten = m_Atten;
-		id = m_CurrentSoundID;
-		seqName = Sequences[m_Sequence]->SeqName;
-		numchoices = m_SequenceChoices.Size();
-	}
-	Super::Serialize(arc);
+		seqOffset = (int)SN_GetSequenceOffset (m_Sequence, m_SequencePtr);
+		arc << seqOffset
+			<< m_DelayUntilTic
+			<< m_Volume
+			<< m_Atten
+			<< m_ModeNum
+			<< m_Next
+			<< m_Prev
+			<< m_ChildSeqNode
+			<< m_ParentSeqNode
+			<< m_CurrentSoundID
+			<< Sequences[m_Sequence]->SeqName;
 
-	arc("seqoffset", seqOffset)
-		("delaytics", delayTics)
-		("volume", volume)
-		("atten", atten)
-		("modelnum", m_ModeNum)
-		("next", m_Next)
-		("prev", m_Prev)
-		("childseqnode", m_ChildSeqNode)
-		("parentseqnode", m_ParentSeqNode)
-		("id", id)
-		("seqname", seqName)
-		("numchoices", numchoices);
-
-	// The way this is saved makes it hard to encapsulate so just do it the hard way...
-	if (arc.isWriting())
-	{
-		if (numchoices > 0 && arc.BeginArray("choices"))
+		arc.WriteCount (m_SequenceChoices.Size());
+		for (i = 0; i < m_SequenceChoices.Size(); ++i)
 		{
-			for (i = 0; i < m_SequenceChoices.Size(); ++i)
-			{
-				arc(nullptr, Sequences[m_SequenceChoices[i]]->SeqName);
-			}
-			arc.EndArray();
+			arc << Sequences[m_SequenceChoices[i]]->SeqName;
 		}
 	}
 	else
 	{
+		FName seqName;
+		int delayTics = 0;
+		FSoundID id;
+		float volume;
+		float atten = ATTN_NORM;
+		int seqnum;
+		unsigned int numchoices;
+
+		arc << seqOffset
+			<< delayTics
+			<< volume
+			<< atten
+			<< m_ModeNum
+			<< m_Next
+			<< m_Prev
+			<< m_ChildSeqNode
+			<< m_ParentSeqNode
+			<< id
+			<< seqName;
+
 		seqnum = FindSequence (seqName);
 		if (seqnum >= 0)
 		{
@@ -365,15 +358,12 @@ void DSeqNode::Serialize(FSerializer &arc)
 
 		ChangeData (seqOffset, delayTics - TIME_REFERENCE, volume, id);
 
+		numchoices = arc.ReadCount();
 		m_SequenceChoices.Resize(numchoices);
-		if (numchoices > 0 && arc.BeginArray("choices"))
+		for (i = 0; i < numchoices; ++i)
 		{
-			for (i = 0; i < numchoices; ++i)
-			{
-				arc(nullptr, seqName);
-				m_SequenceChoices[i] = FindSequence(seqName);
-			}
-			arc.EndArray();
+			arc << seqName;
+			m_SequenceChoices[i] = FindSequence (seqName);
 		}
 	}
 }
@@ -429,33 +419,30 @@ FName DSeqNode::GetSequenceName () const
 	return Sequences[m_Sequence]->SeqName;
 }
 
-IMPLEMENT_CLASS(DSeqActorNode, false, true)
+IMPLEMENT_POINTY_CLASS (DSeqActorNode)
+ DECLARE_POINTER (m_Actor)
+END_POINTERS
 
-IMPLEMENT_POINTERS_START(DSeqActorNode)
-	IMPLEMENT_POINTER(m_Actor)
-IMPLEMENT_POINTERS_END
-
-void DSeqActorNode::Serialize(FSerializer &arc)
+void DSeqActorNode::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc("actor", m_Actor);
+	arc << m_Actor;
 }
 
-IMPLEMENT_CLASS(DSeqPolyNode, false, false)
+IMPLEMENT_CLASS (DSeqPolyNode)
 
-void DSeqPolyNode::Serialize(FSerializer &arc)
+void DSeqPolyNode::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc("poly", m_Poly);
+	arc << m_Poly;
 }
 
-IMPLEMENT_CLASS(DSeqSectorNode, false, false)
+IMPLEMENT_CLASS (DSeqSectorNode)
 
-void DSeqSectorNode::Serialize(FSerializer &arc)
+void DSeqSectorNode::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc("sector",m_Sector)
-		("channel", Channel);
+	arc << m_Sector << Channel;
 }
 
 //==========================================================================
@@ -551,7 +538,7 @@ void S_ParseSndSeq (int levellump)
 	int delaybase;
 	float volumebase;
 	int curseq = -1;
-	int val;
+	fixed_t val;
 
 	// First free the old SNDSEQ data. This allows us to reload this for each level
 	// and specify a level specific SNDSEQ lump!
@@ -687,18 +674,18 @@ void S_ParseSndSeq (int levellump)
 
 				case SS_STRING_VOLUME:		// volume is in range 0..100
 					sc.MustGetFloat ();
-					ScriptTemp.Push(MakeCommand(SS_CMD_VOLUME, int(sc.Float * (65536.f / 100.f))));
+					ScriptTemp.Push(MakeCommand(SS_CMD_VOLUME, int(sc.Float * (FRACUNIT/100.f))));
 					break;
 
 				case SS_STRING_VOLUMEREL:
 					sc.MustGetFloat ();
-					ScriptTemp.Push(MakeCommand(SS_CMD_VOLUMEREL, int(sc.Float * (65536.f / 100.f))));
+					ScriptTemp.Push(MakeCommand(SS_CMD_VOLUMEREL, int(sc.Float * (FRACUNIT/100.f))));
 					break;
 
 				case SS_STRING_VOLUMERAND:
 					sc.MustGetFloat ();
 					volumebase = float(sc.Float);
-					ScriptTemp.Push(MakeCommand(SS_CMD_VOLUMERAND, int(sc.Float * (65536.f / 100.f))));
+					ScriptTemp.Push(MakeCommand(SS_CMD_VOLUMERAND, int(sc.Float * (FRACUNIT/100.f))));
 					sc.MustGetFloat ();
 					ScriptTemp.Push(int((sc.Float - volumebase) * (256/100.f)));
 					break;
@@ -717,12 +704,12 @@ void S_ParseSndSeq (int levellump)
 				case SS_STRING_ATTENUATION:
 					if (sc.CheckFloat())
 					{
-						val = int(sc.Float*65536.);
+						val = FLOAT2FIXED(sc.Float);
 					}
 					else
 					{
 						sc.MustGetString ();
-						val = sc.MustMatchString(&Attenuations[0].name, sizeof(Attenuations[0])) * 65536;
+						val = sc.MustMatchString(&Attenuations[0].name, sizeof(Attenuations[0])) << FRACBITS;
 					}
 					ScriptTemp.Push(MakeCommand(SS_CMD_ATTENUATION, val));
 					break;
@@ -1191,19 +1178,19 @@ void DSeqNode::Tick ()
 			return;
 
 		case SS_CMD_VOLUME:
-			m_Volume = GetFloatData(*m_SequencePtr);
+			m_Volume = GetData(*m_SequencePtr) / float(FRACUNIT);
 			m_SequencePtr++;
 			break;
 
 		case SS_CMD_VOLUMEREL:
 			// like SS_CMD_VOLUME, but the new volume is added to the old volume
-			m_Volume += GetFloatData(*m_SequencePtr);
+			m_Volume += GetData(*m_SequencePtr) / float(FRACUNIT);
 			m_SequencePtr++;
 			break;
 
 		case SS_CMD_VOLUMERAND:
 			// like SS_CMD_VOLUME, but the new volume is chosen randomly from a range
-			m_Volume = GetFloatData(m_SequencePtr[0]) + (pr_sndseq() % m_SequencePtr[1]) / 255.f;
+			m_Volume = GetData(m_SequencePtr[0]) / float(FRACUNIT) + (pr_sndseq() % m_SequencePtr[1]) / 255.f;
 			m_SequencePtr += 2;
 			break;
 
@@ -1212,7 +1199,7 @@ void DSeqNode::Tick ()
 			return;
 
 		case SS_CMD_ATTENUATION:
-			m_Atten = GetFloatData(*m_SequencePtr);
+			m_Atten = FIXED2FLOAT(GetData(*m_SequencePtr));
 			m_SequencePtr++;
 			break;
 

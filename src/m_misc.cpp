@@ -123,8 +123,7 @@ int M_ReadFile (char const *name, BYTE **buffer)
 	handle = open (name, O_RDONLY | O_BINARY, 0666);
 	if (handle == -1)
 		I_Error ("Couldn't read file %s", name);
-	// [BL] Use stat instead of fstat for v140_xp hack
-	if (stat (name,&fileinfo) == -1)
+	if (fstat (handle,&fileinfo) == -1)
 		I_Error ("Couldn't read file %s", name);
 	length = fileinfo.st_size;
 	buf = new BYTE[length];
@@ -150,8 +149,7 @@ int M_ReadFileMalloc (char const *name, BYTE **buffer)
 	handle = open (name, O_RDONLY | O_BINARY, 0666);
 	if (handle == -1)
 		I_Error ("Couldn't read file %s", name);
-	// [BL] Use stat instead of fstat for v140_xp hack
-	if (stat (name,&fileinfo) == -1)
+	if (fstat (handle,&fileinfo) == -1)
 		I_Error ("Couldn't read file %s", name);
 	length = fileinfo.st_size;
 	buf = (BYTE*)M_Malloc(length);
@@ -451,15 +449,10 @@ struct pcx_t
 };
 
 
-inline void putc(unsigned char chr, FileWriter *file)
-{
-	file->Write(&chr, 1);
-}
-
 //
 // WritePCXfile
 //
-void WritePCXfile (FileWriter *file, const BYTE *buffer, const PalEntry *palette,
+void WritePCXfile (FILE *file, const BYTE *buffer, const PalEntry *palette,
 				   ESSType color_type, int width, int height, int pitch)
 {
 	BYTE temprow[MAXWIDTH * 3];
@@ -487,7 +480,7 @@ void WritePCXfile (FileWriter *file, const BYTE *buffer, const PalEntry *palette
 	pcx.palette_type = 1;				// not a grey scale
 	memset (pcx.filler, 0, sizeof(pcx.filler));
 
-	file->Write(&pcx, 128);
+	fwrite (&pcx, 128, 1, file);
 
 	bytes_per_row_minus_one = ((color_type == SS_PAL) ? width : width * 3) - 1;
 
@@ -600,7 +593,7 @@ void WritePCXfile (FileWriter *file, const BYTE *buffer, const PalEntry *palette
 //
 // WritePNGfile
 //
-void WritePNGfile (FileWriter *file, const BYTE *buffer, const PalEntry *palette,
+void WritePNGfile (FILE *file, const BYTE *buffer, const PalEntry *palette,
 				   ESSType color_type, int width, int height, int pitch)
 {
 	char software[100];
@@ -662,7 +655,7 @@ static bool FindFreeName (FString &fullname, const char *extension)
 
 void M_ScreenShot (const char *filename)
 {
-	FileWriter *file;
+	FILE *file;
 	FString autoname;
 	bool writepcx = (stricmp (screenshot_type, "pcx") == 0);	// PNG is the default
 
@@ -716,7 +709,7 @@ void M_ScreenShot (const char *filename)
 		{
 			screen->GetFlashedPalette(palette);
 		}
-		file = FileWriter::Open(autoname);
+		file = fopen (autoname, "wb");
 		if (file == NULL)
 		{
 			Printf ("Could not open %s\n", autoname.GetChars());
@@ -733,7 +726,7 @@ void M_ScreenShot (const char *filename)
 			WritePNGfile(file, buffer, palette, color_type,
 				screen->GetWidth(), screen->GetHeight(), pitch);
 		}
-		delete file;
+		fclose(file);
 		screen->ReleaseScreenshotBuffer();
 
 		if (!screenshot_quiet)

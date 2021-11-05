@@ -176,7 +176,7 @@ public:
 	virtual int Responder (event_t *ev);
 	virtual int Ticker ();
 	virtual void Drawer ();
-	void Destroy() override;
+	void Destroy();
 	FTextureID GetBackground(bool *fill)
 	{
 		*fill = mFlatfill;
@@ -229,7 +229,7 @@ class DIntermissionScreenCast : public DIntermissionScreen
 	DECLARE_CLASS (DIntermissionScreenCast, DIntermissionScreen)
 
 	const char *mName;
-	PClassActor *mClass;
+	const PClass *mClass;
 	AActor *mDefaults;
 	TArray<FICastSound> mCastSounds;
 
@@ -301,7 +301,7 @@ public:
 	bool Responder (event_t *ev);
 	void Ticker ();
 	void Drawer ();
-	void Destroy() override;
+	void Destroy();
 
 	friend void F_AdvanceIntermission();
 };

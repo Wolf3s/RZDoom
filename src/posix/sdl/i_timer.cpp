@@ -7,7 +7,8 @@
 
 #include <SDL.h>
 
-#include "m_fixed.h"
+#include "basictypes.h"
+#include "basicinlines.h"
 #include "hardware.h"
 #include "i_system.h"
 #include "templates.h"
@@ -177,17 +178,18 @@ void I_SelectTimer()
 }
 
 // Returns the fractional amount of a tic passed since the most recent tic
-double I_GetTimeFrac (uint32 *ms)
+fixed_t I_GetTimeFrac (uint32 *ms)
 {
 	DWORD now = SDL_GetTicks ();
 	if (ms) *ms = TicStart + (1000 / TICRATE);
 	if (TicStart == 0)
 	{
-		return 1;
+		return FRACUNIT;
 	}
 	else
 	{
-		return clamp<double>((now - TicStart) * TICRATE / 1000., 0, 1);
+		fixed_t frac = clamp<fixed_t> ((now - TicStart)*FRACUNIT*TICRATE/1000, 0, FRACUNIT);
+		return frac;
 	}
 }
 

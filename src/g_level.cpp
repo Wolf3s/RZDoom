@@ -79,22 +79,19 @@
 #include "v_palette.h"
 #include "menu/menu.h"
 #include "a_sharedglobal.h"
+#include "a_strifeglobal.h"
 #include "r_data/colormaps.h"
+#include "farchive.h"
 #include "r_renderer.h"
-#include "r_utility.h"
-#include "p_spec.h"
-#include "serializer.h"
 
 #include "gi.h"
 
 #include "g_hub.h"
 
-#include <string.h>
-
 void STAT_StartNewGame(const char *lev);
 void STAT_ChangeLevel(const char *newl);
 
-EXTERN_CVAR(Bool, save_formatted)
+
 EXTERN_CVAR (Float, sv_gravity)
 EXTERN_CVAR (Float, sv_aircontrol)
 EXTERN_CVAR (Int, disableautosave)
@@ -182,16 +179,6 @@ CCMD (map)
 			}
 			else
 			{
-				if (argv.argc() > 2 && stricmp(argv[2], "coop") == 0)
-				{
-					deathmatch = false;
-					multiplayernext = true;
-				}
-				else if (argv.argc() > 2 && stricmp(argv[2], "dm") == 0)
-				{
-					deathmatch = true;
-					multiplayernext = true;
-				}
 				G_DeferedInitNew (argv[1]);
 			}
 		}
@@ -203,7 +190,7 @@ CCMD (map)
 	}
 	else
 	{
-		Printf ("Usage: map <map name> [coop|dm]\n");
+		Printf ("Usage: map <map name>\n");
 	}
 }
 
@@ -229,16 +216,6 @@ CCMD(recordmap)
 			}
 			else
 			{
-				if (argv.argc() > 3 && stricmp(argv[3], "coop") == 0)
-				{
-					deathmatch = false;
-					multiplayernext = true;
-				}
-				else if (argv.argc() > 3 && stricmp(argv[3], "dm") == 0)
-				{
-					deathmatch = true;
-					multiplayernext = true;
-				}
 				G_DeferedInitNew(argv[2]);
 				gameaction = ga_recordgame;
 				newdemoname = argv[1];
@@ -253,7 +230,7 @@ CCMD(recordmap)
 	}
 	else
 	{
-		Printf("Usage: recordmap <filename> <map name> [coop|dm]\n");
+		Printf("Usage: recordmap <filename> <map name>\n");
 	}
 }
 
@@ -279,23 +256,13 @@ CCMD (open)
 		}
 		else
 		{
-			if (argv.argc() > 2 && stricmp(argv[2], "coop") == 0)
-			{
-				deathmatch = false;
-				multiplayernext = true;
-			}
-			else if (argv.argc() > 2 && stricmp(argv[2], "dm") == 0)
-			{
-				deathmatch = true;
-				multiplayernext = true;
-			}
 			gameaction = ga_newgame2;
 			d_skill = -1;
 		}
 	}
 	else
 	{
-		Printf ("Usage: open <map file> [coop|dm]\n");
+		Printf ("Usage: open <map file>\n");
 	}
 }
 
@@ -324,8 +291,7 @@ void G_NewInit ()
 	G_ClearSnapshots ();
 	ST_SetNeedRefresh();
 	netgame = false;
-	multiplayer = multiplayernext;
-	multiplayernext = false;
+	multiplayer = false;
 	if (demoplayback)
 	{
 		C_RestoreCVars ();
@@ -404,9 +370,9 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	bool wantFast;
 	int i;
 
+	G_ClearHubInfo();
 	if (!savegamerestore)
 	{
-		G_ClearHubInfo();
 		G_ClearSnapshots ();
 		P_RemoveDefereds ();
 
@@ -477,8 +443,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 		// Set the initial quest log text for Strife.
 		for (i = 0; i < MAXPLAYERS; ++i)
 		{
-			if (playeringame[i])
-				players[i].SetLogText ("Find help");
+			players[i].SetLogText ("Find help");
 		}
 	}
 
@@ -559,8 +524,6 @@ static bool		unloading;
 //
 //==========================================================================
 
-EXTERN_CVAR(Bool, sv_singleplayerrespawn)
-
 void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill)
 {
 	level_info_t *nextinfo = NULL;
@@ -570,7 +533,7 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 		Printf (TEXTCOLOR_RED "Unloading scripts cannot exit the level again.\n");
 		return;
 	}
-	if (gameaction == ga_completed && !(i_compatflags2 & COMPATF2_MULTIEXIT))	// do not exit multiple times.
+	if (gameaction == ga_completed)	// do not exit multiple times.
 	{
 		return;
 	}
@@ -669,7 +632,7 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 
 			// If this is co-op, respawn any dead players now so they can
 			// keep their inventory on the next map.
-			if ((multiplayer || level.flags2 & LEVEL2_ALLOWRESPAWN || sv_singleplayerrespawn) && !deathmatch && player->playerstate == PST_DEAD)
+			if ((multiplayer || level.flags2 & LEVEL2_ALLOWRESPAWN) && !deathmatch && player->playerstate == PST_DEAD)
 			{
 				// Copied from the end of P_DeathThink [[
 				player->cls = NULL;		// Force a new class if the player is using a random class
@@ -857,7 +820,7 @@ void G_DoCompleted (void)
 		}
 		else
 		{ // Make sure we don't have a snapshot lying around from before.
-			level.info->Snapshot.Clean();
+			level.info->ClearSnapshot();
 		}
 	}
 	else
@@ -903,7 +866,7 @@ public:
 	void Tick ();
 };
 
-IMPLEMENT_CLASS(DAutosaver, false, false)
+IMPLEMENT_CLASS (DAutosaver)
 
 void DAutosaver::Tick ()
 {
@@ -1092,7 +1055,7 @@ void G_WorldDone (void)
 	if (strncmp (nextlevel, "enDSeQ", 6) == 0)
 	{
 		FName endsequence = ENamedName(strtol(nextlevel.GetChars()+6, NULL, 16));
-		// Strife needs a special case here to choose between good and sad ending. Bad is handled elsewhere.
+		// Strife needs a special case here to choose between good and sad ending. Bad is handled elsewherw.
 		if (endsequence == NAME_Inter_Strife)
 		{
 			if (players[0].mo->FindInventory (QuestItemClasses[24]) ||
@@ -1196,7 +1159,8 @@ void G_StartTravel ()
 			// Only living players travel. Dead ones get a new body on the new level.
 			if (players[i].health > 0)
 			{
-				pawn->UnlinkFromWorld (nullptr);
+				pawn->UnlinkFromWorld ();
+				P_DelSector_List ();
 				int tid = pawn->tid;	// Save TID
 				pawn->RemoveFromHash ();
 				pawn->tid = tid;		// Restore TID (but no longer linked into the hash chain)
@@ -1205,7 +1169,8 @@ void G_StartTravel ()
 				for (inv = pawn->Inventory; inv != NULL; inv = inv->Inventory)
 				{
 					inv->ChangeStatNum (STAT_TRAVELLING);
-					inv->UnlinkFromWorld (nullptr);
+					inv->UnlinkFromWorld ();
+					P_DelSector_List ();
 				}
 			}
 		}
@@ -1240,70 +1205,56 @@ void G_FinishTravel ()
 		pnum = int(pawn->player - players);
 		pawn->ChangeStatNum (STAT_PLAYER);
 		pawndup = pawn->player->mo;
+		start = NULL;
 		assert (pawn != pawndup);
-
-		start = G_PickPlayerStart(pnum, 0);
-		if (start == NULL)
-		{
-			if (pawndup != nullptr)
+		if (pawndup == NULL)
+		{ // Oh no! there was no start for this player!
+			start = G_PickPlayerStart(pnum, PPS_FORCERANDOM); 
+			if (start != NULL) pawndup = P_SpawnPlayer(start, pnum, (level.flags2 & LEVEL2_PRERAISEWEAPON) ? SPF_WEAPONFULLYUP : 0);
+			if (pawndup == NULL)
 			{
-				Printf(TEXTCOLOR_RED "No player %d start to travel to!\n", pnum + 1);
-				// Move to the coordinates this player had when they left the level.
-				pawn->SetXYZ(pawndup->Pos());
-			}
-			else
-			{
-				// Could not find a start for this player at all. This really should never happen but if it does, let's better abort.
-				DThinker::DestroyThinkersInList(STAT_TRAVELLING);
-				I_Error ("No player %d start to travel to!\n", pnum + 1);
+				pawn->flags |= MF_NOSECTOR | MF_NOBLOCKMAP;
+				pawn->Destroy();
+				continue;
 			}
 		}
+
+		if (start == NULL) start = G_PickPlayerStart(pnum, 0);
 		oldpawn = pawndup;
 
 		// The player being spawned here is a short lived dummy and
 		// must not start any ENTER script or big problems will happen.
 		pawndup = P_SpawnPlayer(start, pnum, SPF_TEMPPLAYER);
-		if (pawndup != NULL)
+		if (!(changeflags & CHANGELEVEL_KEEPFACING))
 		{
-			if (!(changeflags & CHANGELEVEL_KEEPFACING))
-			{
-				pawn->Angles = pawndup->Angles;
-			}
-			pawn->SetXYZ(pawndup->Pos());
-			pawn->Vel = pawndup->Vel;
-			pawn->Sector = pawndup->Sector;
-			pawn->floorz = pawndup->floorz;
-			pawn->ceilingz = pawndup->ceilingz;
-			pawn->dropoffz = pawndup->dropoffz;
-			pawn->floorsector = pawndup->floorsector;
-			pawn->floorpic = pawndup->floorpic;
-			pawn->floorterrain = pawndup->floorterrain;
-			pawn->ceilingsector = pawndup->ceilingsector;
-			pawn->ceilingpic = pawndup->ceilingpic;
-			pawn->Floorclip = pawndup->Floorclip;
-			pawn->waterlevel = pawndup->waterlevel;
+			pawn->angle = pawndup->angle;
+			pawn->pitch = pawndup->pitch;
 		}
-		else
-		{
-			P_FindFloorCeiling(pawn);
-		}
+		pawn->SetXYZ(pawndup->X(), pawndup->Y(), pawndup->Z());
+		pawn->velx = pawndup->velx;
+		pawn->vely = pawndup->vely;
+		pawn->velz = pawndup->velz;
+		pawn->Sector = pawndup->Sector;
+		pawn->floorz = pawndup->floorz;
+		pawn->ceilingz = pawndup->ceilingz;
+		pawn->dropoffz = pawndup->dropoffz;
+		pawn->floorsector = pawndup->floorsector;
+		pawn->floorpic = pawndup->floorpic;
+		pawn->floorterrain = pawndup->floorterrain;
+		pawn->ceilingsector = pawndup->ceilingsector;
+		pawn->ceilingpic = pawndup->ceilingpic;
+		pawn->floorclip = pawndup->floorclip;
+		pawn->waterlevel = pawndup->waterlevel;
 		pawn->target = NULL;
 		pawn->lastenemy = NULL;
 		pawn->player->mo = pawn;
 		pawn->player->camera = pawn;
 		pawn->player->viewheight = pawn->ViewHeight;
 		pawn->flags2 &= ~MF2_BLASTED;
-		if (oldpawn != nullptr)
-		{
-			DObject::StaticPointerSubstitution (oldpawn, pawn);
-			oldpawn->Destroy();
-		}
-		if (pawndup != NULL)
-		{
-			pawndup->Destroy();
-		}
-		pawn->LinkToWorld (nullptr);
-		pawn->ClearInterpolation();
+		DObject::StaticPointerSubstitution (oldpawn, pawn);
+		oldpawn->Destroy();
+		pawndup->Destroy ();
+		pawn->LinkToWorld ();
 		pawn->AddToHash ();
 		pawn->SetState(pawn->SpawnState);
 		pawn->player->SendPitchLimits();
@@ -1311,7 +1262,7 @@ void G_FinishTravel ()
 		for (inv = pawn->Inventory; inv != NULL; inv = inv->Inventory)
 		{
 			inv->ChangeStatNum (STAT_INVENTORY);
-			inv->LinkToWorld (nullptr);
+			inv->LinkToWorld ();
 			inv->Travelled ();
 		}
 		if (ib_compatflags & BCOMPATF_RESETPLAYERSPEED)
@@ -1321,18 +1272,10 @@ void G_FinishTravel ()
 		if (level.FromSnapshot)
 		{
 			FBehavior::StaticStartTypedScripts (SCRIPT_Return, pawn, true);
-
-			// [Nash] run REOPEN scripts upon map re-entry
-			FBehavior::StaticStartTypedScripts(SCRIPT_Reopen, NULL, false);
 		}
 	}
 
 	bglobal.FinishTravel ();
-
-	// make sure that, after travelling has completed, no travelling thinkers are left.
-	// Since this list is excluded from regular thinker cleaning, anything that may survive through here
-	// will endlessly multiply and severely break the following savegames or just simply crash on broken pointers.
-	DThinker::DestroyThinkersInList(STAT_TRAVELLING);
 }
  
 //==========================================================================
@@ -1351,7 +1294,7 @@ void G_InitLevelLocals ()
 	NormalLight.ChangeColor (PalEntry (255, 255, 255), 0);
 
 	level.gravity = sv_gravity * 35/TICRATE;
-	level.aircontrol = sv_aircontrol;
+	level.aircontrol = (fixed_t)(sv_aircontrol * 65536.f);
 	level.teamdamage = teamdamage;
 	level.flags = 0;
 	level.flags2 = 0;
@@ -1392,7 +1335,7 @@ void G_InitLevelLocals ()
 	}
 	if (info->aircontrol != 0.f)
 	{
-		level.aircontrol = info->aircontrol;
+		level.aircontrol = (fixed_t)(info->aircontrol * 65536.f);
 	}
 	if (info->teamdamage != 0.f)
 	{
@@ -1424,6 +1367,7 @@ void G_InitLevelLocals ()
 	NormalLight.ChangeFade (level.fadeto);
 
 	level.DefaultEnvironment = info->DefaultEnvironment;
+	level.DefaultSkybox = NULL;
 }
 
 //==========================================================================
@@ -1496,15 +1440,161 @@ FString CalcMapName (int episode, int level)
 
 void G_AirControlChanged ()
 {
-	if (level.aircontrol <= 1/256.)
+	if (level.aircontrol <= 256)
 	{
-		level.airfriction = 1.;
+		level.airfriction = FRACUNIT;
 	}
 	else
 	{
 		// Friction is inversely proportional to the amount of control
-		level.airfriction = level.aircontrol * -0.0941 + 1.0004;
+		float fric = ((float)level.aircontrol/65536.f) * -0.0941f + 1.0004f;
+		level.airfriction = (fixed_t)(fric * 65536.f);
 	}
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+void G_SerializeLevel (FArchive &arc, bool hubLoad)
+{
+	int i = level.totaltime;
+	
+	Renderer->StartSerialize(arc);
+
+	arc << level.flags
+		<< level.flags2
+		<< level.fadeto
+		<< level.found_secrets
+		<< level.found_items
+		<< level.killed_monsters
+		<< level.gravity
+		<< level.aircontrol
+		<< level.teamdamage
+		<< level.maptime
+		<< i;
+
+	if (SaveVersion >= 3313)
+	{
+		// This is a player property now
+		int nextmusic;
+		arc << nextmusic;
+	}
+
+	// Hub transitions must keep the current total time
+	if (!hubLoad)
+		level.totaltime = i;
+
+	if (SaveVersion >= 4507)
+	{
+		arc << level.skytexture1 << level.skytexture2;
+	}
+	else
+	{
+		level.skytexture1 = TexMan.GetTexture(arc.ReadName(), FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
+		level.skytexture2 = TexMan.GetTexture(arc.ReadName(), FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
+	}
+	if (arc.IsLoading())
+	{
+		sky1texture = level.skytexture1;
+		sky2texture = level.skytexture2;
+		R_InitSkyMap();
+	}
+
+	G_AirControlChanged ();
+
+	BYTE t;
+
+	// Does this level have scrollers?
+	if (arc.IsStoring ())
+	{
+		t = level.Scrolls ? 1 : 0;
+		arc << t;
+	}
+	else
+	{
+		arc << t;
+		if (level.Scrolls)
+		{
+			delete[] level.Scrolls;
+			level.Scrolls = NULL;
+		}
+		if (t)
+		{
+			level.Scrolls = new FSectorScrollValues[numsectors];
+			memset (level.Scrolls, 0, sizeof(level.Scrolls)*numsectors);
+		}
+	}
+
+	FBehavior::StaticSerializeModuleStates (arc);
+	if (arc.IsLoading()) interpolator.ClearInterpolations();
+	P_SerializeThinkers (arc, hubLoad);
+	P_SerializeWorld (arc);
+	P_SerializePolyobjs (arc);
+	P_SerializeSubsectors(arc);
+	StatusBar->Serialize (arc);
+
+	if (SaveVersion >= 4222)
+	{ // This must be done *after* thinkers are serialized.
+		arc << level.DefaultSkybox;
+	}
+
+	arc << level.total_monsters << level.total_items << level.total_secrets;
+
+	// Does this level have custom translations?
+	FRemapTable *trans;
+	WORD w;
+	if (arc.IsStoring ())
+	{
+		for (unsigned int i = 0; i < translationtables[TRANSLATION_LevelScripted].Size(); ++i)
+		{
+			trans = translationtables[TRANSLATION_LevelScripted][i];
+			if (trans != NULL && !trans->IsIdentity())
+			{
+				w = WORD(i);
+				arc << w;
+				trans->Serialize(arc);
+			}
+		}
+		w = 0xffff;
+		arc << w;
+	}
+	else
+	{
+		while (arc << w, w != 0xffff)
+		{
+			trans = translationtables[TRANSLATION_LevelScripted].GetVal(w);
+			if (trans == NULL)
+			{
+				trans = new FRemapTable;
+				translationtables[TRANSLATION_LevelScripted].SetVal(w, trans);
+			}
+			trans->Serialize(arc);
+		}
+	}
+
+	// This must be saved, too, of course!
+	FCanvasTextureInfo::Serialize (arc);
+	AM_SerializeMarkers(arc);
+
+	P_SerializePlayers (arc, hubLoad);
+	P_SerializeSounds (arc);
+	if (arc.IsLoading())
+	{
+		for (i = 0; i < numsectors; i++)
+		{
+			P_Recalculate3DFloors(&sectors[i]);
+		}
+		for (i = 0; i < MAXPLAYERS; ++i)
+		{
+			if (playeringame[i] && players[i].mo != NULL)
+			{
+				players[i].mo->SetupWeaponSlots();
+			}
+		}
+	}
+	Renderer->EndSerialize(arc);
 }
 
 //==========================================================================
@@ -1515,18 +1605,19 @@ void G_AirControlChanged ()
 
 void G_SnapshotLevel ()
 {
-	level.info->Snapshot.Clean();
+	if (level.info->snapshot)
+		delete level.info->snapshot;
 
 	if (level.info->isValid())
 	{
-		FSerializer arc;
+		level.info->snapshotVer = SAVEVER;
+		level.info->snapshot = new FCompressedMemFile;
+		level.info->snapshot->Open ();
 
-		if (arc.OpenWriter(save_formatted))
-		{
-			SaveVersion = SAVEVER;
-			G_SerializeLevel(arc, false);
-			level.info->Snapshot = arc.GetCompressedOutput();
-		}
+		FArchive arc (*level.info->snapshot);
+
+		SaveVersion = SAVEVER;
+		G_SerializeLevel (arc, false);
 	}
 }
 
@@ -1539,19 +1630,18 @@ void G_SnapshotLevel ()
 
 void G_UnSnapshotLevel (bool hubLoad)
 {
-	if (level.info->Snapshot.mBuffer == nullptr)
+	if (level.info->snapshot == NULL)
 		return;
 
 	if (level.info->isValid())
 	{
-		FSerializer arc;
-		if (!arc.OpenReader(&level.info->Snapshot))
-		{
-			I_Error("Failed to load savegame");
-			return;
-		}
-
+		SaveVersion = level.info->snapshotVer;
+		level.info->snapshot->Reopen ();
+		FArchive arc (*level.info->snapshot);
+		if (hubLoad)
+			arc.SetHubTravel ();
 		G_SerializeLevel (arc, hubLoad);
+		arc.Close ();
 		level.FromSnapshot = true;
 
 		TThinkerIterator<APlayerPawn> it;
@@ -1581,7 +1671,7 @@ void G_UnSnapshotLevel (bool hubLoad)
 		}
 	}
 	// No reason to keep the snapshot around once the level's been entered.
-	level.info->Snapshot.Clean();
+	level.info->ClearSnapshot();
 	if (hubLoad)
 	{
 		// Unlock ACS global strings that were locked when the snapshot was made.
@@ -1594,28 +1684,10 @@ void G_UnSnapshotLevel (bool hubLoad)
 //
 //==========================================================================
 
-void G_WriteSnapshots(TArray<FString> &filenames, TArray<FCompressedBuffer> &buffers)
+static void writeSnapShot (FArchive &arc, level_info_t *i)
 {
-	unsigned int i;
-	FString filename;
-
-	for (i = 0; i < wadlevelinfos.Size(); i++)
-	{
-		if (wadlevelinfos[i].Snapshot.mCompressedSize > 0)
-		{
-			filename.Format("%s.map.json", wadlevelinfos[i].MapName.GetChars());
-			filename.ToLower();
-			filenames.Push(filename);
-			buffers.Push(wadlevelinfos[i].Snapshot);
-		}
-	}
-	if (TheDefaultLevelInfo.Snapshot.mCompressedSize > 0)
-	{
-		filename.Format("%s.mapd.json", TheDefaultLevelInfo.MapName.GetChars());
-		filename.ToLower();
-		filenames.Push(filename);
-		buffers.Push(TheDefaultLevelInfo.Snapshot);
-	}
+	arc << i->snapshotVer << i->MapName;
+	i->snapshot->Serialize (arc);
 }
 
 //==========================================================================
@@ -1623,39 +1695,70 @@ void G_WriteSnapshots(TArray<FString> &filenames, TArray<FCompressedBuffer> &buf
 //
 //==========================================================================
 
-void G_WriteVisited(FSerializer &arc)
+void G_WriteSnapshots (FILE *file)
 {
-	if (arc.BeginArray("visited"))
+	unsigned int i;
+
+	for (i = 0; i < wadlevelinfos.Size(); i++)
 	{
-		// Write out which levels have been visited
-		for (auto & wi : wadlevelinfos)
+		if (wadlevelinfos[i].snapshot)
 		{
-			if (wi.flags & LEVEL_VISITED)
-			{
-				arc.AddString(nullptr, wi.MapName);
-			}
+			FPNGChunkArchive arc (file, SNAP_ID);
+			writeSnapShot (arc, (level_info_t *)&wadlevelinfos[i]);
 		}
-		arc.EndArray();
+	}
+	if (TheDefaultLevelInfo.snapshot != NULL)
+	{
+		FPNGChunkArchive arc (file, DSNP_ID);
+		writeSnapShot(arc, &TheDefaultLevelInfo);
+	}
+
+	FPNGChunkArchive *arc = NULL;
+	
+	// Write out which levels have been visited
+	for (i = 0; i < wadlevelinfos.Size(); ++i)
+	{
+		if (wadlevelinfos[i].flags & LEVEL_VISITED)
+		{
+			if (arc == NULL)
+			{
+				arc = new FPNGChunkArchive (file, VIST_ID);
+			}
+			(*arc) << wadlevelinfos[i].MapName;
+		}
+	}
+
+	if (arc != NULL)
+	{
+		FString empty = "";
+		(*arc) << empty;
+		delete arc;
 	}
 
 	// Store player classes to be used when spawning a random class
 	if (multiplayer)
 	{
-		arc.Array("randomclasses", SinglePlayerClass, MAXPLAYERS);
+		FPNGChunkArchive arc2 (file, RCLS_ID);
+		for (i = 0; i < MAXPLAYERS; ++i)
+		{
+			SBYTE cnum = SinglePlayerClass[i];
+			arc2 << cnum;
+		}
 	}
 
-	if (arc.BeginObject("playerclasses"))
+	// Store player classes that are currently in use
+	FPNGChunkArchive arc3 (file, PCLS_ID);
+	for (i = 0; i < MAXPLAYERS; ++i)
 	{
-		for (int i = 0; i < MAXPLAYERS; ++i)
+		BYTE pnum;
+		if (playeringame[i])
 		{
-			if (playeringame[i])
-			{
-				FString key;
-				key.Format("%d", i);
-				arc(key, players[i].cls);
-			}
+			pnum = i;
+			arc3 << pnum;
+			arc3.UserWriteClass (players[i].cls);
 		}
-		arc.EndObject();
+		pnum = 255;
+		arc3 << pnum;
 	}
 }
 
@@ -1664,89 +1767,126 @@ void G_WriteVisited(FSerializer &arc)
 //
 //==========================================================================
 
-void G_ReadSnapshots(FResourceFile *resf)
+void G_ReadSnapshots (PNGHandle *png)
 {
+	DWORD chunkLen;
+	BYTE namelen;
+	char mapname[256];
 	FString MapName;
 	level_info_t *i;
 
-	G_ClearSnapshots();
+	G_ClearSnapshots ();
 
-	for (unsigned j = 0; j < resf->LumpCount(); j++)
+	chunkLen = (DWORD)M_FindPNGChunk (png, SNAP_ID);
+	while (chunkLen != 0)
 	{
-		FResourceLump * resl = resf->GetLump(j);
-		if (resl != nullptr)
+		FPNGChunkArchive arc (png->File->GetFile(), SNAP_ID, chunkLen);
+		DWORD snapver;
+
+		arc << snapver;
+		if (SaveVersion < 4508)
 		{
-			auto ptr = strstr(resl->FullName, ".map.json");
-			if (ptr != nullptr)
+			arc << namelen;
+			arc.Read(mapname, namelen);
+			mapname[namelen] = 0;
+			MapName = mapname;
+		}
+		else arc << MapName;
+		i = FindLevelInfo (MapName);
+		i->snapshotVer = snapver;
+		i->snapshot = new FCompressedMemFile;
+		i->snapshot->Serialize (arc);
+		chunkLen = (DWORD)M_NextPNGChunk (png, SNAP_ID);
+	}
+
+	chunkLen = (DWORD)M_FindPNGChunk (png, DSNP_ID);
+	if (chunkLen != 0)
+	{
+		FPNGChunkArchive arc (png->File->GetFile(), DSNP_ID, chunkLen);
+		DWORD snapver;
+
+		arc << snapver;
+		if (SaveVersion < 4508)
+		{
+			arc << namelen;
+			arc.Read(mapname, namelen);
+			mapname[namelen] = 0;
+			MapName = mapname;
+		}
+		else arc << MapName;
+		TheDefaultLevelInfo.snapshotVer = snapver;
+		TheDefaultLevelInfo.snapshot = new FCompressedMemFile;
+		TheDefaultLevelInfo.snapshot->Serialize (arc);
+	}
+
+	chunkLen = (DWORD)M_FindPNGChunk (png, VIST_ID);
+	if (chunkLen != 0)
+	{
+		FPNGChunkArchive arc (png->File->GetFile(), VIST_ID, chunkLen);
+
+		if (SaveVersion < 4508)
+		{
+			arc << namelen;
+			while (namelen != 0)
 			{
-				ptrdiff_t maplen = ptr - resl->FullName.GetChars();
-				FString mapname(resl->FullName.GetChars(), (size_t)maplen);
+				arc.Read(mapname, namelen);
+				mapname[namelen] = 0;
 				i = FindLevelInfo(mapname);
-				if (i != nullptr)
-				{
-					i->Snapshot = resl->GetRawData();
-				}
+				i->flags |= LEVEL_VISITED;
+				arc << namelen;
 			}
-			else
+		}
+		else
+		{
+			while (arc << MapName, MapName.Len() > 0)
 			{
-				auto ptr = strstr(resl->FullName, ".mapd.json");
-				if (ptr != nullptr)
-				{
-					ptrdiff_t maplen = ptr - resl->FullName.GetChars();
-					FString mapname(resl->FullName.GetChars(), (size_t)maplen);
-					TheDefaultLevelInfo.Snapshot = resl->GetRawData();
-				}
+				i = FindLevelInfo(MapName);
+				i->flags |= LEVEL_VISITED;
 			}
 		}
 	}
-}
 
-//==========================================================================
-//
-//
-//==========================================================================
-
-void G_ReadVisited(FSerializer &arc)
-{
-	if (arc.BeginArray("visited"))
+	chunkLen = (DWORD)M_FindPNGChunk (png, RCLS_ID);
+	if (chunkLen != 0)
 	{
-		for (int s = arc.ArraySize(); s > 0; s--)
+		FPNGChunkArchive arc (png->File->GetFile(), PCLS_ID, chunkLen);
+		SBYTE cnum;
+
+		for (DWORD j = 0; j < chunkLen; ++j)
 		{
-			FString str;
-			arc(nullptr, str);
-			auto i = FindLevelInfo(str);
-			if (i != nullptr) i->flags |= LEVEL_VISITED;
+			arc << cnum;
+			SinglePlayerClass[j] = cnum;
 		}
-		arc.EndArray();
 	}
 
-	arc.Array("randomclasses", SinglePlayerClass, MAXPLAYERS);
-
-	if (arc.BeginObject("playerclasses"))
+	chunkLen = (DWORD)M_FindPNGChunk (png, PCLS_ID);
+	if (chunkLen != 0)
 	{
-		for (int i = 0; i < MAXPLAYERS; ++i)
+		FPNGChunkArchive arc (png->File->GetFile(), RCLS_ID, chunkLen);
+		BYTE pnum;
+
+		arc << pnum;
+		while (pnum != 255)
 		{
-			FString key;
-			key.Format("%d", i);
-			arc(key, players[i].cls);
+			arc.UserReadClass (players[pnum].cls);
+			arc << pnum;
 		}
-		arc.EndObject();
 	}
+	png->File->ResetFilePtr();
 }
 
-//==========================================================================
-//
-//
 //==========================================================================
 
 CCMD(listsnapshots)
 {
 	for (unsigned i = 0; i < wadlevelinfos.Size(); ++i)
 	{
-		FCompressedBuffer *snapshot = &wadlevelinfos[i].Snapshot;
-		if (snapshot->mBuffer != nullptr)
+		FCompressedMemFile *snapshot = wadlevelinfos[i].snapshot;
+		if (snapshot != NULL)
 		{
-			Printf("%s (%u -> %u bytes)\n", wadlevelinfos[i].MapName.GetChars(), snapshot->mCompressedSize, snapshot->mSize);
+			unsigned int comp, uncomp;
+			snapshot->GetSizes(comp, uncomp);
+			Printf("%s (%u -> %u bytes)\n", wadlevelinfos[i].MapName.GetChars(), comp, uncomp);
 		}
 	}
 }
@@ -1756,32 +1896,38 @@ CCMD(listsnapshots)
 //
 //==========================================================================
 
-void P_WriteACSDefereds (FSerializer &arc)
+static void writeDefereds (FArchive &arc, level_info_t *i)
 {
-	bool found = false;
+	arc << i->MapName << i->defered;
+}
 
-	// only write this stuff if needed
-	for (auto &wi : wadlevelinfos)
+//==========================================================================
+//
+//
+//==========================================================================
+
+void P_WriteACSDefereds (FILE *file)
+{
+	FPNGChunkArchive *arc = NULL;
+
+	for (unsigned int i = 0; i < wadlevelinfos.Size(); i++)
 	{
-		if (wi.deferred.Size() > 0)
+		if (wadlevelinfos[i].defered)
 		{
-			found = true;
-			break;
-		}
-	}
-	if (found && arc.BeginObject("deferred"))
-	{
-		for (auto &wi : wadlevelinfos)
-		{
-			if (wi.deferred.Size() > 0)
+			if (arc == NULL)
 			{
-				if (wi.deferred.Size() > 0)
-				{
-					arc(wi.MapName, wi.deferred);
-				}
+				arc = new FPNGChunkArchive (file, ACSD_ID);
 			}
+			writeDefereds (*arc, (level_info_t *)&wadlevelinfos[i]);
 		}
-		arc.EndObject();
+	}
+
+	if (arc != NULL)
+	{
+		// Signal end of defereds
+		FString empty = "";
+		(*arc) << empty;
+		delete arc;
 	}
 }
 
@@ -1790,27 +1936,49 @@ void P_WriteACSDefereds (FSerializer &arc)
 //
 //==========================================================================
 
-void P_ReadACSDefereds (FSerializer &arc)
+void P_ReadACSDefereds (PNGHandle *png)
 {
+	BYTE namelen;
+	char mapname[256];
 	FString MapName;
-	
+	size_t chunklen;
+
 	P_RemoveDefereds ();
 
-	if (arc.BeginObject("deferred"))
+	if ((chunklen = M_FindPNGChunk (png, ACSD_ID)) != 0)
 	{
-		const char *key;
+		FPNGChunkArchive arc (png->File->GetFile(), ACSD_ID, chunklen);
 
-		while ((key = arc.GetKey()))
+		if (SaveVersion < 4508)
 		{
-			level_info_t *i = FindLevelInfo(key);
-			if (i == NULL)
+			arc << namelen;
+			while (namelen != 0)
 			{
-				I_Error("Unknown map '%s' in savegame", key);
+				arc.Read(mapname, namelen);
+				mapname[namelen] = 0;
+				level_info_t *i = FindLevelInfo(mapname);
+				if (i == NULL)
+				{
+					I_Error("Unknown map '%s' in savegame", mapname);
+				}
+				arc << i->defered;
+				arc << namelen;
 			}
-			arc(nullptr, i->deferred);
 		}
-		arc.EndObject();
+		else
+		{
+			while (arc << MapName, MapName.Len() > 0)
+			{
+				level_info_t *i = FindLevelInfo(MapName);
+				if (i == NULL)
+				{
+					I_Error("Unknown map '%s' in savegame", MapName.GetChars());
+				}
+				arc << i->defered;
+			}
+		}
 	}
+	png->File->ResetFilePtr();
 }
 
 
@@ -1822,9 +1990,9 @@ void P_ReadACSDefereds (FSerializer &arc)
 void FLevelLocals::Tick ()
 {
 	// Reset carry sectors
-	if (Scrolls.Size() > 0)
+	if (Scrolls != NULL)
 	{
-		memset (&Scrolls[0], 0, sizeof(Scrolls[0])*Scrolls.Size());
+		memset (Scrolls, 0, sizeof(*Scrolls)*numsectors);
 	}
 }
 
@@ -1833,61 +2001,18 @@ void FLevelLocals::Tick ()
 //
 //==========================================================================
 
-void FLevelLocals::AddScroller (int secnum)
+void FLevelLocals::AddScroller (DScroller *scroller, int secnum)
 {
 	if (secnum < 0)
 	{
 		return;
 	}
-	if (Scrolls.Size() == 0)
+	if (Scrolls == NULL)
 	{
-		Scrolls.Resize(numsectors);
-		memset (&Scrolls[0], 0, sizeof(Scrolls[0])*numsectors);
+		Scrolls = new FSectorScrollValues[numsectors];
+		memset (Scrolls, 0, sizeof(*Scrolls)*numsectors);
 	}
 }
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-DEFINE_FIELD(FLevelLocals, time)
-DEFINE_FIELD(FLevelLocals, maptime)
-DEFINE_FIELD(FLevelLocals, totaltime)
-DEFINE_FIELD(FLevelLocals, starttime)
-DEFINE_FIELD(FLevelLocals, partime)
-DEFINE_FIELD(FLevelLocals, sucktime)
-DEFINE_FIELD(FLevelLocals, cluster)
-DEFINE_FIELD(FLevelLocals, clusterflags)
-DEFINE_FIELD(FLevelLocals, levelnum)
-DEFINE_FIELD(FLevelLocals, LevelName)
-DEFINE_FIELD(FLevelLocals, MapName)
-DEFINE_FIELD(FLevelLocals, NextMap)
-DEFINE_FIELD(FLevelLocals, NextSecretMap)
-DEFINE_FIELD(FLevelLocals, maptype)
-DEFINE_FIELD(FLevelLocals, Music)
-DEFINE_FIELD(FLevelLocals, musicorder)
-DEFINE_FIELD(FLevelLocals, total_secrets)
-DEFINE_FIELD(FLevelLocals, found_secrets)
-DEFINE_FIELD(FLevelLocals, total_items)
-DEFINE_FIELD(FLevelLocals, found_items)
-DEFINE_FIELD(FLevelLocals, total_monsters)
-DEFINE_FIELD(FLevelLocals, killed_monsters)
-DEFINE_FIELD(FLevelLocals, gravity)
-DEFINE_FIELD(FLevelLocals, aircontrol)
-DEFINE_FIELD(FLevelLocals, airfriction)
-DEFINE_FIELD(FLevelLocals, airsupply)
-DEFINE_FIELD(FLevelLocals, teamdamage)
-DEFINE_FIELD_BIT(FLevelLocals, flags, monsterstelefrag, LEVEL_MONSTERSTELEFRAG)
-DEFINE_FIELD_BIT(FLevelLocals, flags, actownspecial, LEVEL_ACTOWNSPECIAL)
-DEFINE_FIELD_BIT(FLevelLocals, flags, sndseqtotalctrl, LEVEL_SNDSEQTOTALCTRL)
-DEFINE_FIELD_BIT(FLevelLocals, flags2, allmap, LEVEL2_ALLMAP)
-DEFINE_FIELD_BIT(FLevelLocals, flags2, missilesactivateimpact, LEVEL2_MISSILESACTIVATEIMPACT)
-DEFINE_FIELD_BIT(FLevelLocals, flags2, monsterfallingdamage, LEVEL2_MONSTERFALLINGDAMAGE)
-DEFINE_FIELD_BIT(FLevelLocals, flags2, checkswitchrange, LEVEL2_CHECKSWITCHRANGE)
-DEFINE_FIELD_BIT(FLevelLocals, flags2, polygrind, LEVEL2_POLYGRIND)
-DEFINE_FIELD_BIT(FLevelLocals, flags2, nomonsters, LEVEL2_NOMONSTERS)
 
 //==========================================================================
 //

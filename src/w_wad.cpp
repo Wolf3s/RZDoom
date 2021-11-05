@@ -256,7 +256,7 @@ void FWadCollection::AddFile (const char *filename, FileReader *wadinfo)
 		}
 	}
 
-	if (!batchrun) Printf (" adding %s", filename);
+	Printf (" adding %s", filename);
 	startlump = NumLumps;
 
 	FResourceFile *resfile;
@@ -501,15 +501,6 @@ int FWadCollection::CheckNumForName (const char *name, int space, int wadnum, bo
 	return i != NULL_INDEX ? i : -1;
 }
 
-DEFINE_ACTION_FUNCTION(_Wads, CheckNumForName)
-{
-	PARAM_PROLOGUE;
-	PARAM_STRING(name);
-	PARAM_INT(ns);
-	PARAM_INT_DEF(wadnum);
-	PARAM_BOOL_DEF(exact);
-	ACTION_RETURN_INT(Wads.CheckNumForName(name, ns, wadnum, exact));
-}
 //==========================================================================
 //
 // W_GetNumForName

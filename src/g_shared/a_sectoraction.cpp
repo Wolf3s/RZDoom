@@ -37,7 +37,7 @@
 
 // The base class for sector actions ----------------------------------------
 
-IMPLEMENT_CLASS(ASectorAction, false, false)
+IMPLEMENT_CLASS (ASectorAction)
 
 ASectorAction::ASectorAction (bool activatedByUse) :
 	ActivatedByUse (activatedByUse) {}
@@ -49,27 +49,23 @@ bool ASectorAction::IsActivatedByUse() const
 
 void ASectorAction::Destroy ()
 {
-	if (Sector != nullptr)
+	// Remove ourself from this sector's list of actions
+	AActor *probe = Sector->SecActTarget;
+	union
 	{
-		// Remove ourself from this sector's list of actions
-		AActor *probe = Sector->SecActTarget;
-		union
-		{
-			AActor **act;
-			ASectorAction **secact;
-		} prev;
-		prev.secact = &Sector->SecActTarget;
+		AActor **act;
+		ASectorAction **secact;
+	} prev;
+	prev.secact = &Sector->SecActTarget;
 
-		while (probe && probe != this)
-		{
-			prev.act = &probe->tracer;
-			probe = probe->tracer;
-		}
-		if (probe != nullptr)
-		{
-			*prev.act = probe->tracer;
-		}
-		Sector = nullptr;
+	while (probe && probe != this)
+	{
+		prev.act = &probe->tracer;
+		probe = probe->tracer;
+	}
+	if (probe != NULL)
+	{
+		*prev.act = probe->tracer;
 	}
 
 	Super::Destroy ();
@@ -142,7 +138,7 @@ public:
 	bool DoTriggerAction (AActor *triggerer, int activationType);
 };
 
-IMPLEMENT_CLASS(ASecActEnter, false, false)
+IMPLEMENT_CLASS (ASecActEnter)
 
 
 bool ASecActEnter::DoTriggerAction (AActor *triggerer, int activationType)
@@ -160,7 +156,7 @@ public:
 	bool DoTriggerAction (AActor *triggerer, int activationType);
 };
 
-IMPLEMENT_CLASS(ASecActExit, false, false)
+IMPLEMENT_CLASS (ASecActExit)
 
 
 bool ASecActExit::DoTriggerAction (AActor *triggerer, int activationType)
@@ -180,8 +176,7 @@ public:
 
 // Skull Tag uses 9999 for a special that is triggered whenever
 // the player is on the sector's floor. I think this is more useful.
-
-IMPLEMENT_CLASS(ASecActHitFloor, false, false)
+IMPLEMENT_CLASS (ASecActHitFloor)
 
 
 bool ASecActHitFloor::DoTriggerAction (AActor *triggerer, int activationType)
@@ -199,7 +194,7 @@ public:
 	bool DoTriggerAction (AActor *triggerer, int activationType);
 };
 
-IMPLEMENT_CLASS(ASecActHitCeil, false, false)
+IMPLEMENT_CLASS (ASecActHitCeil)
 
 
 bool ASecActHitCeil::DoTriggerAction (AActor *triggerer, int activationType)
@@ -218,7 +213,7 @@ public:
 	bool DoTriggerAction (AActor *triggerer, int activationType);
 };
 
-IMPLEMENT_CLASS(ASecActUse, false, false)
+IMPLEMENT_CLASS (ASecActUse)
 
 
 bool ASecActUse::DoTriggerAction (AActor *triggerer, int activationType)
@@ -237,7 +232,7 @@ public:
 	bool DoTriggerAction (AActor *triggerer, int activationType);
 };
 
-IMPLEMENT_CLASS(ASecActUseWall, false, false)
+IMPLEMENT_CLASS (ASecActUseWall)
 
 
 bool ASecActUseWall::DoTriggerAction (AActor *triggerer, int activationType)
@@ -255,7 +250,7 @@ public:
 	bool DoTriggerAction (AActor *triggerer, int activationType);
 };
 
-IMPLEMENT_CLASS(ASecActEyesDive, false, false)
+IMPLEMENT_CLASS (ASecActEyesDive)
 
 
 bool ASecActEyesDive::DoTriggerAction (AActor *triggerer, int activationType)
@@ -273,7 +268,7 @@ public:
 	bool DoTriggerAction (AActor *triggerer, int activationType);
 };
 
-IMPLEMENT_CLASS(ASecActEyesSurface, false, false)
+IMPLEMENT_CLASS (ASecActEyesSurface)
 
 
 bool ASecActEyesSurface::DoTriggerAction (AActor *triggerer, int activationType)
@@ -291,7 +286,7 @@ public:
 	bool DoTriggerAction (AActor *triggerer, int activationType);
 };
 
-IMPLEMENT_CLASS(ASecActEyesBelowC, false, false)
+IMPLEMENT_CLASS (ASecActEyesBelowC)
 
 
 bool ASecActEyesBelowC::DoTriggerAction (AActor *triggerer, int activationType)
@@ -309,7 +304,7 @@ public:
 	bool DoTriggerAction (AActor *triggerer, int activationType);
 };
 
-IMPLEMENT_CLASS(ASecActEyesAboveC, false, false)
+IMPLEMENT_CLASS (ASecActEyesAboveC)
 
 
 bool ASecActEyesAboveC::DoTriggerAction (AActor *triggerer, int activationType)
@@ -327,7 +322,7 @@ public:
 	bool DoTriggerAction (AActor *triggerer, int activationType);
 };
 
-IMPLEMENT_CLASS(ASecActHitFakeFloor, false, false)
+IMPLEMENT_CLASS (ASecActHitFakeFloor)
 
 
 bool ASecActHitFakeFloor::DoTriggerAction (AActor *triggerer, int activationType)

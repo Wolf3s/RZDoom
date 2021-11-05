@@ -71,13 +71,13 @@ TDeletingArray<FVoxelDef *> VoxelDefs;
 struct VoxelOptions
 {
 	VoxelOptions()
-	: DroppedSpin(0), PlacedSpin(0), Scale(1.), AngleOffset(90.), OverridePalette(false)
+	: DroppedSpin(0), PlacedSpin(0), Scale(FRACUNIT), AngleOffset(ANGLE_90), OverridePalette(false)
 	{}
 
 	int			DroppedSpin;
 	int			PlacedSpin;
-	double		Scale;
-	DAngle		AngleOffset;
+	fixed_t		Scale;
+	angle_t		AngleOffset;
 	bool		OverridePalette;
 };
 
@@ -213,9 +213,9 @@ FVoxel *R_LoadKVX(int lumpnum)
 		mipl->SizeX = GetInt(rawmip + 0);
 		mipl->SizeY = GetInt(rawmip + 4);
 		mipl->SizeZ = GetInt(rawmip + 8);
-		mipl->Pivot.X = GetInt(rawmip + 12) / 256.;
-		mipl->Pivot.Y = GetInt(rawmip + 16) / 256.;
-		mipl->Pivot.Z = GetInt(rawmip + 20) / 256.;
+		mipl->PivotX = GetInt(rawmip + 12);
+		mipl->PivotY = GetInt(rawmip + 16);
+		mipl->PivotZ = GetInt(rawmip + 20);
 
 		// How much space do we have for voxdata?
 		int offsetsize = (mipl->SizeX + 1) * 4 + mipl->SizeX * (mipl->SizeY + 1) * 2;
@@ -300,7 +300,9 @@ FVoxel *R_LoadKVX(int lumpnum)
 	// Fix pivot data for submips, since some tools seem to like to just center these.
 	for (i = 1; i < mip; ++i)
 	{
-		voxel->Mips[i].Pivot = voxel->Mips[i - 1].Pivot / 2;
+		voxel->Mips[i].PivotX = voxel->Mips[0].PivotX >> i;
+		voxel->Mips[i].PivotY = voxel->Mips[0].PivotY >> i;
+		voxel->Mips[i].PivotZ = voxel->Mips[0].PivotZ >> i;
 	}
 
 	for (i = 0; i < mip; ++i)
@@ -337,9 +339,9 @@ FVoxelDef *R_LoadVoxelDef(int lumpnum, int spin)
 	{
 		FVoxelDef *voxdef = new FVoxelDef;
 		voxdef->Voxel = vox;
-		voxdef->Scale = 1.;
+		voxdef->Scale = FRACUNIT;
 		voxdef->DroppedSpin = voxdef->PlacedSpin = spin;
-		voxdef->AngleOffset = 90.;
+		voxdef->AngleOffset = ANGLE_90;
 
 		Voxels.Push(vox);
 		VoxelDefs.Push(voxdef);
@@ -356,7 +358,7 @@ FVoxelDef *R_LoadVoxelDef(int lumpnum, int spin)
 FVoxelMipLevel::FVoxelMipLevel()
 {
 	SizeZ = SizeY = SizeX = 0;
-	Pivot.Zero();
+	PivotZ = PivotY = PivotX = 0;
 	OffsetX = NULL;
 	OffsetXY = NULL;
 	SlabData = NULL;
@@ -456,7 +458,7 @@ static bool VOX_ReadSpriteNames(FScanner &sc, TArray<DWORD> &vsprites)
 		}
 		else if (sc.StringLen == 5 && (sc.String[4] = toupper(sc.String[4]), sc.String[4] < 'A' || sc.String[4] >= 'A' + MAX_SPRITE_FRAMES))
 		{
-			sc.ScriptMessage("Sprite frame %c is invalid.\n", sc.String[4]);
+			sc.ScriptMessage("Sprite frame %s is invalid.\n", sc.String[4]);
 		}
 		else
 		{
@@ -497,37 +499,29 @@ static void VOX_ReadOptions(FScanner &sc, VoxelOptions &opts)
 		{
 			sc.MustGetToken('=');
 			sc.MustGetToken(TK_FloatConst);
-			opts.Scale = sc.Float;
+			opts.Scale = FLOAT2FIXED(sc.Float);
 		}
 		else if (sc.Compare("spin"))
 		{
-			int mul = 1;
 			sc.MustGetToken('=');
-			if (sc.CheckToken('-')) mul = -1;
 			sc.MustGetToken(TK_IntConst);
-			opts.DroppedSpin = opts.PlacedSpin = sc.Number*mul;
+			opts.DroppedSpin = opts.PlacedSpin = sc.Number;
 		}
 		else if (sc.Compare("placedspin"))
 		{
-			int mul = 1;
 			sc.MustGetToken('=');
-			if (sc.CheckToken('-')) mul = -1;
 			sc.MustGetToken(TK_IntConst);
-			opts.PlacedSpin = sc.Number*mul;
+			opts.PlacedSpin = sc.Number;
 		}
 		else if (sc.Compare("droppedspin"))
 		{
-			int mul = 1;
 			sc.MustGetToken('=');
-			if (sc.CheckToken('-')) mul = -1;
 			sc.MustGetToken(TK_IntConst);
-			opts.DroppedSpin = sc.Number*mul;
+			opts.DroppedSpin = sc.Number;
 		}
 		else if (sc.Compare("angleoffset"))
 		{
-			int mul = 1;
 			sc.MustGetToken('=');
-			if (sc.CheckToken('-')) mul = -1;
 			sc.MustGetAnyToken();
 			if (sc.TokenType == TK_IntConst)
 			{
@@ -537,7 +531,7 @@ static void VOX_ReadOptions(FScanner &sc, VoxelOptions &opts)
 			{
 				sc.TokenMustBe(TK_FloatConst);
 			}
-			opts.AngleOffset = mul * sc.Float + 90.;
+			opts.AngleOffset = ANGLE_90 + angle_t(sc.Float * ANGLE_180 / 180.0);
 		}
 		else if (sc.Compare("overridepalette"))
 		{

@@ -67,6 +67,7 @@ EXTERN_CVAR(Bool, fullscreen   )
 
 // ---------------------------------------------------------------------------
 
+
 namespace
 {
 
@@ -77,9 +78,6 @@ void      (*TermFuncs[MAX_TERMS])();
 const char *TermNames[MAX_TERMS];
 size_t      NumTerms;
 
-} // unnamed namespace
-
-// Expose this for i_main_except.cpp
 void call_terms()
 {
 	while (NumTerms > 0)
@@ -87,6 +85,8 @@ void call_terms()
 		TermFuncs[--NumTerms]();
 	}
 }
+
+} // unnamed namespace
 
 
 void addterm(void (*func)(), const char *name)
@@ -130,92 +130,8 @@ void Mac_I_FatalError(const char* const message)
 }
 
 
-static void I_DetectOS()
-{
-	SInt32 majorVersion = 0;
-	Gestalt(gestaltSystemVersionMajor, &majorVersion);
-	
-	SInt32 minorVersion = 0;
-	Gestalt(gestaltSystemVersionMinor, &minorVersion);
-	
-	SInt32 bugFixVersion = 0;
-	Gestalt(gestaltSystemVersionBugFix, &bugFixVersion);
-	
-	const char* name = "Unknown version";
-	
-	if (10 == majorVersion) switch (minorVersion)
-	{
-		case  4: name = "Mac OS X Tiger";        break;
-		case  5: name = "Mac OS X Leopard";      break;
-		case  6: name = "Mac OS X Snow Leopard"; break;
-		case  7: name = "Mac OS X Lion";         break;
-		case  8: name = "OS X Mountain Lion";    break;
-		case  9: name = "OS X Mavericks";        break;
-		case 10: name = "OS X Yosemite";         break;
-		case 11: name = "OS X El Capitan";       break;
-		case 12: name = "macOS Sierra";          break;
-	}
-
-	char release[16] = "unknown";
-	size_t size = sizeof release - 1;
-	sysctlbyname("kern.osversion", release, &size, nullptr, 0);
-	
-	const char* const architecture =
-#ifdef __i386__
-		"32-bit Intel";
-#elif defined __x86_64__
-		"64-bit Intel";
-#elif defined __ppc__
-		"32-bit PowerPC";
-#elif defined __ppc64__
-		"64-bit PowerPC";
-#else
-		"Unknown";
-#endif
-	
-	Printf("OS: %s %d.%d.%d (%s) %s\n", name, majorVersion, minorVersion, bugFixVersion, release, architecture);
-}
-
-
 DArgs* Args; // command line arguments
 
-
-// Newer versions of GCC than 4.2 have a bug with C++ exceptions in Objective-C++ code.
-// To work around we'll implement the try and catch in standard C++.
-// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61759
-void OriginalMainExcept(int argc, char** argv);
-void OriginalMainTry(int argc, char** argv)
-{
-	Args = new DArgs(argc, argv);
-
-	/*
-	 killough 1/98:
-
-	 This fixes some problems with exit handling
-	 during abnormal situations.
-
-	 The old code called I_Quit() to end program,
-	 while now I_Quit() is installed as an exit
-	 handler and exit() is called to exit, either
-	 normally or abnormally. Seg faults are caught
-	 and the error handler is used, to prevent
-	 being left in graphics mode or having very
-	 loud SFX noise because the sound card is
-	 left in an unstable state.
-	 */
-
-	atexit(call_terms);
-	atterm(I_Quit);
-
-	NSString* exePath = [[NSBundle mainBundle] executablePath];
-	progdir = [[exePath stringByDeletingLastPathComponent] UTF8String];
-	progdir += "/";
-
-	C_InitConsole(80 * 8, 25 * 8, false);
-	
-	I_DetectOS();
-	D_DoomMain();
-}
 
 namespace
 {
@@ -234,6 +150,7 @@ void NewFailure()
 {
 	I_FatalError("Failed to allocate memory from system heap");
 }
+
 
 int OriginalMain(int argc, char** argv)
 {
@@ -257,7 +174,53 @@ int OriginalMain(int argc, char** argv)
 	vid_vsync     = true;
 	fullscreen    = true;
 
-	OriginalMainExcept(argc, argv);
+	try
+	{
+		Args = new DArgs(argc, argv);
+
+		/*
+		 killough 1/98:
+
+		 This fixes some problems with exit handling
+		 during abnormal situations.
+
+		 The old code called I_Quit() to end program,
+		 while now I_Quit() is installed as an exit
+		 handler and exit() is called to exit, either
+		 normally or abnormally. Seg faults are caught
+		 and the error handler is used, to prevent
+		 being left in graphics mode or having very
+		 loud SFX noise because the sound card is
+		 left in an unstable state.
+		 */
+
+		atexit(call_terms);
+		atterm(I_Quit);
+
+		NSString* exePath = [[NSBundle mainBundle] executablePath];
+		progdir = [[exePath stringByDeletingLastPathComponent] UTF8String];
+		progdir += "/";
+
+		C_InitConsole(80 * 8, 25 * 8, false);
+		D_DoomMain();
+	}
+	catch(const CDoomError& error)
+	{
+		const char* const message = error.GetMessage();
+
+		if (NULL != message)
+		{
+			fprintf(stderr, "%s\n", message);
+			Mac_I_FatalError(message);
+		}
+
+		exit(-1);
+	}
+	catch(...)
+	{
+		call_terms();
+		throw;
+	}
 
 	return 0;
 }
@@ -269,8 +232,8 @@ int OriginalMain(int argc, char** argv)
 
 
 @interface ApplicationController : NSResponder
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1060
-	<NSApplicationDelegate>
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
+	<NSFileManagerDelegate>
 #endif
 {
 }

@@ -65,8 +65,6 @@
 #include "version.h"
 #include "md5.h"
 #include "m_misc.h"
-#include "r_utility.h"
-#include "cmdlib.h"
 
 void P_GetPolySpots (MapData * lump, TArray<FNodeBuilder::FPolyStart> &spots, TArray<FNodeBuilder::FPolyStart> &anchors);
 
@@ -81,7 +79,7 @@ static void CreateCachedNodes(MapData *map);
 // fixed 32 bit gl_vert format v2.0+ (glBsp 1.91)
 struct mapglvertex_t
 {
-	SDWORD x,y;
+  fixed_t x,y;
 };
 
 struct gl3_mapsubsector_t
@@ -129,10 +127,10 @@ struct gl5_mapnode_t
 
 static int CheckForMissingSegs()
 {
-	double *added_seglen = new double[numsides];
+	float *added_seglen = new float[numsides];
 	int missing = 0;
 
-	memset(added_seglen, 0, sizeof(double)*numsides);
+	memset(added_seglen, 0, sizeof(float)*numsides);
 	for(int i=0;i<numsegs;i++)
 	{
 		seg_t * seg = &segs[i];
@@ -140,15 +138,20 @@ static int CheckForMissingSegs()
 		if (seg->sidedef!=NULL)
 		{
 			// check all the segs and calculate the length they occupy on their sidedef
-			DVector2 vec1(seg->v2->fX() - seg->v1->fX(), seg->v2->fY() - seg->v1->fY());
-			added_seglen[seg->sidedef - sides] += vec1.Length();
+			TVector2<double> vec1(seg->v2->x - seg->v1->x, seg->v2->y - seg->v1->y);
+			added_seglen[seg->sidedef - sides] += float(vec1.Length());
 		}
 	}
 
 	for(int i=0;i<numsides;i++)
 	{
-		double linelen = sides[i].linedef->Delta().Length();
-		missing += (added_seglen[i] < linelen - 1.);
+		side_t * side =&sides[i];
+		line_t * line = side->linedef;
+
+		TVector2<double> lvec(line->dx, line->dy);
+		float linelen = float(lvec.Length());
+
+		missing += (added_seglen[i] < linelen - FRACUNIT);
 	}
 
 	delete [] added_seglen;
@@ -263,7 +266,8 @@ static bool LoadGLVertexes(FileReader * lump)
 
 	for (i = firstglvertex; i < numvertexes; i++)
 	{
-		vertexes[i].set(LittleLong(mgl->x)/65536., LittleLong(mgl->y)/65536.);
+		vertexes[i].x = LittleLong(mgl->x);
+		vertexes[i].y = LittleLong(mgl->y);
 		mgl++;
 	}
 	delete[] gldata;
@@ -589,7 +593,7 @@ static bool LoadNodes (FileReader * lump)
 				}
 				for (k = 0; k < 4; k++)
 				{
-					no->bbox[j][k] = (float)LittleShort(mn->bbox[j][k]);
+					no->bbox[j][k] = LittleShort(mn->bbox[j][k])<<FRACBITS;
 				}
 			}
 		}
@@ -649,7 +653,7 @@ static bool LoadNodes (FileReader * lump)
 				}
 				for (k = 0; k < 4; k++)
 				{
-					no->bbox[j][k] = (float)LittleShort(mn->bbox[j][k]);
+					no->bbox[j][k] = LittleShort(mn->bbox[j][k])<<FRACBITS;
 				}
 			}
 		}
@@ -1013,7 +1017,7 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 				subsectors, numsubsectors,
 				vertexes, numvertexes);
 			endTime = I_FPSTime ();
-			DPrintf (DMSG_NOTIFY, "BSP generation took %.3f sec (%d segs)\n", (endTime - startTime) * 0.001, numsegs);
+			DPrintf ("BSP generation took %.3f sec (%d segs)\n", (endTime - startTime) * 0.001, numsegs);
 			buildtime = endTime - startTime;
 		}
 	}
@@ -1026,12 +1030,12 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 #endif
 		if (level.maptype != MAPTYPE_BUILD && gl_cachenodes && buildtime/1000.f >= gl_cachetime)
 		{
-			DPrintf(DMSG_NOTIFY, "Caching nodes\n");
+			DPrintf("Caching nodes\n");
 			CreateCachedNodes(map);
 		}
 		else
 		{
-			DPrintf(DMSG_NOTIFY, "Not caching nodes (time = %f)\n", buildtime/1000.f);
+			DPrintf("Not caching nodes (time = %f)\n", buildtime/1000.f);
 		}
 	}
 
@@ -1096,8 +1100,8 @@ static void CreateCachedNodes(MapData *map)
 	WriteLong(ZNodes, numvertexes);
 	for(int i=0;i<numvertexes;i++)
 	{
-		WriteLong(ZNodes, vertexes[i].fixX());
-		WriteLong(ZNodes, vertexes[i].fixY());
+		WriteLong(ZNodes, vertexes[i].x);
+		WriteLong(ZNodes, vertexes[i].y);
 	}
 
 	WriteLong(ZNodes, numsubsectors);
@@ -1135,7 +1139,7 @@ static void CreateCachedNodes(MapData *map)
 		{
 			for (int k = 0; k < 4; ++k)
 			{
-				WriteWord(ZNodes, (short)nodes[i].bbox[j][k]);
+				WriteWord(ZNodes, nodes[i].bbox[j][k] >> FRACBITS);
 			}
 		}
 
@@ -1333,7 +1337,7 @@ CCMD(clearnodecache)
 //
 //==========================================================================
 
-subsector_t *P_PointInSubsector (double x, double y)
+subsector_t *P_PointInSubsector (fixed_t x, fixed_t y)
 {
 	node_t *node;
 	int side;
@@ -1344,17 +1348,16 @@ subsector_t *P_PointInSubsector (double x, double y)
 				
 	node = gamenodes + numgamenodes - 1;
 
-	fixed_t xx = FLOAT2FIXED(x);
-	fixed_t yy = FLOAT2FIXED(y);
 	do
 	{
-		side = R_PointOnSide (xx, yy, node);
+		side = R_PointOnSide (x, y, node);
 		node = (node_t *)node->children[side];
 	}
 	while (!((size_t)node & 1));
 		
 	return (subsector_t *)((BYTE *)node - 1);
 }
+
 
 //==========================================================================
 //
@@ -1383,7 +1386,7 @@ static bool PointOnLine (int x, int y, int x1, int y1, int dx, int dy)
 		// Either the point is very near the line, or the segment defining
 		// the line is very short: Do a more expensive test to determine
 		// just how far from the line the point is.
-		double l = g_sqrt(d_dx*d_dx+d_dy*d_dy);
+		double l = sqrt(d_dx*d_dx+d_dy*d_dy);
 		double dist = fabs(s_num)/l;
 		if (dist < SIDE_EPSILON)
 		{
@@ -1487,7 +1490,7 @@ void P_SetRenderSector()
 		ss->flags |= SSECF_DEGENERATE;
 		for(j=2; j<ss->numlines; j++)
 		{
-			if (!PointOnLine(seg[j].v1->fixX(), seg[j].v1->fixY(), seg->v1->fixX(), seg->v1->fixY(), seg->v2->fixX() -seg->v1->fixX(), seg->v2->fixY() -seg->v1->fixY()))
+			if (!PointOnLine(seg[j].v1->x, seg[j].v1->y, seg->v1->x, seg->v1->y, seg->v2->x-seg->v1->x, seg->v2->y-seg->v1->y))
 			{
 				// Not on the same line
 				ss->flags &= ~SSECF_DEGENERATE;

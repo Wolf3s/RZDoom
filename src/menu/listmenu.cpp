@@ -42,7 +42,7 @@
 #include "d_event.h"
 #include "menu/menu.h"
 
-IMPLEMENT_CLASS(DListMenu, false, false)
+IMPLEMENT_CLASS(DListMenu)
 
 //=============================================================================
 //
@@ -156,9 +156,7 @@ bool DListMenu::Responder (event_t *ev)
 
 bool DListMenu::MenuEvent (int mkey, bool fromcontroller)
 {
-	int oldSelect = mDesc->mSelectedItem;
 	int startedAt = mDesc->mSelectedItem;
-	if (startedAt < 0) startedAt = 0;
 
 	switch (mkey)
 	{
@@ -168,7 +166,6 @@ bool DListMenu::MenuEvent (int mkey, bool fromcontroller)
 			if (--mDesc->mSelectedItem < 0) mDesc->mSelectedItem = mDesc->mItems.Size()-1;
 		}
 		while (!mDesc->mItems[mDesc->mSelectedItem]->Selectable() && mDesc->mSelectedItem != startedAt);
-		if (mDesc->mSelectedItem == startedAt) mDesc->mSelectedItem = oldSelect;
 		S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 		return true;
 
@@ -178,7 +175,6 @@ bool DListMenu::MenuEvent (int mkey, bool fromcontroller)
 			if (++mDesc->mSelectedItem >= (int)mDesc->mItems.Size()) mDesc->mSelectedItem = 0;
 		}
 		while (!mDesc->mItems[mDesc->mSelectedItem]->Selectable() && mDesc->mSelectedItem != startedAt);
-		if (mDesc->mSelectedItem == startedAt) mDesc->mSelectedItem = oldSelect;
 		S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 		return true;
 

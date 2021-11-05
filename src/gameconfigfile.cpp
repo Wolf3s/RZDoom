@@ -39,6 +39,13 @@
 #include <CoreServices/CoreServices.h>
 #endif
 
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+extern HWND Window;
+#define USE_WINDOWS_DWORD
+#endif
+
 #include "doomdef.h"
 #include "gameconfigfile.h"
 #include "c_cvars.h"
@@ -66,7 +73,6 @@ EXTERN_CVAR (Bool, snd_pitched)
 EXTERN_CVAR (Color, am_wallcolor)
 EXTERN_CVAR (Color, am_fdwallcolor)
 EXTERN_CVAR (Color, am_cdwallcolor)
-EXTERN_CVAR (Float, spc_amp)
 EXTERN_CVAR (Bool, wi_percents)
 
 FGameConfigFile::FGameConfigFile ()
@@ -297,13 +303,6 @@ void FGameConfigFile::DoGlobalSetup ()
 				if (vsync != NULL)
 				{
 					vsync->ResetToDefault ();
-				}
-			}
-			if (last < 206)
-			{ // spc_amp is now a float, not an int.
-				if (spc_amp > 16)
-				{
-					spc_amp = spc_amp / 16.f;
 				}
 			}
 			if (last < 207)

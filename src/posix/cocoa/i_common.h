@@ -145,12 +145,6 @@ enum
 
 static const NSOpenGLPixelFormatAttribute NSOpenGLPFAAllowOfflineRenderers = NSOpenGLPixelFormatAttribute(96);
 
-@interface NSWindow(SetCollectionBehavior)
-- (void)setCollectionBehavior:(NSUInteger)collectionBehavior;
-@end
-
-typedef NSUInteger NSWindowCollectionBehavior;
-
 #endif // prior to 10.5
 
 
@@ -187,8 +181,6 @@ typedef NSInteger NSApplicationActivationPolicy;
 @interface NSScreen(HiDPIStubs)
 - (NSRect)convertRectToBacking:(NSRect)aRect;
 @end
-
-static const NSWindowCollectionBehavior NSWindowCollectionBehaviorFullScreenAuxiliary = NSWindowCollectionBehavior(1 << 8);
 
 #endif // prior to 10.7
 

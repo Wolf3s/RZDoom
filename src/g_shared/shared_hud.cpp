@@ -43,8 +43,6 @@
 #include "c_cvars.h"
 #include "w_wad.h"
 #include "a_keys.h"
-#include "a_armor.h"
-#include "a_ammo.h"
 #include "sbar.h"
 #include "sc_man.h"
 #include "templates.h"
@@ -52,9 +50,6 @@
 #include "doomstat.h"
 #include "g_level.h"
 #include "d_net.h"
-#include "d_player.h"
-#include "r_utility.h"
-#include "cmdlib.h"
 
 #include <time.h>
 
@@ -69,7 +64,7 @@ EXTERN_CVAR (Int, screenblocks)
 EXTERN_CVAR (Bool, am_showtime)
 EXTERN_CVAR (Bool, am_showtotaltime)
 
-CVAR(Int,hud_althudscale, 4, CVAR_ARCHIVE)				// Scale the hud to 640x400?
+CVAR(Int,hud_althudscale, 2, CVAR_ARCHIVE)				// Scale the hud to 640x400?
 CVAR(Bool,hud_althud, false, CVAR_ARCHIVE)				// Enable/Disable the alternate HUD
 
 														// These are intentionally not the same as in the automap!
@@ -84,7 +79,6 @@ CVAR (Int ,  hud_showtime,		0,	    CVAR_ARCHIVE);	// Show time on HUD
 CVAR (Int ,  hud_timecolor,		CR_GOLD,CVAR_ARCHIVE);	// Color of in-game time on HUD
 CVAR (Int ,  hud_showlag,		0, CVAR_ARCHIVE);		// Show input latency (maketic - gametic difference)
 
-CVAR (Int, hud_ammo_order, 0, CVAR_ARCHIVE);				// ammo image and text order
 CVAR (Int, hud_ammo_red, 25, CVAR_ARCHIVE)					// ammo percent less than which status is red    
 CVAR (Int, hud_ammo_yellow, 50, CVAR_ARCHIVE)				// ammo percent less is yellow more green        
 CVAR (Int, hud_health_red, 25, CVAR_ARCHIVE)				// health amount less than which status is red   
@@ -120,17 +114,19 @@ static FTexture * invgems[4];				// Inventory arrows
 static int hudwidth, hudheight;				// current width/height for HUD display
 static int statspace;
 
-DVector2 AM_GetPosition();
-int active_con_scaletext();
+void AM_GetPosition(fixed_t & x, fixed_t & y);
 
-FTextureID GetHUDIcon(PClassInventory *cls)
+
+FTextureID GetHUDIcon(const PClass *cls)
 {
-	return cls->AltHUDIcon;
+	FTextureID tex;
+	tex.texnum = cls->Meta.GetMetaInt(HUMETA_AltIcon, 0);
+	return tex;
 }
 
-void SetHUDIcon(PClassInventory *cls, FTextureID tex)
+void SetHUDIcon(PClass *cls, FTextureID tex)
 {
-	cls->AltHUDIcon = tex;
+	cls->Meta.SetMetaInt(HUMETA_AltIcon, tex.GetIndex());
 }
 
 //---------------------------------------------------------------------------
@@ -317,8 +313,9 @@ static void DrawArmor(ABasicArmor * barmor, AHexenArmor * harmor, int x, int y)
 
 	if (harmor)
 	{
-		auto ac = (harmor->Slots[0] + harmor->Slots[1] + harmor->Slots[2] + harmor->Slots[3] + harmor->Slots[4]);
-		ap += int(ac);
+		int ac = (harmor->Slots[0] + harmor->Slots[1] + harmor->Slots[2] + harmor->Slots[3] + harmor->Slots[4]);
+		ac >>= FRACBITS;
+		ap += ac;
 		
 		if (ac)
 		{
@@ -381,33 +378,32 @@ static void DrawArmor(ABasicArmor * barmor, AHexenArmor * harmor, int x, int y)
 // this doesn't have to be done each frame
 //
 //---------------------------------------------------------------------------
-static TArray<PClassActor *> KeyTypes, UnassignedKeyTypes;
+static TArray<const PClass*> KeyTypes, UnassignedKeyTypes;
 
-static int ktcmp(const void * a, const void * b)
+static int STACK_ARGS ktcmp(const void * a, const void * b)
 {
-	AKey *key1 = (AKey*)GetDefaultByType ( *(PClassActor **)a );
-	AKey *key2 = (AKey*)GetDefaultByType ( *(PClassActor **)b );
+	AKey * key1 = (AKey*)GetDefaultByType ( *(const PClass**)a );
+	AKey * key2 = (AKey*)GetDefaultByType ( *(const PClass**)b );
 	return key1->KeyNumber - key2->KeyNumber;
 }
 
 static void SetKeyTypes()
 {
-	for(unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); i++)
+	for(unsigned int i=0;i<PClass::m_Types.Size();i++)
 	{
-		PClass *ti = PClassActor::AllActorClasses[i];
+		const PClass * ti = PClass::m_Types[i];
 
 		if (ti->IsDescendantOf(RUNTIME_CLASS(AKey)))
 		{
-			PClassActor *tia = static_cast<PClassActor *>(ti);
-			AKey *key = (AKey*)GetDefaultByType(tia);
+			AKey * key = (AKey*)GetDefaultByType(ti);
 
 			if (key->Icon.isValid() && key->KeyNumber>0)
 			{
-				KeyTypes.Push(tia);
+				KeyTypes.Push(ti);
 			}
 			else 
 			{
-				UnassignedKeyTypes.Push(tia);
+				UnassignedKeyTypes.Push(ti);
 			}
 		}
 	}
@@ -418,7 +414,7 @@ static void SetKeyTypes()
 	else
 	{
 		// Don't leave the list empty
-		PClassActor *ti = RUNTIME_CLASS(AKey);
+		const PClass * ti = RUNTIME_CLASS(AKey);
 		KeyTypes.Push(ti);
 	}
 }
@@ -483,30 +479,30 @@ static int DrawKeys(player_t * CPlayer, int x, int y)
 	int xo=x;
 	int i;
 	int c=0;
-	AInventory *inv;
+	AInventory * inv;
 
 	if (!deathmatch)
 	{
-		if (KeyTypes.Size() == 0) SetKeyTypes();
+		if (KeyTypes.Size()==0) SetKeyTypes();
 
 		// First all keys that are assigned to locks (in reverse order of definition)
-		for (i = KeyTypes.Size()-1; i >= 0; i--)
+		for(i=KeyTypes.Size()-1;i>=0;i--)
 		{
-			if ((inv = CPlayer->mo->FindInventory(KeyTypes[i])))
+			if ((inv=CPlayer->mo->FindInventory(KeyTypes[i])))
 			{
 				DrawOneKey(xo, x, y, c, inv);
 			}
 		}
 		// And now the rest
-		for (i = UnassignedKeyTypes.Size()-1; i >= 0; i--)
+		for(i=UnassignedKeyTypes.Size()-1;i>=0;i--)
 		{
-			if ((inv = CPlayer->mo->FindInventory(UnassignedKeyTypes[i])))
+			if ((inv=CPlayer->mo->FindInventory(UnassignedKeyTypes[i])))
 			{
 				DrawOneKey(xo, x, y, c, inv);
 			}
 		}
 	}
-	if (x == xo && y != yo) y+=11;
+	if (x==xo && y!=yo) y+=11;
 	return y-11;
 }
 
@@ -516,14 +512,14 @@ static int DrawKeys(player_t * CPlayer, int x, int y)
 // Drawing Ammo
 //
 //---------------------------------------------------------------------------
-static TArray<PClassAmmo *> orderedammos;
+static TArray<const PClass *> orderedammos;
 
 static void AddAmmoToList(AWeapon * weapdef)
 {
 
 	for(int i=0; i<2;i++)
 	{
-		PClassAmmo * ti = i==0? weapdef->AmmoType1 : weapdef->AmmoType2;
+		const PClass * ti = i==0? weapdef->AmmoType1 : weapdef->AmmoType2;
 		if (ti)
 		{
 			AAmmo * ammodef=(AAmmo*)GetDefaultByType(ti);
@@ -540,38 +536,6 @@ static void AddAmmoToList(AWeapon * weapdef)
 			}
 		}
 	}
-}
-
-static int GetDigitCount(int value)
-{
-	int digits = 0;
-
-	do
-	{
-		value /= 10;
-		++digits;
-	}
-	while (0 != value);
-
-	return digits;
-}
-
-static void GetAmmoTextLengths(player_t *CPlayer, int& ammocur, int& ammomax)
-{
-	for (auto type : orderedammos)
-	{
-		AAmmo * ammoitem = static_cast<AAmmo*>(CPlayer->mo->FindInventory(type));
-		AAmmo * inv = nullptr == ammoitem
-			? static_cast<AAmmo*>(GetDefaultByType(type))
-			: ammoitem;
-		assert(nullptr != inv);
-
-		ammocur = MAX(ammocur, nullptr == ammoitem ? 0 : ammoitem->Amount);
-		ammomax = MAX(ammomax, inv->MaxAmount);
-	}
-
-	ammocur = GetDigitCount(ammocur);
-	ammomax = GetDigitCount(ammomax);
 }
 
 static int DrawAmmo(player_t *CPlayer, int x, int y)
@@ -595,7 +559,7 @@ static int DrawAmmo(player_t *CPlayer, int x, int y)
 		// Order ammo by use of weapons in the weapon slots
 		for (k = 0; k < NUM_WEAPON_SLOTS; k++) for(j = 0; j < CPlayer->weapons.Slots[k].Size(); j++)
 		{
-			PClassActor *weap = CPlayer->weapons.Slots[k].GetWeapon(j);
+			const PClass *weap = CPlayer->weapons.Slots[k].GetWeapon(j);
 
 			if (weap)
 			{
@@ -621,32 +585,14 @@ static int DrawAmmo(player_t *CPlayer, int x, int y)
 
 	// ok, we got all ammo types. Now draw the list back to front (bottom to top)
 
-	int ammocurlen = 0;
-	int ammomaxlen = 0;
-	GetAmmoTextLengths(CPlayer, ammocurlen, ammomaxlen);
-
-	mysnprintf(buf, countof(buf), "%0*d/%0*d", ammocurlen, 0, ammomaxlen, 0);
-
-	int def_width = ConFont->StringWidth(buf);
+	int def_width = ConFont->StringWidth("000/000");
+	x-=def_width;
 	int yadd = ConFont->GetHeight();
-
-	int xtext = x - def_width;
-	int ximage = x;
-
-	if (hud_ammo_order > 0)
-	{
-		xtext -= 24;
-		ximage -= 20;
-	}
-	else
-	{
-		ximage -= def_width + 20;
-	}
 
 	for(i=orderedammos.Size()-1;i>=0;i--)
 	{
 
-		PClassAmmo * type = orderedammos[i];
+		const PClass * type = orderedammos[i];
 		AAmmo * ammoitem = (AAmmo*)CPlayer->mo->FindInventory(type);
 
 		AAmmo * inv = ammoitem? ammoitem : (AAmmo*)GetDefaultByType(orderedammos[i]);
@@ -659,7 +605,7 @@ static int DrawAmmo(player_t *CPlayer, int x, int y)
 		int maxammo = inv->MaxAmount;
 		int ammo = ammoitem? ammoitem->Amount : 0;
 
-		mysnprintf(buf, countof(buf), "%*d/%*d", ammocurlen, ammo, ammomaxlen, maxammo);
+		mysnprintf(buf, countof(buf), "%3d/%3d", ammo, maxammo);
 
 		int tex_width= clamp<int>(ConFont->StringWidth(buf)-def_width, 0, 1000);
 
@@ -667,8 +613,8 @@ static int DrawAmmo(player_t *CPlayer, int x, int y)
 						 ammo < ( (maxammo * hud_ammo_red) / 100) ? CR_RED :   
 						 ammo < ( (maxammo * hud_ammo_yellow) / 100) ? CR_GOLD : CR_GREEN );
 
-		DrawHudText(ConFont, fontcolor, buf, xtext-tex_width, y+yadd, trans);
-		DrawImageToBox(TexMan[icon], ximage, y, 16, 8, trans);
+		DrawHudText(ConFont, fontcolor, buf, x-tex_width, y+yadd, trans);
+		DrawImageToBox(TexMan[icon], x-20, y, 16, 8, trans);
 		y-=10;
 	}
 	return y;
@@ -735,7 +681,7 @@ static void DrawOneWeapon(player_t * CPlayer, int x, int & y, AWeapon * weapon)
 
 	// Powered up weapons and inherited sister weapons are not displayed.
 	if (weapon->WeaponFlags & WIF_POWERED_UP) return;
-	if (weapon->SisterWeapon && weapon->IsKindOf(weapon->SisterWeapon->GetClass())) return;
+	if (weapon->SisterWeapon && weapon->IsKindOf(RUNTIME_TYPE(weapon->SisterWeapon))) return;
 
 	trans=0x6666;
 	if (CPlayer->ReadyWeapon)
@@ -759,16 +705,16 @@ static void DrawOneWeapon(player_t * CPlayer, int x, int & y, AWeapon * weapon)
 }
 
 
-static void DrawWeapons(player_t *CPlayer, int x, int y)
+static void DrawWeapons(player_t * CPlayer, int x, int y)
 {
 	int k,j;
-	AInventory *inv;
+	AInventory * inv;
 
 	// First draw all weapons in the inventory that are not assigned to a weapon slot
-	for(inv = CPlayer->mo->Inventory; inv; inv = inv->Inventory)
+	for(inv=CPlayer->mo->Inventory;inv;inv=inv->Inventory)
 	{
 		if (inv->IsKindOf(RUNTIME_CLASS(AWeapon)) && 
-			!CPlayer->weapons.LocateWeapon(static_cast<AWeapon*>(inv)->GetClass(), NULL, NULL))
+			!CPlayer->weapons.LocateWeapon(RUNTIME_TYPE(inv), NULL, NULL))
 		{
 			DrawOneWeapon(CPlayer, x, y, static_cast<AWeapon*>(inv));
 		}
@@ -777,7 +723,7 @@ static void DrawWeapons(player_t *CPlayer, int x, int y)
 	// And now everything in the weapon slots back to front
 	for (k = NUM_WEAPON_SLOTS - 1; k >= 0; k--) for(j = CPlayer->weapons.Slots[k].Size() - 1; j >= 0; j--)
 	{
-		PClassActor *weap = CPlayer->weapons.Slots[k].GetWeapon(j);
+		const PClass *weap = CPlayer->weapons.Slots[k].GetWeapon(j);
 		if (weap) 
 		{
 			inv=CPlayer->mo->FindInventory(weap);
@@ -820,7 +766,7 @@ static void DrawInventory(player_t * CPlayer, int x,int y)
 
 				if (AltIcon.Exists() && (rover->Icon.isValid() || AltIcon.isValid()) )
 				{
-					int trans = rover==CPlayer->mo->InvSel ? 0x10000 : 0x6666;
+					int trans = rover==CPlayer->mo->InvSel ? FRACUNIT : 0x6666;
 
 					DrawImageToBox(TexMan[AltIcon.isValid()? AltIcon : rover->Icon], x, y, 19, 25, trans);
 					if (rover->Amount>1)
@@ -872,57 +818,42 @@ static void DrawFrags(player_t * CPlayer, int x, int y)
 
 static void DrawCoordinates(player_t * CPlayer)
 {
-	DVector3 pos;
+	fixed_t x;
+	fixed_t y;
+	fixed_t z;
 	char coordstr[18];
 	int h = SmallFont->GetHeight()+1;
 
 	
 	if (!map_point_coordinates || !automapactive) 
 	{
-		pos = CPlayer->mo->Pos();
+		x=CPlayer->mo->X();
+		y=CPlayer->mo->Y();                     
+		z=CPlayer->mo->Z();
 	}
 	else 
 	{
-		DVector2 apos = AM_GetPosition();
-		double z = P_PointInSector(apos)->floorplane.ZatPoint(apos);
-		pos = DVector3(apos, z);
+		AM_GetPosition(x,y);
+		z = P_PointInSector(x, y)->floorplane.ZatPoint(x, y);
 	}
 
-	int vwidth, vheight;
-	if (active_con_scaletext() == 0)
-	{
-		vwidth = SCREENWIDTH / 2;
-		vheight = SCREENHEIGHT / 2;
-	}
-	else
-	{
-		vwidth = SCREENWIDTH / active_con_scaletext();
-		vheight = SCREENHEIGHT / active_con_scaletext();
-	}
-
+	int vwidth = con_scaletext==0? SCREENWIDTH : SCREENWIDTH/2;
+	int vheight = con_scaletext==0? SCREENHEIGHT : SCREENHEIGHT/2;
 	int xpos = vwidth - SmallFont->StringWidth("X: -00000")-6;
 	int ypos = 18;
 
-	screen->DrawText(SmallFont, hudcolor_titl, vwidth - 6 - SmallFont->StringWidth(level.MapName), ypos, level.MapName,
+	mysnprintf(coordstr, countof(coordstr), "X: %d", x>>FRACBITS);
+	screen->DrawText(SmallFont, hudcolor_xyco, xpos, ypos, coordstr,
 		DTA_KeepRatio, true,
 		DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
 
-	screen->DrawText(SmallFont, hudcolor_titl, vwidth - 6 - SmallFont->StringWidth(level.LevelName), ypos + h, level.LevelName,
+	mysnprintf(coordstr, countof(coordstr), "Y: %d", y>>FRACBITS);
+	screen->DrawText(SmallFont, hudcolor_xyco, xpos, ypos+h, coordstr,
 		DTA_KeepRatio, true,
 		DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
 
-	mysnprintf(coordstr, countof(coordstr), "X: %d", int(pos.X));
+	mysnprintf(coordstr, countof(coordstr), "Z: %d", z>>FRACBITS);
 	screen->DrawText(SmallFont, hudcolor_xyco, xpos, ypos+2*h, coordstr,
-		DTA_KeepRatio, true,
-		DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
-
-	mysnprintf(coordstr, countof(coordstr), "Y: %d", int(pos.Y));
-	screen->DrawText(SmallFont, hudcolor_xyco, xpos, ypos+3*h, coordstr,
-		DTA_KeepRatio, true,
-		DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
-
-	mysnprintf(coordstr, countof(coordstr), "Z: %d", int(pos.Z));
-	screen->DrawText(SmallFont, hudcolor_xyco, xpos, ypos+4*h, coordstr,
 		DTA_KeepRatio, true,
 		DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
 }
@@ -1002,7 +933,7 @@ static void DrawTime()
 	const int width  = SmallFont->GetCharWidth('0') * characterCount + 2; // small offset from screen's border
 	const int height = SmallFont->GetHeight();
 
-	DrawHudText(SmallFont, hud_timecolor, timeString, hudwidth - width, height, 0x10000);
+	DrawHudText(SmallFont, hud_timecolor, timeString, hudwidth - width, height, FRACUNIT);
 }
 
 static bool IsAltHUDTextVisible()
@@ -1060,7 +991,7 @@ static void DrawLatency()
 	const int width = SmallFont->GetCharWidth('0') * characterCount + 2; // small offset from screen's border
 	const int height = SmallFont->GetHeight() * (ST_IsTimeVisible() ? 2 : 1);
 
-	DrawHudText(SmallFont, color, tempstr, hudwidth - width, height, 0x10000);
+	DrawHudText(SmallFont, color, tempstr, hudwidth - width, height, FRACUNIT);
 }
 
 bool ST_IsLatencyVisible()
@@ -1086,38 +1017,20 @@ void DrawHUD()
 	if (hud_althudscale && SCREENWIDTH>640) 
 	{
 		hudwidth=SCREENWIDTH/2;
-		if (hud_althudscale == 4)
-		{
-			if (uiscale == 0)
-			{
-				hudwidth = CleanWidth;
-				hudheight = CleanHeight;
-			}
-			else
-			{
-				hudwidth = SCREENWIDTH / uiscale;
-				hudheight = SCREENHEIGHT / uiscale;
-			}
-		}
-		else if (hud_althudscale == 3)
-		{
-			hudwidth = SCREENWIDTH / 4;
-			hudheight = SCREENHEIGHT / 4;
-		}
-		else if (hud_althudscale == 2)
+		if (hud_althudscale == 2) 
 		{
 			// Optionally just double the pixels to reduce scaling artifacts.
 			hudheight=SCREENHEIGHT/2;
 		}
 		else 
 		{
-			if (AspectTallerThanWide(WidescreenRatio))
+			if (WidescreenRatio == 4)
 			{
-				hudheight = hudwidth * 30 / AspectMultiplier(WidescreenRatio);	// BaseRatioSizes is inverted for this mode
+				hudheight = hudwidth * 30 / BaseRatioSizes[WidescreenRatio][3];	// BaseRatioSizes is inverted for this mode
 			}
 			else
 			{
-				hudheight = hudwidth * 30 / (48*48/AspectMultiplier(WidescreenRatio));
+				hudheight = hudwidth * 30 / (48*48/BaseRatioSizes[WidescreenRatio][3]);
 			}
 		}
 	}
@@ -1169,7 +1082,7 @@ void DrawHUD()
 		{
 			seconds = Tics2Seconds(level.totaltime);
 			mysnprintf(printstr, countof(printstr), "%02i:%02i:%02i", seconds/3600, (seconds%3600)/60, seconds%60);
-			DrawHudText(SmallFont, hudcolor_ttim, printstr, hudwidth-length, bottom, 0x10000);
+			DrawHudText(SmallFont, hudcolor_ttim, printstr, hudwidth-length, bottom, FRACUNIT);
 			bottom -= fonth;
 		}
 
@@ -1179,14 +1092,14 @@ void DrawHUD()
 			{
 				seconds = Tics2Seconds(level.time);
 				mysnprintf(printstr, countof(printstr), "%02i:%02i:%02i", seconds/3600, (seconds%3600)/60, seconds%60);
-				DrawHudText(SmallFont, hudcolor_time, printstr, hudwidth-length, bottom, 0x10000);
+				DrawHudText(SmallFont, hudcolor_time, printstr, hudwidth-length, bottom, FRACUNIT);
 				bottom -= fonth;
 			}
 
 			// Single level time for hubs
 			seconds= Tics2Seconds(level.maptime);
 			mysnprintf(printstr, countof(printstr), "%02i:%02i:%02i", seconds/3600, (seconds%3600)/60, seconds%60);
-			DrawHudText(SmallFont, hudcolor_ltim, printstr, hudwidth-length, bottom, 0x10000);
+			DrawHudText(SmallFont, hudcolor_ltim, printstr, hudwidth-length, bottom, FRACUNIT);
 		}
 
 		ST_FormatMapName(mapname);
@@ -1267,7 +1180,7 @@ void HUD_InitHud()
 			}
 			else
 			{
-				PClass *ti = PClass::FindClass(sc.String);
+				const PClass * ti = PClass::FindClass(sc.String);
 				if (!ti)
 				{
 					Printf("Unknown item class '%s' in ALTHUDCF\n", sc.String);
@@ -1286,8 +1199,9 @@ void HUD_InitHud()
 				}
 				else tex.SetInvalid();
 
-				if (ti) SetHUDIcon(static_cast<PClassInventory*>(ti), tex);
+				if (ti) SetHUDIcon(const_cast<PClass*>(ti), tex);
 			}
 		}
 	}
 }
+

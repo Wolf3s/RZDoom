@@ -31,7 +31,6 @@
 #include "templates.h"
 #include "d_net.h"
 #include "d_event.h"
-#include "a_armor.h"
 
 #define QUEUESIZE		128
 #define MESSAGESIZE		128
@@ -46,8 +45,6 @@ EXTERN_CVAR (Int, con_scaletext)
 EXTERN_CVAR (Bool, sb_cooperative_enable)
 EXTERN_CVAR (Bool, sb_deathmatch_enable)
 EXTERN_CVAR (Bool, sb_teamdeathmatch_enable)
-
-int active_con_scaletext();
 
 // Public data
 
@@ -227,7 +224,7 @@ void CT_Drawer (void)
 		int i, x, scalex, y, promptwidth;
 
 		y = (viewactive || gamestate != GS_LEVEL) ? -10 : -30;
-		if (active_con_scaletext() == 0)
+		if (con_scaletext == 1)
 		{
 			scalex = CleanXfac;
 			y *= CleanYfac;
@@ -237,19 +234,9 @@ void CT_Drawer (void)
 			scalex = 1;
 		}
 
-		int screen_width, screen_height, st_y;
-		if (active_con_scaletext() == 0)
-		{
-			screen_width = SCREENWIDTH;
-			screen_height = SCREENHEIGHT;
-			st_y = ST_Y;
-		}
-		else
-		{
-			screen_width = SCREENWIDTH / active_con_scaletext();
-			screen_height = SCREENHEIGHT / active_con_scaletext();
-			st_y = ST_Y / active_con_scaletext();
-		}
+		int screen_width = con_scaletext > 1? SCREENWIDTH/2 : SCREENWIDTH;
+		int screen_height = con_scaletext > 1? SCREENHEIGHT/2 : SCREENHEIGHT;
+		int st_y = con_scaletext > 1?  ST_Y/2 : ST_Y;
 
 		y += ((SCREENHEIGHT == viewheight && viewactive) || gamestate != GS_LEVEL) ? screen_height : st_y;
 
@@ -275,10 +262,10 @@ void CT_Drawer (void)
 		// draw the prompt, text, and cursor
 		ChatQueue[len] = SmallFont->GetCursor();
 		ChatQueue[len+1] = '\0';
-		if (active_con_scaletext() < 2)
+		if (con_scaletext < 2)
 		{
-			screen->DrawText (SmallFont, CR_GREEN, 0, y, prompt, DTA_CleanNoMove, active_con_scaletext() == 0, TAG_DONE);
-			screen->DrawText (SmallFont, CR_GREY, promptwidth, y, (char *)(ChatQueue + i), DTA_CleanNoMove, active_con_scaletext() == 0, TAG_DONE);
+			screen->DrawText (SmallFont, CR_GREEN, 0, y, prompt, DTA_CleanNoMove, *con_scaletext, TAG_DONE);
+			screen->DrawText (SmallFont, CR_GREY, promptwidth, y, (char *)(ChatQueue + i), DTA_CleanNoMove, *con_scaletext, TAG_DONE);
 		}
 		else
 		{

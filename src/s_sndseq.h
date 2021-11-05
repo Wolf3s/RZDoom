@@ -20,9 +20,9 @@ class DSeqNode : public DObject
 	DECLARE_CLASS (DSeqNode, DObject)
 	HAS_OBJECT_POINTERS
 public:
-	void Serialize(FSerializer &arc);
+	void Serialize (FArchive &arc);
 	void StopAndDestroy ();
-	void Destroy() override;
+	void Destroy ();
 	void Tick ();
 	void ChangeData (int seqOffset, int delayTics, float volume, FSoundID currentSoundID);
 	void AddChoice (int seqnum, seqtype_t type);
@@ -38,7 +38,7 @@ public:
 	inline static DSeqNode *FirstSequence() { return SequenceListHead; }
 	inline DSeqNode *NextSequence() const { return m_Next; }
 
-	static void SerializeSequences (FSerializer &arc);
+	static void SerializeSequences (FArchive &arc);
 
 protected:
 	DSeqNode ();

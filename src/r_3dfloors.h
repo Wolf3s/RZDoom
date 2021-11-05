@@ -3,16 +3,11 @@
 
 #include "p_3dfloors.h"
 
-EXTERN_CVAR(Int, r_3dfloors);
-
-namespace swrenderer
-{
-
 // special types
 
 struct HeightLevel
 {
-	double height;
+	fixed_t height;
 	struct HeightLevel *prev;
 	struct HeightLevel *next;
 };
@@ -54,14 +49,16 @@ enum
 
 extern int fake3D;
 extern F3DFloor *fakeFloor;
+extern fixed_t fakeHeight;
 extern fixed_t fakeAlpha;
 extern int fakeActive;
-extern double sclipBottom;
-extern double sclipTop;
+extern fixed_t sclipBottom;
+extern fixed_t sclipTop;
 extern HeightLevel *height_top;
 extern HeightLevel *height_cur;
 extern int CurrentMirror;
 extern int CurrentSkybox;
+EXTERN_CVAR(Int, r_3dfloors);
 
 // functions
 void R_3D_DeleteHeights();
@@ -70,7 +67,5 @@ void R_3D_NewClip();
 void R_3D_ResetClip();
 void R_3D_EnterSkybox();
 void R_3D_LeaveSkybox();
-
-}
 
 #endif

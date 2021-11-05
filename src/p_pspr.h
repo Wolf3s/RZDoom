@@ -25,98 +25,78 @@
 
 // Basic data types.
 // Needs fixed point, and BAM angles.
+#include "tables.h"
+#include "thingdef/thingdef.h"
 
-#define WEAPONBOTTOM			128.
+#define WEAPONBOTTOM			128*FRACUNIT
 
-#define WEAPONTOP				32.
-#define WEAPON_FUDGE_Y			0.375
-class AInventory;
+// [RH] +0x6000 helps it meet the screen bottom
+//		at higher resolutions while still being in
+//		the right spot at 320x200.
+#define WEAPONTOP				(32*FRACUNIT+0x6000)
+
 
 //
 // Overlay psprites are scaled shapes
 // drawn directly on the view screen,
 // coordinates are given for a 320*200 view screen.
 //
-enum PSPLayers
+typedef enum
 {
-	PSP_STRIFEHANDS = -1,
-	PSP_WEAPON = 1,
-	PSP_FLASH = 1000,
-	PSP_TARGETCENTER = INT_MAX - 2,
-	PSP_TARGETLEFT,
-	PSP_TARGETRIGHT,
+	ps_weapon,
+	ps_flash,
+	ps_targetcenter,
+	ps_targetleft,
+	ps_targetright,
+	NUMPSPRITES
+
+} psprnum_t;
+
+/*
+inline FArchive &operator<< (FArchive &arc, psprnum_t &i)
+{
+	BYTE val = (BYTE)i;
+	arc << val;
+	i = (psprnum_t)val;
+	return arc;
+}
+*/
+
+struct pspdef_t
+{
+	FState*		state;	// a NULL state means not active
+	int 		tics;
+	fixed_t 	sx;
+	fixed_t 	sy;
+	int			sprite;
+	int			frame;
+	bool		processPending; // true: waiting for periodic processing on this tick
 };
 
-enum PSPFlags
-{
-	PSPF_ADDWEAPON	= 1 << 0,
-	PSPF_ADDBOB		= 1 << 1,
-	PSPF_POWDOUBLE	= 1 << 2,
-	PSPF_CVARFAST	= 1 << 3,
-	PSPF_FLIP		= 1 << 6,
-};
+class FArchive;
 
-class DPSprite : public DObject
-{
-	DECLARE_CLASS (DPSprite, DObject)
-	HAS_OBJECT_POINTERS
-public:
-	DPSprite(player_t *owner, AActor *caller, int id);
+FArchive &operator<< (FArchive &, pspdef_t &);
 
-	static void NewTick();
-	void SetState(FState *newstate, bool pending = false);
-
-	int			GetID()		const { return ID; }
-	int			GetSprite()	const { return Sprite; }
-	int			GetFrame()	const { return Frame; }
-	FState*		GetState()	const { return State; }
-	DPSprite*	GetNext()	      { return Next; }
-	AActor*		GetCaller()	      { return Caller; }
-	void		SetCaller(AActor *newcaller) { Caller = newcaller; }
-	void		ResetInterpolation() { oldx = x; oldy = y; }
-
-	double x, y;
-	double oldx, oldy;
-	bool firstTic;
-	int Tics;
-	int Flags;
-
-private:
-	DPSprite () {}
-
-	void Serialize(FSerializer &arc);
-	void Tick();
-	void Destroy() override;
-
-public:	// must be public to be able to generate the field export tables. Grrr...
-	TObjPtr<AActor> Caller;
-	TObjPtr<DPSprite> Next;
-	player_t *Owner;
-	FState *State;
-	int Sprite;
-	int Frame;
-	int ID;
-	bool processPending; // true: waiting for periodic processing on this tick
-
-	friend class player_t;
-	friend void CopyPlayer(player_t *dst, player_t *src, const char *name);
-};
+class player_t;
+class AActor;
+struct FState;
 
 void P_NewPspriteTick();
+void P_SetPsprite (player_t *player, int position, FState *state, bool nofunction=false);
 void P_CalcSwing (player_t *player);
-void P_SetPsprite(player_t *player, PSPLayers id, FState *state, bool pending = false);
 void P_BringUpWeapon (player_t *player);
 void P_FireWeapon (player_t *player);
 void P_DropWeapon (player_t *player);
-void P_BobWeapon (player_t *player, float *x, float *y, double ticfrac);
-DAngle P_BulletSlope (AActor *mo, FTranslatedLineTarget *pLineTarget = NULL, int aimflags = 0);
-AActor *P_AimTarget(AActor *mo);
+void P_BobWeapon (player_t *player, pspdef_t *psp, fixed_t *x, fixed_t *y);
+angle_t P_BulletSlope (AActor *mo, AActor **pLineTarget = NULL);
+void P_GunShot (AActor *mo, bool accurate, const PClass *pufftype, angle_t pitch);
 
-void DoReadyWeapon(AActor *self);
-void DoReadyWeaponToBob(AActor *self);
-void DoReadyWeaponToFire(AActor *self, bool primary = true, bool secondary = true);
-void DoReadyWeaponToSwitch(AActor *self, bool switchable = true);
+void DoReadyWeapon(AActor * self);
+void DoReadyWeaponToBob(AActor * self);
+void DoReadyWeaponToFire(AActor * self, bool primary = true, bool secondary = true);
+void DoReadyWeaponToSwitch(AActor * self, bool switchable = true);
 
+DECLARE_ACTION(A_Raise)
 void A_ReFire(AActor *self, FState *state = NULL);
 
 #endif	// __P_PSPR_H__

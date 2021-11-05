@@ -27,154 +27,26 @@
 
 #include "doomdef.h"
 #include "p_local.h"
-#include "p_spec.h"
 
 #include "p_lnspec.h"
-#include "doomstat.h"
-#include "p_maputl.h"
 
 // State.
 #include "r_state.h"
 #include "statnums.h"
-#include "serializer.h"
+#include "farchive.h"
 
 static FRandom pr_flicker ("Flicker");
 static FRandom pr_lightflash ("LightFlash");
 static FRandom pr_strobeflash ("StrobeFlash");
 static FRandom pr_fireflicker ("FireFlicker");
 
-
-class DFireFlicker : public DLighting
-{
-	DECLARE_CLASS(DFireFlicker, DLighting)
-public:
-	DFireFlicker(sector_t *sector);
-	DFireFlicker(sector_t *sector, int upper, int lower);
-	void		Serialize(FSerializer &arc);
-	void		Tick();
-protected:
-	int 		m_Count;
-	int 		m_MaxLight;
-	int 		m_MinLight;
-private:
-	DFireFlicker();
-};
-
-class DFlicker : public DLighting
-{
-	DECLARE_CLASS(DFlicker, DLighting)
-public:
-	DFlicker(sector_t *sector, int upper, int lower);
-	void		Serialize(FSerializer &arc);
-	void		Tick();
-protected:
-	int 		m_Count;
-	int 		m_MaxLight;
-	int 		m_MinLight;
-private:
-	DFlicker();
-};
-
-class DLightFlash : public DLighting
-{
-	DECLARE_CLASS(DLightFlash, DLighting)
-public:
-	DLightFlash(sector_t *sector);
-	DLightFlash(sector_t *sector, int min, int max);
-	void		Serialize(FSerializer &arc);
-	void		Tick();
-protected:
-	int 		m_Count;
-	int 		m_MaxLight;
-	int 		m_MinLight;
-	int 		m_MaxTime;
-	int 		m_MinTime;
-private:
-	DLightFlash();
-};
-
-class DStrobe : public DLighting
-{
-	DECLARE_CLASS(DStrobe, DLighting)
-public:
-	DStrobe(sector_t *sector, int utics, int ltics, bool inSync);
-	DStrobe(sector_t *sector, int upper, int lower, int utics, int ltics);
-	void		Serialize(FSerializer &arc);
-	void		Tick();
-protected:
-	int 		m_Count;
-	int 		m_MinLight;
-	int 		m_MaxLight;
-	int 		m_DarkTime;
-	int 		m_BrightTime;
-private:
-	DStrobe();
-};
-
-class DGlow : public DLighting
-{
-	DECLARE_CLASS(DGlow, DLighting)
-public:
-	DGlow(sector_t *sector);
-	void		Serialize(FSerializer &arc);
-	void		Tick();
-protected:
-	int 		m_MinLight;
-	int 		m_MaxLight;
-	int 		m_Direction;
-private:
-	DGlow();
-};
-
-// [RH] Glow from Light_Glow and Light_Fade specials
-class DGlow2 : public DLighting
-{
-	DECLARE_CLASS(DGlow2, DLighting)
-public:
-	DGlow2(sector_t *sector, int start, int end, int tics, bool oneshot);
-	void		Serialize(FSerializer &arc);
-	void		Tick();
-protected:
-	int			m_Start;
-	int			m_End;
-	int			m_MaxTics;
-	int			m_Tics;
-	bool		m_OneShot;
-private:
-	DGlow2();
-};
-
-// [RH] Phased light thinker
-class DPhased : public DLighting
-{
-	DECLARE_CLASS(DPhased, DLighting)
-public:
-	DPhased(sector_t *sector);
-	DPhased(sector_t *sector, int baselevel, int phase);
-	void		Serialize(FSerializer &arc);
-	void		Tick();
-protected:
-	BYTE		m_BaseLevel;
-	BYTE		m_Phase;
-private:
-	DPhased();
-	DPhased(sector_t *sector, int baselevel);
-	int PhaseHelper(sector_t *sector, int index, int light, sector_t *prev);
-};
-
-#define GLOWSPEED				8
-#define STROBEBRIGHT			5
-#define FASTDARK				15
-#define SLOWDARK				TICRATE
-
-
 //-----------------------------------------------------------------------------
 //
 //
 //
 //-----------------------------------------------------------------------------
 
-IMPLEMENT_CLASS(DLighting, false, false)
+IMPLEMENT_CLASS (DLighting)
 
 DLighting::DLighting ()
 {
@@ -192,18 +64,16 @@ DLighting::DLighting (sector_t *sector)
 //
 //-----------------------------------------------------------------------------
 
-IMPLEMENT_CLASS(DFireFlicker, false, false)
+IMPLEMENT_CLASS (DFireFlicker)
 
 DFireFlicker::DFireFlicker ()
 {
 }
 
-void DFireFlicker::Serialize(FSerializer &arc)
+void DFireFlicker::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc("count", m_Count)
-		("maxlight", m_MaxLight)
-		("minlight", m_MinLight);
+	arc << m_Count << m_MaxLight << m_MinLight;
 }
 
 
@@ -259,18 +129,16 @@ DFireFlicker::DFireFlicker (sector_t *sector, int upper, int lower)
 //
 //-----------------------------------------------------------------------------
 
-IMPLEMENT_CLASS(DFlicker, false, false)
+IMPLEMENT_CLASS (DFlicker)
 
 DFlicker::DFlicker ()
 {
 }
 
-void DFlicker::Serialize(FSerializer &arc)
+void DFlicker::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc("count", m_Count)
-		("maxlight", m_MaxLight)
-		("minlight", m_MinLight);
+	arc << m_Count << m_MaxLight << m_MinLight;
 }
 
 //-----------------------------------------------------------------------------
@@ -306,9 +174,9 @@ void DFlicker::Tick ()
 DFlicker::DFlicker (sector_t *sector, int upper, int lower)
 	: DLighting (sector)
 {
-	m_MaxLight = sector_t::ClampLight(upper);
-	m_MinLight = sector_t::ClampLight(lower);
-	sector->lightlevel = m_MaxLight;
+	m_MaxLight = upper;
+	m_MinLight = lower;
+	sector->lightlevel = upper;
 	m_Count = (pr_flicker()&64)+1;
 }
 
@@ -335,20 +203,16 @@ void EV_StartLightFlickering (int tag, int upper, int lower)
 //
 //-----------------------------------------------------------------------------
 
-IMPLEMENT_CLASS(DLightFlash, false, false)
+IMPLEMENT_CLASS (DLightFlash)
 
 DLightFlash::DLightFlash ()
 {
 }
 
-void DLightFlash::Serialize(FSerializer &arc)
+void DLightFlash::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc("count", m_Count)
-		("maxlight", m_MaxLight)
-		("minlight", m_MinLight)
-		("maxtime", m_MaxTime)
-		("mintime", m_MinTime);
+	arc << m_Count << m_MaxLight << m_MaxTime << m_MinLight << m_MinTime;
 }
 
 //-----------------------------------------------------------------------------
@@ -410,20 +274,16 @@ DLightFlash::DLightFlash (sector_t *sector, int min, int max)
 //
 //-----------------------------------------------------------------------------
 
-IMPLEMENT_CLASS(DStrobe, false, false)
+IMPLEMENT_CLASS (DStrobe)
 
 DStrobe::DStrobe ()
 {
 }
 
-void DStrobe::Serialize(FSerializer &arc)
+void DStrobe::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc("count", m_Count)
-		("maxlight", m_MaxLight)
-		("minlight", m_MinLight)
-		("darktime", m_DarkTime)
-		("brighttime", m_BrightTime);
+	arc << m_Count << m_MaxLight << m_MinLight << m_DarkTime << m_BrightTime;
 }
 
 //-----------------------------------------------------------------------------
@@ -612,9 +472,9 @@ void EV_LightTurnOn (int tag, int bright)
 //
 //-----------------------------------------------------------------------------
 
-void EV_LightTurnOnPartway (int tag, double frac)
+void EV_LightTurnOnPartway (int tag, fixed_t frac)
 {
-	frac = clamp(frac, 0., 1.);
+	frac = clamp<fixed_t> (frac, 0, FRACUNIT);
 
 	// Search all sectors for ones with same tag as activating line
 	int secnum;
@@ -638,7 +498,7 @@ void EV_LightTurnOnPartway (int tag, double frac)
 				}
 			}
 		}
-		sector->SetLightLevel(int(frac * bright + (1 - frac) * min));
+		sector->SetLightLevel(DMulScale16 (frac, bright, FRACUNIT-frac, min));
 	}
 }
 
@@ -668,18 +528,16 @@ void EV_LightChange (int tag, int value)
 //
 //-----------------------------------------------------------------------------
 
-IMPLEMENT_CLASS(DGlow, false, false)
+IMPLEMENT_CLASS (DGlow)
 
 DGlow::DGlow ()
 {
 }
 
-void DGlow::Serialize(FSerializer &arc)
+void DGlow::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc("direction", m_Direction)
-		("maxlight", m_MaxLight)
-		("minlight", m_MinLight);
+	arc << m_Direction << m_MaxLight << m_MinLight;
 }
 
 //-----------------------------------------------------------------------------
@@ -737,20 +595,16 @@ DGlow::DGlow (sector_t *sector)
 //
 //-----------------------------------------------------------------------------
 
-IMPLEMENT_CLASS(DGlow2, false, false)
+IMPLEMENT_CLASS (DGlow2)
 
 DGlow2::DGlow2 ()
 {
 }
 
-void DGlow2::Serialize(FSerializer &arc)
+void DGlow2::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc("end", m_End)
-		("maxtics", m_MaxTics)
-		("oneshot", m_OneShot)
-		("start", m_Start)
-		("tics", m_Tics);
+	arc << m_End << m_MaxTics << m_OneShot << m_Start << m_Tics;
 }
 
 //-----------------------------------------------------------------------------
@@ -870,17 +724,16 @@ void EV_StartLightFading (int tag, int value, int tics)
 //
 //-----------------------------------------------------------------------------
 
-IMPLEMENT_CLASS(DPhased, false, false)
+IMPLEMENT_CLASS (DPhased)
 
 DPhased::DPhased ()
 {
 }
 
-void DPhased::Serialize(FSerializer &arc)
+void DPhased::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc("baselevel", m_BaseLevel)
-		("phase", m_Phase);
+	arc << m_BaseLevel << m_Phase;
 }
 
 //-----------------------------------------------------------------------------
@@ -915,7 +768,7 @@ void DPhased::Tick ()
 
 int DPhased::PhaseHelper (sector_t *sector, int index, int light, sector_t *prev)
 {
-	if (!sector || sector->validcount == validcount)
+	if (!sector)
 	{
 		return index;
 	}
@@ -923,7 +776,6 @@ int DPhased::PhaseHelper (sector_t *sector, int index, int light, sector_t *prev
 	{
 		DPhased *l;
 		int baselevel = sector->lightlevel ? sector->lightlevel : light;
-		sector->validcount = validcount;
 
 		if (index == 0)
 		{
@@ -960,7 +812,6 @@ DPhased::DPhased (sector_t *sector, int baselevel)
 DPhased::DPhased (sector_t *sector)
 	: DLighting (sector)
 {
-	validcount++;
 	PhaseHelper (sector, 0, 0, NULL);
 }
 
@@ -992,63 +843,3 @@ void EV_StopLightEffect (int tag)
 		}
 	}
 }
-
-
-void P_SpawnLights(sector_t *sector)
-{
-	switch (sector->special)
-	{
-	case Light_Phased:
-		new DPhased(sector, 48, 63 - (sector->lightlevel & 63));
-		break;
-
-		// [RH] Hexen-like phased lighting
-	case LightSequenceStart:
-		new DPhased(sector);
-		break;
-
-	case dLight_Flicker:
-		new DLightFlash(sector);
-		break;
-
-	case dLight_StrobeFast:
-		new DStrobe(sector, STROBEBRIGHT, FASTDARK, false);
-		break;
-
-	case dLight_StrobeSlow:
-		new DStrobe(sector, STROBEBRIGHT, SLOWDARK, false);
-		break;
-
-	case dLight_Strobe_Hurt:
-		new DStrobe(sector, STROBEBRIGHT, FASTDARK, false);
-		break;
-
-	case dLight_Glow:
-		new DGlow(sector);
-		break;
-
-	case dLight_StrobeSlowSync:
-		new DStrobe(sector, STROBEBRIGHT, SLOWDARK, true);
-		break;
-
-	case dLight_StrobeFastSync:
-		new DStrobe(sector, STROBEBRIGHT, FASTDARK, true);
-		break;
-
-	case dLight_FireFlicker:
-		new DFireFlicker(sector);
-		break;
-
-	case dScroll_EastLavaDamage:
-		new DStrobe(sector, STROBEBRIGHT, FASTDARK, false);
-		break;
-
-	case sLight_Strobe_Hurt:
-		new DStrobe(sector, STROBEBRIGHT, FASTDARK, false);
-		break;
-
-	default:
-		break;
-	}
-}
-

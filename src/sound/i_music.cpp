@@ -476,11 +476,6 @@ retry_as_sndsys:
 	{
 		info = new OPLMUSSong (*reader, device != NULL? device->args.GetChars() : "");
 	}
-	// Check for game music
-	else if ((fmt = GME_CheckFormat(id[0])) != NULL && fmt[0] != '\0')
-	{
-		info = GME_OpenSong(*reader, fmt);
-	}
 
     if (info == NULL)
     {

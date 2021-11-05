@@ -2,23 +2,55 @@
 #define __TEXTURES_H
 
 #include "doomtype.h"
-#include "vectors.h"
 
 class FBitmap;
 struct FRemapTable;
 struct FCopyInfo;
 class FScanner;
-class PClassInventory;
+struct PClass;
+class FArchive;
 
 // Texture IDs
 class FTextureManager;
 class FTerrainTypeArray;
+
+class FTextureID
+{
+	friend class FTextureManager;
+	friend FArchive &operator<< (FArchive &arc, FTextureID &tex);
+	friend FTextureID GetHUDIcon(const PClass *cls);
+	friend void R_InitSpriteDefs ();
+
+public:
+	FTextureID() throw() {}
+	bool isNull() const { return texnum == 0; }
+	bool isValid() const { return texnum > 0; }
+	bool Exists() const { return texnum >= 0; }
+	void SetInvalid() { texnum = -1; }
+	void SetNull() { texnum = 0; }
+	bool operator ==(const FTextureID &other) const { return texnum == other.texnum; }
+	bool operator !=(const FTextureID &other) const { return texnum != other.texnum; }
+	FTextureID operator +(int offset) throw();
+	int GetIndex() const { return texnum; }	// Use this only if you absolutely need the index!
+
+	// The switch list needs these to sort the switches by texture index
+	int operator -(FTextureID other) const { return texnum - other.texnum; }
+	bool operator < (FTextureID other) const { return texnum < other.texnum; }
+	bool operator > (FTextureID other) const { return texnum > other.texnum; }
+	
+protected:
+	FTextureID(int num) { texnum = num; }
+private:
+	int texnum;
+};
 
 class FNullTextureID : public FTextureID
 {
 public:
 	FNullTextureID() : FTextureID(0) {}
 };
+
+FArchive &operator<< (FArchive &arc, FTextureID &tex);
 
 //
 // Animating textures and planes
@@ -120,7 +152,8 @@ public:
 
 	BYTE WidthBits, HeightBits;
 
-	DVector2 Scale;
+	fixed_t		xScale;
+	fixed_t		yScale;
 
 	int SourceLump;
 	FTextureID id;
@@ -199,17 +232,16 @@ public:
 	int GetWidth () { return Width; }
 	int GetHeight () { return Height; }
 
-	int GetScaledWidth () { int foo = int((Width * 2) / Scale.X); return (foo >> 1) + (foo & 1); }
-	int GetScaledHeight () { int foo = int((Height * 2) / Scale.Y); return (foo >> 1) + (foo & 1); }
-	double GetScaledWidthDouble () { return Width / Scale.X; }
-	double GetScaledHeightDouble () { return Height / Scale.Y; }
-	double GetScaleY() const { return Scale.Y; }
+	int GetScaledWidth () { int foo = (Width << 17) / xScale; return (foo >> 1) + (foo & 1); }
+	int GetScaledHeight () { int foo = (Height << 17) / yScale; return (foo >> 1) + (foo & 1); }
+	int GetScaledHeight(fixed_t scale) { int foo = (Height << 17) / scale; return (foo >> 1) + (foo & 1); }
+	double GetScaledWidthDouble () { return (Width * 65536.) / xScale; }
+	double GetScaledHeightDouble () { return (Height * 65536.) / yScale; }
 
-	int GetScaledLeftOffset () { int foo = int((LeftOffset * 2) / Scale.X); return (foo >> 1) + (foo & 1); }
-	int GetScaledTopOffset () { int foo = int((TopOffset * 2) / Scale.Y); return (foo >> 1) + (foo & 1); }
-	double GetScaledLeftOffsetDouble() { return LeftOffset / Scale.X; }
-	double GetScaledTopOffsetDouble() { return TopOffset / Scale.Y; }
-	virtual void ResolvePatches() {}
+	int GetScaledLeftOffset () { int foo = (LeftOffset << 17) / xScale; return (foo >> 1) + (foo & 1); }
+	int GetScaledTopOffset () { int foo = (TopOffset << 17) / yScale; return (foo >> 1) + (foo & 1); }
+	double GetScaledLeftOffsetDouble() { return (LeftOffset * 65536.) / xScale; }
+	double GetScaledTopOffsetDouble() { return (TopOffset * 65536.) / yScale; }
 
 	virtual void SetFrontSkyLayer();
 
@@ -235,12 +267,12 @@ public:
 		LeftOffset = BaseTexture->LeftOffset;
 		WidthBits = BaseTexture->WidthBits;
 		HeightBits = BaseTexture->HeightBits;
-		Scale = BaseTexture->Scale;
+		xScale = BaseTexture->xScale;
+		yScale = BaseTexture->yScale;
 		WidthMask = (1 << WidthBits) - 1;
 	}
 
 	void SetScaledSize(int fitwidth, int fitheight);
-	PalEntry GetSkyCapColor(bool bottom);
 
 	virtual void HackHack (int newheight);	// called by FMultipatchTexture to discover corrupt patches.
 
@@ -260,11 +292,6 @@ protected:
 		bNoDecals = other->bNoDecals;
 		Rotations = other->Rotations;
 	}
-
-private:
-	bool bSWSkyColorDone = false;
-	PalEntry FloorSkyColor;
-	PalEntry CeilingSkyColor;
 
 public:
 	static void FlipSquareBlock (BYTE *block, int x, int y);
@@ -350,7 +377,7 @@ public:
 
 	FTextureID CheckForTexture (const char *name, int usetype, BITFIELD flags=TEXMAN_TryAny);
 	FTextureID GetTexture (const char *name, int usetype, BITFIELD flags=0);
-	int ListTextures (const char *name, TArray<FTextureID> &list, bool listall = false);
+	int ListTextures (const char *name, TArray<FTextureID> &list);
 
 	void AddTexturesLump (const void *lumpdata, int lumpsize, int deflumpnum, int patcheslump, int firstdup=0, bool texture1=false);
 	void AddTexturesLumps (int lump1, int lump2, int patcheslump);
@@ -383,6 +410,10 @@ public:
 	void UnloadAll ();
 
 	int NumTextures () const { return (int)Textures.Size(); }
+	void PrecacheLevel (void);
+
+	void WriteTexture (FArchive &arc, int picnum);
+	int ReadTexture (FArchive &arc);
 
 	void UpdateAnimations (DWORD mstime);
 	int GuesstimateNumTextures ();
@@ -446,12 +477,6 @@ private:
 	TArray<FSwitchDef *> mSwitchDefs;
 	TArray<FDoorAnimation> mAnimatedDoors;
 	TArray<BYTE *> BuildTileFiles;
-public:
-	short sintable[2048];	// for texture warping
-	enum
-	{
-		SINMASK = 2047
-	};
 };
 
 // A texture that doesn't really exist
@@ -469,7 +494,7 @@ public:
 class FWarpTexture : public FTexture
 {
 public:
-	FWarpTexture (FTexture *source, int warptype);
+	FWarpTexture (FTexture *source);
 	~FWarpTexture ();
 
 	virtual int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate=0, FCopyInfo *inf = NULL);
@@ -489,16 +514,24 @@ protected:
 	BYTE *Pixels;
 	Span **Spans;
 	float Speed;
-	int WidthOffsetMultiplier, HeightOffsetMultiplier;  // [mxd]
 
 	virtual void MakeTexture (DWORD time);
-	int NextPo2 (int v); // [mxd]
-	void SetupMultipliers (int width, int height); // [mxd]
+};
+
+// [GRB] Eternity-like warping
+class FWarp2Texture : public FWarpTexture
+{
+public:
+	FWarp2Texture (FTexture *source);
+
+protected:
+	void MakeTexture (DWORD time);
 };
 
 // A texture that can be drawn to.
 class DSimpleCanvas;
 class AActor;
+class FArchive;
 
 class FCanvasTexture : public FTexture
 {

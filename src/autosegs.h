@@ -38,8 +38,7 @@
 #include "doomtype.h"
 
 #define REGMARKER(x) (x)
-typedef void * const REGINFO;
-typedef void * NCREGINFO;
+typedef void *REGINFO;
 
 // List of Action functons
 extern REGINFO ARegHead;
@@ -49,13 +48,13 @@ extern REGINFO ARegTail;
 extern REGINFO CRegHead;
 extern REGINFO CRegTail;
 
-// List of class fields
-extern REGINFO FRegHead;
-extern REGINFO FRegTail;
-
 // List of properties
 extern REGINFO GRegHead;
 extern REGINFO GRegTail;
+
+// List of variables
+extern REGINFO MRegHead;
+extern REGINFO MRegTail;
 
 // List of MAPINFO map options
 extern REGINFO YRegHead;
@@ -79,7 +78,7 @@ class FAutoSegIterator
 			}
 			Probe = Head;
 		}
-		NCREGINFO operator*() const NO_SANITIZE
+		REGINFO operator*() const NO_SANITIZE
 		{
 			return *Probe;
 		}

@@ -23,9 +23,6 @@
 #ifndef __R_SEGS_H__
 #define __R_SEGS_H__
 
-namespace swrenderer
-{
-
 struct drawseg_t;
 
 void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2);
@@ -34,15 +31,10 @@ extern short *openings;
 extern ptrdiff_t lastopening;
 extern size_t maxopenings;
 
-int R_CreateWallSegmentY (short *outbuf, double z1, double z2, const FWallCoords *wallc);
-int R_CreateWallSegmentYSloped (short *outbuf, const secplane_t &plane, const FWallCoords *wallc);
-inline int R_CreateWallSegmentY(short *outbuf, double z, const FWallCoords *wallc)
-{
-	return R_CreateWallSegmentY(outbuf, z, z, wallc);
-}
-
-void PrepWall (float *swall, fixed_t *lwall, double walxrepeat, int x1, int x2);
-void PrepLWall (fixed_t *lwall, double walxrepeat, int x1, int x2);
+int OWallMost (short *mostbuf, fixed_t z, const FWallCoords *wallc);
+int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc);
+void PrepWall (fixed_t *swall, fixed_t *lwall, fixed_t walxrepeat, int x1, int x2);
+void PrepLWall (fixed_t *lwall, fixed_t walxrepeat, int x1, int x2);
 
 ptrdiff_t R_NewOpening (ptrdiff_t len);
 
@@ -50,34 +42,11 @@ void R_CheckDrawSegs ();
 
 void R_RenderSegLoop ();
 
-extern float	swall[MAXWIDTH];
+extern fixed_t	swall[MAXWIDTH];
 extern fixed_t	lwall[MAXWIDTH];
-extern float	rw_light;		// [RH] Scale lights with viewsize adjustments
-extern float	rw_lightstep;
-extern float	rw_lightleft;
+extern fixed_t	rw_light;		// [RH] Scale lights with viewsize adjustments
+extern fixed_t	rw_lightstep;
+extern fixed_t	rw_lightleft;
 extern fixed_t	rw_offset;
-
-/* portal structure, this is used in r_ code in order to store drawsegs with portals (and mirrors) */
-struct PortalDrawseg
-{
-	line_t* src; // source line (the one drawn) this doesn't change over render loops
-	line_t* dst; // destination line (the one that the portal is linked with, equals 'src' for mirrors)
-
-	int x1; // drawseg x1
-	int x2; // drawseg x2
-
-	int len;
-	TArray<short> ceilingclip;
-	TArray<short> floorclip;
-
-	bool mirror; // true if this is a mirror (src should equal dst)
-};
-
-extern PortalDrawseg* CurrentPortal;
-extern int CurrentPortalUniq;
-extern bool CurrentPortalInSkybox;
-extern TArray<PortalDrawseg> WallPortals;
-
-}
 
 #endif

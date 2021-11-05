@@ -90,6 +90,7 @@ The FON2 header is followed by variable length data:
 #include "cmdlib.h"
 #include "sc_man.h"
 #include "hu_stuff.h"
+#include "farchive.h"
 #include "textures/textures.h"
 #include "r_data/r_translate.h"
 #include "colormatcher.h"
@@ -133,7 +134,7 @@ protected:
 	void LoadBMF (int lump, const BYTE *data);
 	void CreateFontFromPic (FTextureID picnum);
 
-	static int BMFCompare(const void *a, const void *b);
+	static int STACK_ARGS BMFCompare(const void *a, const void *b);
 
 	enum
 	{
@@ -230,7 +231,7 @@ struct TempColorInfo
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static int TranslationMapCompare (const void *a, const void *b);
+static int STACK_ARGS TranslationMapCompare (const void *a, const void *b);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -338,6 +339,33 @@ FFont *V_GetFont(const char *name)
 		}
 	}
 	return font;
+}
+//==========================================================================
+//
+// SerializeFFontPtr
+//
+//==========================================================================
+
+FArchive &SerializeFFontPtr (FArchive &arc, FFont* &font)
+{
+	if (arc.IsStoring ())
+	{
+		arc << font->Name;
+	}
+	else
+	{
+		char *name = NULL;
+
+		arc << name;
+		font = V_GetFont(name);
+		if (font == NULL)
+		{
+			Printf ("Could not load font %s\n", name);
+			font = SmallFont;
+		}
+		delete[] name;
+	}
+	return arc;
 }
 
 //==========================================================================
@@ -566,7 +594,7 @@ void RecordTextureColors (FTexture *pic, BYTE *usedcolors)
 //
 //==========================================================================
 
-static int compare (const void *arg1, const void *arg2)
+static int STACK_ARGS compare (const void *arg1, const void *arg2)
 {
 	if (RPART(GPalette.BaseColors[*((BYTE *)arg1)]) * 299 +
 		GPART(GPalette.BaseColors[*((BYTE *)arg1)]) * 587 +
@@ -1332,7 +1360,7 @@ void FSingleLumpFont::LoadBMF(int lump, const BYTE *data)
 //
 //==========================================================================
 
-int FSingleLumpFont::BMFCompare(const void *a, const void *b)
+int STACK_ARGS FSingleLumpFont::BMFCompare(const void *a, const void *b)
 {
 	const PalEntry *pa = (const PalEntry *)a;
 	const PalEntry *pb = (const PalEntry *)b;
@@ -2300,19 +2328,19 @@ void V_InitFontColors ()
 				else if (sc.Compare ("Flat:"))
 				{
 					sc.MustGetString();
-					logcolor = V_GetColor (NULL, sc);
+					logcolor = V_GetColor (NULL, sc.String);
 				}
 				else
 				{
 					// Get first color
-					c = V_GetColor (NULL, sc);
+					c = V_GetColor (NULL, sc.String);
 					tparm.Start[0] = RPART(c);
 					tparm.Start[1] = GPART(c);
 					tparm.Start[2] = BPART(c);
 
 					// Get second color
 					sc.MustGetString();
-					c = V_GetColor (NULL, sc);
+					c = V_GetColor (NULL, sc.String);
 					tparm.End[0] = RPART(c);
 					tparm.End[1] = GPART(c);
 					tparm.End[2] = BPART(c);
@@ -2446,7 +2474,7 @@ void V_InitFontColors ()
 //
 //==========================================================================
 
-static int TranslationMapCompare (const void *a, const void *b)
+static int STACK_ARGS TranslationMapCompare (const void *a, const void *b)
 {
 	return int(((const TranslationMap *)a)->Name) - int(((const TranslationMap *)b)->Name);
 }

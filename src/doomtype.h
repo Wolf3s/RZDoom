@@ -44,10 +44,68 @@
 #include "tarray.h"
 #include "name.h"
 #include "zstring.h"
+#include "vectors.h"
 
-class PClassActor;
-typedef TMap<int, PClassActor *> FClassMap;
+struct PClass;
+typedef TMap<int, const PClass *> FClassMap;
 
+// Since this file is included by everything, it seems an appropriate place
+// to check the NOASM/USEASM macros.
+
+// There are three assembly-related macros:
+//
+//		NOASM	- Assembly code is disabled
+//		X86_ASM	- Using ia32 assembly code
+//		X64_ASM	- Using amd64 assembly code
+//
+// Note that these relate only to using the pure assembly code. Inline
+// assembly may still be used without respect to these macros, as
+// deemed appropriate.
+
+#ifndef NOASM
+// Select the appropriate type of assembly code to use.
+
+#if defined(_M_IX86) || defined(__i386__)
+
+#define X86_ASM
+#ifdef X64_ASM
+#undef X64_ASM
+#endif
+
+#elif defined(_M_X64) || defined(__amd64__)
+
+#define X64_ASM
+#ifdef X86_ASM
+#undef X86_ASM
+#endif
+
+#else
+
+#define NOASM
+
+#endif
+
+#endif
+
+#ifdef NOASM
+// Ensure no assembly macros are defined if NOASM is defined.
+
+#ifdef X86_ASM
+#undef X86_ASM
+#endif
+
+#ifdef X64_ASM
+#undef X64_ASM
+#endif
+
+#endif
+
+
+#if defined(_MSC_VER) || defined(__WATCOMC__)
+#define STACK_ARGS __cdecl
+#else
+#define STACK_ARGS
+#endif
 
 #if defined(_MSC_VER)
 #define NOVTABLE __declspec(novtable)
@@ -65,21 +123,7 @@ typedef TMap<int, PClassActor *> FClassMap;
 #define NO_SANITIZE
 #endif
 
-#if defined(__GNUC__)
-// With versions of GCC newer than 4.2, it appears it was determined that the
-// cost of an unaligned pointer on PPC was high enough to add padding to the
-// end of packed structs.  For whatever reason __packed__ and pragma pack are
-// handled differently in this regard. Note that this only needs to be applied
-// to types which are used in arrays or sizeof is needed. This also prevents
-// code from taking references to the struct members.
-#define FORCE_PACKED __attribute__((__packed__))
-#else
-#define FORCE_PACKED
-#endif
-
 #include "basictypes.h"
-
-extern bool batchrun;
 
 // Bounding box coordinate storage.
 enum
@@ -92,11 +136,11 @@ enum
 
 
 // [RH] This gets used all over; define it here:
-int Printf (int printlevel, const char *, ...) GCCPRINTF(2,3);
-int Printf (const char *, ...) GCCPRINTF(1,2);
+int STACK_ARGS Printf (int printlevel, const char *, ...) GCCPRINTF(2,3);
+int STACK_ARGS Printf (const char *, ...) GCCPRINTF(1,2);
 
 // [RH] Same here:
-int DPrintf (int level, const char *, ...) GCCPRINTF(2,3);
+int STACK_ARGS DPrintf (const char *, ...) GCCPRINTF(1,2);
 
 extern "C" int mysnprintf(char *buffer, size_t count, const char *format, ...) GCCPRINTF(3,4);
 extern "C" int myvsnprintf(char *buffer, size_t count, const char *format, va_list argptr) GCCFORMAT(3);
@@ -109,19 +153,15 @@ enum
 	PRINT_MEDIUM,	// death messages
 	PRINT_HIGH,		// critical messages
 	PRINT_CHAT,		// chat messages
-	PRINT_TEAMCHAT,	// chat messages from a teammate
-	PRINT_LOG,		// only to logfile
-	PRINT_BOLD = 200				// What Printf_Bold used
+	PRINT_TEAMCHAT	// chat messages from a teammate
 };
-
-enum
-{
-	DMSG_OFF,		// no developer messages.
-	DMSG_ERROR,		// general notification messages
-	DMSG_WARNING,	// warnings
-	DMSG_NOTIFY,	// general notification messages
-	DMSG_SPAMMY,	// for those who want to see everything, regardless of its usefulness.
-};
+#define PRINT_LOW				0				// pickup messages
+#define PRINT_MEDIUM			1				// death messages
+#define PRINT_HIGH				2				// critical messages
+#define PRINT_CHAT				3				// chat messages
+#define PRINT_TEAMCHAT			4				// chat messages from a teammate
+#define PRINT_LOG				5				// only to logfile
+#define PRINT_BOLD				200				// What Printf_Bold used
 
 struct PalEntry
 {
@@ -155,39 +195,6 @@ struct PalEntry
 #endif
 };
 
-class PClassInventory;
-
-class FTextureID
-{
-	friend class FTextureManager;
-	friend FTextureID GetHUDIcon(PClassInventory *cls);
-	friend void R_InitSpriteDefs();
-
-public:
-	FTextureID() throw() {}
-	bool isNull() const { return texnum == 0; }
-	bool isValid() const { return texnum > 0; }
-	bool Exists() const { return texnum >= 0; }
-	void SetInvalid() { texnum = -1; }
-	void SetNull() { texnum = 0; }
-	bool operator ==(const FTextureID &other) const { return texnum == other.texnum; }
-	bool operator !=(const FTextureID &other) const { return texnum != other.texnum; }
-	FTextureID operator +(int offset) throw();
-	int GetIndex() const { return texnum; }	// Use this only if you absolutely need the index!
-
-											// The switch list needs these to sort the switches by texture index
-	int operator -(FTextureID other) const { return texnum - other.texnum; }
-	bool operator < (FTextureID other) const { return texnum < other.texnum; }
-	bool operator > (FTextureID other) const { return texnum > other.texnum; }
-
-protected:
-	FTextureID(int num) { texnum = num; }
-private:
-	int texnum;
-};
-
-
-
 // Screenshot buffer image data types
 enum ESSType
 {
@@ -196,12 +203,9 @@ enum ESSType
 	SS_BGRA
 };
 
-// always use our own definition for consistency.
-#ifdef M_PI
-#undef M_PI
+#ifndef M_PI
+#define M_PI		3.14159265358979323846	// matches value in gcc v2 math.h
 #endif
-
-const double M_PI = 3.14159265358979323846;	// matches value in gcc v2 math.h
 
 template <typename T, size_t N>
 char ( &_ArraySizeHelper( T (&array)[N] ))[N];
@@ -213,14 +217,12 @@ char ( &_ArraySizeHelper( T (&array)[N] ))[N];
 #ifdef __MACH__
 #define SECTION_AREG "__DATA,areg"
 #define SECTION_CREG "__DATA,creg"
-#define SECTION_FREG "__DATA,freg"
 #define SECTION_GREG "__DATA,greg"
 #define SECTION_MREG "__DATA,mreg"
 #define SECTION_YREG "__DATA,yreg"
 #else
 #define SECTION_AREG "areg"
 #define SECTION_CREG "creg"
-#define SECTION_FREG "freg"
 #define SECTION_GREG "greg"
 #define SECTION_MREG "mreg"
 #define SECTION_YREG "yreg"

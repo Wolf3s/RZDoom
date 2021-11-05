@@ -37,6 +37,8 @@
 #include <pthread.h>
 #include <libkern/OSAtomic.h>
 
+#include "basictypes.h"
+#include "basicinlines.h"
 #include "doomdef.h"
 #include "i_system.h"
 #include "templates.h"
@@ -184,7 +186,7 @@ unsigned int I_FPSTime()
 }
 
 
-double I_GetTimeFrac(uint32* ms)
+fixed_t I_GetTimeFrac(uint32* ms)
 {
 	const uint32_t now = I_MSTime();
 
@@ -194,8 +196,8 @@ double I_GetTimeFrac(uint32* ms)
 	}
 
 	return 0 == s_ticStart
-		? 1.
-		: clamp<double>( (now - s_ticStart) * TICRATE / 1000., 0, 1);
+		? FRACUNIT
+		: clamp<fixed_t>( (now - s_ticStart) * FRACUNIT * TICRATE / 1000, 0, FRACUNIT);
 }
 
 

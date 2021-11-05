@@ -23,6 +23,19 @@ inline int CheckException(DWORD code)
 	return EXCEPTION_CONTINUE_SEARCH;
 }
 
+
+#else
+
+#ifdef __try
+#undef __try
+#endif
+#define __try
+
+#ifdef __except
+#undef __except
+#endif
+#define __except(a) if (0)
+
 #endif
 
 #endif

@@ -269,13 +269,12 @@ bool wipe_doBurn (int ticks)
 	}
 
 	// Draw the screen
-	int xstep, ystep, firex, firey;
+	fixed_t xstep, ystep, firex, firey;
 	int x, y;
 	BYTE *to, *fromold, *fromnew;
-	const int SHIFT = 16;
 
-	xstep = (FIREWIDTH << SHIFT) / SCREENWIDTH;
-	ystep = (FIREHEIGHT << SHIFT) / SCREENHEIGHT;
+	xstep = (FIREWIDTH * FRACUNIT) / SCREENWIDTH;
+	ystep = (FIREHEIGHT * FRACUNIT) / SCREENHEIGHT;
 	to = screen->GetBuffer();
 	fromold = (BYTE *)wipe_scr_start;
 	fromnew = (BYTE *)wipe_scr_end;
@@ -286,7 +285,7 @@ bool wipe_doBurn (int ticks)
 		{
 			int fglevel;
 
-			fglevel = burnarray[(firex>>SHIFT)+(firey>>SHIFT)*FIREWIDTH] / 2;
+			fglevel = burnarray[(firex>>FRACBITS)+(firey>>FRACBITS)*FIREWIDTH] / 2;
 			if (fglevel >= 63)
 			{
 				to[x] = fromnew[x];
@@ -341,7 +340,7 @@ bool wipe_doFade (int ticks)
 	else
 	{
 		int x, y;
-		int bglevel = 64 - fade;
+		fixed_t bglevel = 64 - fade;
 		DWORD *fg2rgb = Col2RGB8[fade];
 		DWORD *bg2rgb = Col2RGB8[bglevel];
 		BYTE *fromnew = (BYTE *)wipe_scr_end;

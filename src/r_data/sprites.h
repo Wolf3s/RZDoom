@@ -1,8 +1,6 @@
 #ifndef __RES_SPRITES_H
 #define __RES_SPRITES_H
 
-#include "vectors.h"
-
 #define MAX_SPRITE_FRAMES	29		// [RH] Macro-ized as in BOOM.
 
 //
@@ -53,7 +51,8 @@ public:
 	BYTE		range0start;
 	BYTE		range0end;
 	bool		othergame;	// [GRB]
-	DVector2	Scale;
+	fixed_t		ScaleX;
+	fixed_t		ScaleY;
 	int			sprite;
 	int			crouchsprite;
 	int			namespc;	// namespace for this skin

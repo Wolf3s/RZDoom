@@ -36,50 +36,55 @@
 #include "a_sharedglobal.h"
 #include "p_local.h"
 #include "p_lnspec.h"
+#include "farchive.h"
 #include "r_sky.h"
-#include "r_state.h"
-#include "portal.h"
 
 // arg0 = Visibility*4 for this skybox
 
-IMPLEMENT_CLASS(ASkyViewpoint, false, false)
+IMPLEMENT_POINTY_CLASS (ASkyViewpoint)
+	DECLARE_POINTER(Mate)
+END_POINTERS
 
 // If this actor has no TID, make it the default sky box
 void ASkyViewpoint::BeginPlay ()
 {
 	Super::BeginPlay ();
 
-	if (tid == 0 && sectorPortals[0].mSkybox == nullptr)
+	if (tid == 0 && level.DefaultSkybox == NULL)
 	{
-		sectorPortals[0].mSkybox = this;
-		sectorPortals[0].mDestination = Sector;
+		level.DefaultSkybox = this;
 	}
+}
+
+void ASkyViewpoint::Serialize (FArchive &arc)
+{
+	Super::Serialize (arc);
+	arc << bInSkybox << bAlways << Mate;
 }
 
 void ASkyViewpoint::Destroy ()
 {
 	// remove all sector references to ourselves.
-	for (auto &s : sectorPortals)
+	for (int i = 0; i <numsectors; i++)
 	{
-		if (s.mSkybox == this)
+		if (sectors[i].SkyBoxes[sector_t::floor] == this)
 		{
-			s.mSkybox = 0;
-			// This is necessary to entirely disable EE-style skyboxes
-			// if their viewpoint gets deleted.
-			s.mFlags |= PORTSF_SKYFLATONLY;
+			sectors[i].SkyBoxes[sector_t::floor] = NULL;
+		}
+		if (sectors[i].SkyBoxes[sector_t::ceiling] == this)
+		{
+			sectors[i].SkyBoxes[sector_t::ceiling] = NULL;
 		}
 	}
-
+	if (level.DefaultSkybox == this)
+	{
+		level.DefaultSkybox = NULL;
+	}
 	Super::Destroy();
 }
 
-IMPLEMENT_CLASS(ASkyCamCompat, false, false)
+IMPLEMENT_CLASS (ASkyCamCompat)
 
-void ASkyCamCompat::BeginPlay()
-{
-	// Do not call the SkyViewpoint's super method because it would trash our setup
-	AActor::BeginPlay();
-}
 
 //---------------------------------------------------------------------------
 
@@ -98,7 +103,7 @@ public:
 	void PostBeginPlay ();
 };
 
-IMPLEMENT_CLASS(ASkyPicker, false, false)
+IMPLEMENT_CLASS (ASkyPicker)
 
 void ASkyPicker::PostBeginPlay ()
 {
@@ -117,21 +122,20 @@ void ASkyPicker::PostBeginPlay ()
 
 	if (box == NULL && args[0] != 0)
 	{
-		Printf ("Can't find SkyViewpoint %d for sector %td\n", args[0], Sector - sectors);
+		Printf ("Can't find SkyViewpoint %d for sector %td\n",
+			args[0], Sector - sectors);
 	}
 	else
 	{
-		int boxindex = P_GetSkyboxPortal(box);
-		// Do not override special portal types, only regular skies.
 		if (0 == (args[1] & 2))
 		{
-			if (Sector->GetPortalType(sector_t::ceiling) == PORTS_SKYVIEWPOINT)
-				Sector->Portals[sector_t::ceiling] = boxindex;
+			Sector->SkyBoxes[sector_t::ceiling] = box;
+			if (box == NULL) Sector->MoreFlags |= SECF_NOCEILINGSKYBOX;	// sector should ignore the level's default skybox
 		}
 		if (0 == (args[1] & 1))
 		{
-			if (Sector->GetPortalType(sector_t::floor) == PORTS_SKYVIEWPOINT)
-				Sector->Portals[sector_t::floor] = boxindex;
+			Sector->SkyBoxes[sector_t::floor] = box;
+			if (box == NULL) Sector->MoreFlags |= SECF_NOFLOORSKYBOX;	// sector should ignore the level's default skybox
 		}
 	}
 	Destroy ();
@@ -142,12 +146,14 @@ void ASkyPicker::PostBeginPlay ()
 
 // arg0 = opacity of plane; 0 = invisible, 255 = fully opaque
 
-IMPLEMENT_CLASS(AStackPoint, false, false)
+IMPLEMENT_CLASS (AStackPoint)
 
 void AStackPoint::BeginPlay ()
 {
 	// Skip SkyViewpoint's initialization
 	AActor::BeginPlay ();
+
+	bAlways = true;
 }
 
 //---------------------------------------------------------------------------
@@ -157,10 +163,10 @@ class ASectorSilencer : public AActor
 	DECLARE_CLASS (ASectorSilencer, AActor)
 public:
 	void BeginPlay ();
-	void Destroy() override;
+	void Destroy ();
 };
 
-IMPLEMENT_CLASS(ASectorSilencer, false, false)
+IMPLEMENT_CLASS (ASectorSilencer)
 
 void ASectorSilencer::BeginPlay ()
 {
@@ -170,10 +176,22 @@ void ASectorSilencer::BeginPlay ()
 
 void ASectorSilencer::Destroy ()
 {
-	if (Sector != nullptr)
-	{
-		Sector->Flags &= ~SECF_SILENT;
-	}
+	Sector->Flags &= ~SECF_SILENT;
 	Super::Destroy ();
+}
+
+class ASectorFlagSetter : public AActor
+{
+	DECLARE_CLASS (ASectorFlagSetter, AActor)
+public:
+	void BeginPlay ();
+};
+
+IMPLEMENT_CLASS (ASectorFlagSetter)
+
+void ASectorFlagSetter::BeginPlay ()
+{
+	Super::BeginPlay ();
+	Sector->Flags |= args[0];
 }
 

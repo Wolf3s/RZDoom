@@ -35,9 +35,7 @@
 #include "i_system.h"
 #include "sc_man.h"
 #include "cmdlib.h"
-#include "serializer.h"
-#include "d_player.h"
-#include "p_spec.h"
+#include "farchive.h"
 
 //============================================================================
 //
@@ -45,25 +43,31 @@
 //
 //============================================================================
 
-IMPLEMENT_CLASS(DDoor, false, false)
+IMPLEMENT_CLASS (DDoor)
+
+inline FArchive &operator<< (FArchive &arc, DDoor::EVlDoor &type)
+{
+	BYTE val = (BYTE)type;
+	arc << val;
+	type = (DDoor::EVlDoor)val;
+	return arc;
+}
 
 DDoor::DDoor ()
 {
 }
 
-void DDoor::Serialize(FSerializer &arc)
+void DDoor::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc.Enum("type", m_Type)
-		("topdist", m_TopDist)
-		("botspot", m_BotSpot)
-		("botdist", m_BotDist)
-		("oldfloordist", m_OldFloorDist)
-		("speed", m_Speed)
-		("direction", m_Direction)
-		("topwait", m_TopWait)
-		("topcountdown", m_TopCountdown)
-		("lighttag", m_LightTag);
+	arc << m_Type
+		<< m_TopDist
+		<< m_BotSpot << m_BotDist << m_OldFloorDist
+		<< m_Speed
+		<< m_Direction
+		<< m_TopWait
+		<< m_TopCountdown
+		<< m_LightTag;
 }
 
 //============================================================================
@@ -74,16 +78,16 @@ void DDoor::Serialize(FSerializer &arc)
 
 void DDoor::Tick ()
 {
-	EMoveResult res;
+	EResult res;
 
-	// Adjust bottom height - but only if there isn't an active lift attached to the floor.
-	if (m_Sector->floorplane.fD() != m_OldFloorDist)
+	if (m_Sector->floorplane.d != m_OldFloorDist)
 	{
 		if (!m_Sector->floordata || !m_Sector->floordata->IsKindOf(RUNTIME_CLASS(DPlat)) ||
 			!(barrier_cast<DPlat*>(m_Sector->floordata))->IsLift())
 		{
-			m_OldFloorDist = m_Sector->floorplane.fD();
-			m_BotDist = m_Sector->ceilingplane.PointToDist (m_BotSpot, m_Sector->floorplane.ZatPoint (m_BotSpot));
+			m_OldFloorDist = m_Sector->floorplane.d;
+			m_BotDist = m_Sector->ceilingplane.PointToDist (m_BotSpot,
+				m_Sector->floorplane.ZatPoint (m_BotSpot));
 		}
 	}
 
@@ -117,7 +121,7 @@ void DDoor::Tick ()
 		{
 			switch (m_Type)
 			{
-			case doorWaitRaise:
+			case doorRaiseIn5Mins:
 				m_Direction = 1;
 				m_Type = doorRaise;
 				DoorSound (true);
@@ -131,16 +135,16 @@ void DDoor::Tick ()
 		
 	case -1:
 		// DOWN
-		res = m_Sector->MoveCeiling (m_Speed, m_BotDist, -1, m_Direction, false);
+		res = MoveCeiling (m_Speed, m_BotDist, -1, m_Direction, false);
 
 		// killough 10/98: implement gradual lighting effects
-		if (m_LightTag != 0 && m_TopDist != -m_Sector->floorplane.fD())
+		if (m_LightTag != 0 && m_TopDist != -m_Sector->floorplane.d)
 		{
-			EV_LightTurnOnPartway (m_LightTag, 
-				(m_Sector->ceilingplane.fD() + m_Sector->floorplane.fD()) / (m_TopDist + m_Sector->floorplane.fD()));
+			EV_LightTurnOnPartway (m_LightTag, FixedDiv (m_Sector->ceilingplane.d + m_Sector->floorplane.d,
+				m_TopDist + m_Sector->floorplane.d));
 		}
 
-		if (res == EMoveResult::pastdest)
+		if (res == pastdest)
 		{
 			SN_StopSequence (m_Sector, CHAN_CEILING);
 			switch (m_Type)
@@ -160,7 +164,7 @@ void DDoor::Tick ()
 				break;
 			}
 		}
-		else if (res == EMoveResult::crushed)
+		else if (res == crushed)
 		{
 			switch (m_Type)
 			{
@@ -177,16 +181,16 @@ void DDoor::Tick ()
 		
 	case 1:
 		// UP
-		res = m_Sector->MoveCeiling (m_Speed, m_TopDist, -1, m_Direction, false);
+		res = MoveCeiling (m_Speed, m_TopDist, -1, m_Direction, false);
 		
 		// killough 10/98: implement gradual lighting effects
-		if (m_LightTag != 0 && m_TopDist != -m_Sector->floorplane.fD())
+		if (m_LightTag != 0 && m_TopDist != -m_Sector->floorplane.d)
 		{
-			EV_LightTurnOnPartway (m_LightTag, 
-				(m_Sector->ceilingplane.fD() + m_Sector->floorplane.fD()) / (m_TopDist + m_Sector->floorplane.fD()));
+			EV_LightTurnOnPartway (m_LightTag, FixedDiv (m_Sector->ceilingplane.d + m_Sector->floorplane.d,
+				m_TopDist + m_Sector->floorplane.d));
 		}
 
-		if (res == EMoveResult::pastdest)
+		if (res == pastdest)
 		{
 			SN_StopSequence (m_Sector, CHAN_CEILING);
 			switch (m_Type)
@@ -206,12 +210,12 @@ void DDoor::Tick ()
 				break;
 			}
 		}
-		else if (res == EMoveResult::crushed)
+		else if (res == crushed)
 		{
 			switch (m_Type)
 			{
 			case doorRaise:
-			case doorWaitRaise:
+			case doorRaiseIn5Mins:
 				m_Direction = -1;
 				DoorSound(false);
 				break;
@@ -248,7 +252,7 @@ void DDoor::DoorSound(bool raise, DSeqNode *curseq) const
 
 	if (m_Sector->Flags & SECF_SILENTMOVE) return;
 
-	if (m_Speed >= 8)
+	if (m_Speed >= FRACUNIT*8)
 	{
 		choice += 2;
 	}
@@ -344,12 +348,12 @@ DDoor::DDoor (sector_t *sector)
 //
 //============================================================================
 
-DDoor::DDoor (sector_t *sec, EVlDoor type, double speed, int delay, int lightTag, int topcountdown)
+DDoor::DDoor (sector_t *sec, EVlDoor type, fixed_t speed, int delay, int lightTag)
 	: DMovingCeiling (sec),
-  	  m_Type (type), m_Speed (speed), m_TopWait (delay), m_TopCountdown(topcountdown), m_LightTag (lightTag)
+  	  m_Type (type), m_Speed (speed), m_TopWait (delay), m_LightTag (lightTag)
 {
 	vertex_t *spot;
-	double height;
+	fixed_t height;
 
 	if (i_compatflags & COMPATF_NODOORLIGHT)
 	{
@@ -361,7 +365,7 @@ DDoor::DDoor (sector_t *sec, EVlDoor type, double speed, int delay, int lightTag
 	case doorClose:
 		m_Direction = -1;
 		height = sec->FindLowestCeilingSurrounding (&spot);
-		m_TopDist = sec->ceilingplane.PointToDist (spot, height - 4);
+		m_TopDist = sec->ceilingplane.PointToDist (spot, height - 4*FRACUNIT);
 		DoorSound (false);
 		break;
 
@@ -369,32 +373,23 @@ DDoor::DDoor (sector_t *sec, EVlDoor type, double speed, int delay, int lightTag
 	case doorRaise:
 		m_Direction = 1;
 		height = sec->FindLowestCeilingSurrounding (&spot);
-		m_TopDist = sec->ceilingplane.PointToDist (spot, height - 4);
-		if (m_TopDist != sec->ceilingplane.fD())
+		m_TopDist = sec->ceilingplane.PointToDist (spot, height - 4*FRACUNIT);
+		if (m_TopDist != sec->ceilingplane.d)
 			DoorSound (true);
 		break;
 
 	case doorCloseWaitOpen:
-		m_TopDist = sec->ceilingplane.fD();
+		m_TopDist = sec->ceilingplane.d;
 		m_Direction = -1;
 		DoorSound (false);
 		break;
 
-	case doorWaitRaise:
+	case doorRaiseIn5Mins:
 		m_Direction = 2;
 		height = sec->FindLowestCeilingSurrounding (&spot);
-		m_TopDist = sec->ceilingplane.PointToDist (spot, height - 4);
+		m_TopDist = sec->ceilingplane.PointToDist (spot, height - 4*FRACUNIT);
+		m_TopCountdown = 5 * 60 * TICRATE;
 		break;
-
-	case doorWaitClose:
-		m_Direction = 0;
-		m_Type = DDoor::doorRaise;
-		height = sec->FindHighestFloorPoint (&m_BotSpot);
-		m_BotDist = sec->ceilingplane.PointToDist (m_BotSpot, height);
-		m_OldFloorDist = sec->floorplane.fD();
-		m_TopDist = sec->ceilingplane.fD();
-		break;
-
 	}
 
 	if (!m_Sector->floordata || !m_Sector->floordata->IsKindOf(RUNTIME_CLASS(DPlat)) ||
@@ -408,7 +403,7 @@ DDoor::DDoor (sector_t *sec, EVlDoor type, double speed, int delay, int lightTag
 		height = sec->FindLowestCeilingPoint(&m_BotSpot);
 		m_BotDist = sec->ceilingplane.PointToDist (m_BotSpot, height);
 	}
-	m_OldFloorDist = sec->floorplane.fD();
+	m_OldFloorDist = sec->floorplane.d;
 }
 
 //============================================================================
@@ -419,7 +414,7 @@ DDoor::DDoor (sector_t *sec, EVlDoor type, double speed, int delay, int lightTag
 //============================================================================
 
 bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
-				int tag, double speed, int delay, int lock, int lightTag, bool boomgen, int topcountdown)
+				int tag, int speed, int delay, int lock, int lightTag, bool boomgen)
 {
 	bool		rtn = false;
 	int 		secnum;
@@ -485,7 +480,7 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 			}
 			return false;
 		}
-		if (new DDoor (sec, type, speed, delay, lightTag, topcountdown))
+		if (new DDoor (sec, type, speed, delay, lightTag))
 			rtn = true;
 	}
 	else
@@ -499,7 +494,7 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 			if (sec->PlaneMoving(sector_t::ceiling))
 				continue;
 
-			if (new DDoor (sec, type, speed, delay, lightTag, topcountdown))
+			if (new DDoor (sec, type, speed, delay, lightTag))
 				rtn = true;
 		}
 				
@@ -509,36 +504,69 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 
 //============================================================================
 //
+// Spawn a door that closes after 30 seconds
+//
+//============================================================================
+
+void P_SpawnDoorCloseIn30 (sector_t *sec)
+{
+	fixed_t height;
+	DDoor *door = new DDoor (sec);
+
+	door->m_Sector = sec;
+	door->m_Direction = 0;
+	door->m_Type = DDoor::doorRaise;
+	door->m_Speed = FRACUNIT*2;
+	door->m_TopCountdown = 30 * TICRATE;
+	height = sec->FindHighestFloorPoint (&door->m_BotSpot);
+	door->m_BotDist = sec->ceilingplane.PointToDist (door->m_BotSpot, height);
+	door->m_OldFloorDist = sec->floorplane.d;
+	door->m_TopDist = sec->ceilingplane.d;
+	door->m_LightTag = 0;
+}
+
+//============================================================================
+//
+// Spawn a door that opens after 5 minutes
+//
+//============================================================================
+
+void P_SpawnDoorRaiseIn5Mins (sector_t *sec)
+{
+	new DDoor (sec, DDoor::doorRaiseIn5Mins, 2*FRACUNIT, TICRATE*30/7, 0);
+}
+
+
+//============================================================================
+//
 // animated doors
 //
 //============================================================================
 
-IMPLEMENT_CLASS(DAnimatedDoor, false, false)
+IMPLEMENT_CLASS (DAnimatedDoor)
 
 DAnimatedDoor::DAnimatedDoor ()
 {
 }
 
 DAnimatedDoor::DAnimatedDoor (sector_t *sec)
-	: DMovingCeiling (sec, false)
+	: DMovingCeiling (sec)
 {
 }
 
-void DAnimatedDoor::Serialize(FSerializer &arc)
+void DAnimatedDoor::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
 	
-	arc("line1", m_Line1)
-		("line2", m_Line2)
-		("frame", m_Frame)
-		("timer", m_Timer)
-		("botdist", m_BotDist)
-		("status", m_Status)
-		("speed", m_Speed)
-		("delay", m_Delay)
-		("dooranim", m_DoorAnim)
-		("setblock1", m_SetBlocking1)
-		("setblock2", m_SetBlocking2);
+	arc << m_Line1 << m_Line2
+		<< m_Frame
+		<< m_Timer
+		<< m_BotDist
+		<< m_Status
+		<< m_Speed
+		<< m_Delay
+		<< m_DoorAnim
+		<< m_SetBlocking1 << m_SetBlocking2;
 }
 
 //============================================================================
@@ -555,13 +583,13 @@ bool DAnimatedDoor::StartClosing ()
 		return false;
 	}
 
-	double topdist = m_Sector->ceilingplane.fD();
-	if (m_Sector->MoveCeiling (2048., m_BotDist, 0, -1, false) == EMoveResult::crushed)
+	fixed_t topdist = m_Sector->ceilingplane.d;
+	if (MoveCeiling (2048*FRACUNIT, m_BotDist, 0, -1, false) == crushed)
 	{
 		return false;
 	}
 
-	m_Sector->MoveCeiling (2048., topdist, 1);
+	MoveCeiling (2048*FRACUNIT, topdist, 1);
 
 	m_Line1->flags |= ML_BLOCKING;
 	m_Line2->flags |= ML_BLOCKING;
@@ -646,7 +674,7 @@ void DAnimatedDoor::Tick ()
 			if (--m_Frame < 0)
 			{
 				// IF DOOR IS DONE CLOSING...
-				m_Sector->MoveCeiling (2048., m_BotDist, -1);
+				MoveCeiling (2048*FRACUNIT, m_BotDist, -1);
 				m_Sector->ceilingdata = NULL;
 				Destroy ();
 				// Unset blocking flags on lines that didn't start with them. Since the
@@ -684,11 +712,14 @@ void DAnimatedDoor::Tick ()
 //============================================================================
 
 DAnimatedDoor::DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay, FDoorAnimation *anim)
-	: DMovingCeiling (sec, false)
+	: DMovingCeiling (sec)
 {
-	double topdist;
+	fixed_t topdist;
 	FTextureID picnum;
 
+	// The DMovingCeiling constructor automatically sets up an interpolation for us.
+	// Stop it, since the ceiling is moving instantly here.
+	StopInterpolation();
 	m_DoorAnim = anim;
 
 	m_Line1 = line;
@@ -715,7 +746,7 @@ DAnimatedDoor::DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay,
 	FTexture *tex = TexMan[picnum];
 	topdist = tex ? tex->GetScaledHeight() : 64;
 
-	topdist = m_Sector->ceilingplane.fD() - topdist * m_Sector->ceilingplane.fC();
+	topdist = m_Sector->ceilingplane.d - topdist * m_Sector->ceilingplane.c;
 
 	m_Status = Opening;
 	m_Speed = speed;
@@ -726,8 +757,8 @@ DAnimatedDoor::DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay,
 	m_SetBlocking2 = !!(m_Line2->flags & ML_BLOCKING);
 	m_Line1->flags |= ML_BLOCKING;
 	m_Line2->flags |= ML_BLOCKING;
-	m_BotDist = m_Sector->ceilingplane.fD();
-	m_Sector->MoveCeiling (2048., topdist, 1);
+	m_BotDist = m_Sector->ceilingplane.d;
+	MoveCeiling (2048*FRACUNIT, topdist, 1);
 	if (m_DoorAnim->OpenSound != NAME_None)
 	{
 		SN_StartSequence (m_Sector, CHAN_INTERIOR, m_DoorAnim->OpenSound, 1);

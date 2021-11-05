@@ -54,7 +54,7 @@ public:
 	bool MouseEvent(int type, int x, int y);
 };
 
-IMPLEMENT_CLASS(DReadThisMenu, false, false)
+IMPLEMENT_CLASS(DReadThisMenu)
 
 //=============================================================================
 //
@@ -79,7 +79,7 @@ DReadThisMenu::DReadThisMenu(DMenu *parent)
 void DReadThisMenu::Drawer()
 {
 	FTexture *tex = NULL, *prevpic = NULL;
-	double alpha;
+	fixed_t alpha;
 
 	// Did the mapper choose a custom help page via MAPINFO?
 	if ((level.info != NULL) && level.info->F1Pic.Len() != 0)
@@ -99,12 +99,12 @@ void DReadThisMenu::Drawer()
 	}
 
 	screen->Dim(0, 1.0, 0,0, SCREENWIDTH, SCREENHEIGHT);
-	alpha = MIN((gametic - mInfoTic) * (3. / TICRATE), 1.);
-	if (alpha < 1. && prevpic != NULL)
+	alpha = MIN<fixed_t> (Scale (gametic - mInfoTic, OPAQUE, TICRATE/3), OPAQUE);
+	if (alpha < OPAQUE && prevpic != NULL)
 	{
 		screen->DrawTexture (prevpic, 0, 0, DTA_Fullscreen, true, TAG_DONE);
 	}
-	screen->DrawTexture (tex, 0, 0, DTA_Fullscreen, true, DTA_AlphaF, alpha,	TAG_DONE);
+	screen->DrawTexture (tex, 0, 0, DTA_Fullscreen, true, DTA_Alpha, alpha,	TAG_DONE);
 
 }
 

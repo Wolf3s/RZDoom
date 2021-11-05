@@ -45,7 +45,6 @@
 #include "v_video.h"
 #include "m_fixed.h"
 #include "textures/textures.h"
-#include "v_palette.h"
 
 typedef bool (*CheckFunc)(FileReader & file);
 typedef FTexture * (*CreateFunc)(FileReader & file, int lumpnum);
@@ -119,12 +118,12 @@ FTexture * FTexture::CreateTexture (int lumpnum, int usetype)
 					// Now we're stuck with this stupid behaviour.
 					if (w==128 && h==128) 
 					{
-						tex->Scale.X = tex->Scale.Y = 2;
+						tex->xScale = tex->yScale = 2*FRACUNIT;
 						tex->bWorldPanning = true;
 					}
 					else if (w==256 && h==256) 
 					{
-						tex->Scale.X = tex->Scale.Y = 4;
+						tex->xScale = tex->yScale = 4*FRACUNIT;
 						tex->bWorldPanning = true;
 					}
 				}
@@ -148,7 +147,7 @@ FTexture * FTexture::CreateTexture (const char *name, int lumpnum, int usetype)
 
 FTexture::FTexture (const char *name, int lumpnum)
 : LeftOffset(0), TopOffset(0),
-  WidthBits(0), HeightBits(0), Scale(1,1), SourceLump(lumpnum),
+  WidthBits(0), HeightBits(0), xScale(FRACUNIT), yScale(FRACUNIT), SourceLump(lumpnum),
   UseType(TEX_Any), bNoDecals(false), bNoRemap0(false), bWorldPanning(false),
   bMasked(true), bAlphaTexture(false), bHasCanvas(false), bWarped(0), bComplex(false), bMultiPatch(false), bKeepAround(false),
   Rotations(0xFFFF), SkyOffset(0), Width(0), Height(0), WidthMask(0), Native(NULL)
@@ -210,9 +209,8 @@ void FTexture::CalcBitSize ()
 	}
 	WidthMask = (1 << WidthBits) - 1;
 
-	// <hr>The minimum height is 2, because we cannot shift right 32 bits.</hr>
-	// Scratch that. Somebody actually made a 1x1 texture, so now we have to handle it.
-	for (i = 0; (1 << i) < Height; ++i)
+	// The minimum height is 2, because we cannot shift right 32 bits.
+	for (i = 1; (1 << i) < Height; ++i)
 	{ }
 
 	HeightBits = i;
@@ -564,81 +562,11 @@ FTexture *FTexture::GetRawTexture()
 
 void FTexture::SetScaledSize(int fitwidth, int fitheight)
 {
-	Scale.X = double(Width) / fitwidth;
-	Scale.Y =double(Height) / fitheight;
+	xScale = FLOAT2FIXED(float(Width) / fitwidth);
+	yScale = FLOAT2FIXED(float(Height) / fitheight);
 	// compensate for roundoff errors
-	if (int(Scale.X * fitwidth) != Width) Scale.X += (1 / 65536.);
-	if (int(Scale.Y * fitheight) != Height) Scale.Y += (1 / 65536.);
-}
-
-//===========================================================================
-// 
-//	Gets the average color of a texture for use as a sky cap color
-//
-//===========================================================================
-
-namespace
-{
-	PalEntry averageColor(const DWORD *data, int size, int maxout)
-	{
-		int				i;
-		unsigned int	r, g, b;
-
-		// First clear them.
-		r = g = b = 0;
-		if (size == 0)
-		{
-			return PalEntry(255, 255, 255);
-		}
-		for (i = 0; i < size; i++)
-		{
-			b += BPART(data[i]);
-			g += GPART(data[i]);
-			r += RPART(data[i]);
-		}
-
-		r = r / size;
-		g = g / size;
-		b = b / size;
-
-		int maxv = MAX(MAX(r, g), b);
-
-		if (maxv && maxout)
-		{
-			r = Scale(r, maxout, maxv);
-			g = Scale(g, maxout, maxv);
-			b = Scale(b, maxout, maxv);
-		}
-		return PalEntry(255, r, g, b);
-	}
-}
-
-PalEntry FTexture::GetSkyCapColor(bool bottom)
-{
-	PalEntry col;
-
-	if (!bSWSkyColorDone)
-	{
-		bSWSkyColorDone = true;
-
-		FBitmap bitmap;
-		bitmap.Create(GetWidth(), GetHeight());
-		CopyTrueColorPixels(&bitmap, 0, 0);
-		int w = GetWidth();
-		int h = GetHeight();
-
-		const uint32_t *buffer = (const uint32_t *)bitmap.GetPixels();
-		if (buffer)
-		{
-			CeilingSkyColor = averageColor((DWORD *)buffer, w * MIN(30, h), 0);
-			if (h>30)
-			{
-				FloorSkyColor = averageColor(((DWORD *)buffer) + (h - 30)*w, w * 30, 0);
-			}
-			else FloorSkyColor = CeilingSkyColor;
-		}
-	}
-	return bottom ? FloorSkyColor : CeilingSkyColor;
+	if (MulScale16(xScale, fitwidth) != Width) xScale++;
+	if (MulScale16(yScale, fitheight) != Height) yScale++;
 }
 
 

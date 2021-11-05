@@ -25,45 +25,22 @@
 
 #include "r_bsp.h"
 
-struct particle_t;
-struct FVoxel;
-
-namespace swrenderer
-{
-
 // A vissprite_t is a thing
 //	that will be drawn during a refresh.
 // I.e. a sprite object that is partly visible.
 
 struct vissprite_t
 {
-	struct posang
-	{
-		FVector3 vpos;			// view origin
-		FAngle vang;			// view angle
-	};
-
 	short			x1, x2;
-	FVector3		gpos;			// origin in world coordinates
-	union
-	{
-		struct
-		{
-			float	gzb, gzt;		// global bottom / top for silhouette clipping
-		};
-		struct
-		{
-			int		y1, y2;			// top / bottom of particle on screen
-		};
-	};
-	DAngle			Angle;
-	fixed_t			xscale;
-	float			yscale;
-	float			depth;
-	float			idepth;			// 1/z
-	float			deltax, deltay;
+	fixed_t			gx, gy, gz;		// origin in world coordinates
+	angle_t			angle;
+	fixed_t			gzb, gzt;		// global bottom / top for silhouette clipping
+	fixed_t			xscale, yscale;
+	fixed_t			depth;
+	fixed_t			idepth;			// 1/z
+	fixed_t			deltax, deltay;
 	DWORD			FillColor;
-	double			floorclip;
+	fixed_t			floorclip;
 	union
 	{
 		FTexture *pic;
@@ -74,14 +51,21 @@ struct vissprite_t
 		// Used by face sprites
 		struct
 		{
-			double	texturemid;
+			fixed_t	texturemid;
 			fixed_t	startfrac;		// horizontal position of x1
 			fixed_t	xiscale;		// negative if flipped
 		};
 		// Used by wall sprites
-		FWallCoords wallc;
+		struct
+		{
+			FWallCoords wallc;
+		};
 		// Used by voxels
-		posang pa;
+		struct
+		{
+			fixed_t vx, vy, vz;		// view origin
+			angle_t vang;			// view angle
+		};
 	};
 	sector_t		*heightsec;		// killough 3/27/98: height sector for underwater/fake ceiling
 	sector_t		*sector;		// [RH] sector this sprite is in
@@ -96,12 +80,11 @@ struct vissprite_t
 	short 			renderflags;
 	DWORD			Translation;	// [RH] for color translation
 	visstyle_t		Style;
-	int				CurrentPortalUniq; // [ZZ] to identify the portal that this thing is in. used for clipping.
-
-	vissprite_t() {}
 };
 
-void R_DrawParticle_C (vissprite_t *);
+struct particle_t;
+
+void R_DrawParticle (vissprite_t *);
 void R_ProjectParticle (particle_t *, const sector_t *sector, int shade, int fakeside);
 
 extern int MaxVisSprites;
@@ -117,23 +100,24 @@ extern short			screenheightarray[MAXWIDTH];
 // vars for R_DrawMaskedColumn
 extern short*			mfloorclip;
 extern short*			mceilingclip;
-extern double			spryscale;
-extern double			sprtopscreen;
+extern fixed_t			spryscale;
+extern fixed_t			sprtopscreen;
 extern bool				sprflipvert;
 
-extern double			pspritexscale;
-extern double			pspritexiscale;
-extern double			pspriteyscale;
+extern fixed_t			pspritexscale;
+extern fixed_t			pspriteyscale;
+extern fixed_t			pspritexiscale;
 
 extern FTexture			*WallSpriteTile;
 
 
-void R_DrawMaskedColumn (FTexture *texture, fixed_t column, bool useRt, bool unmasked = false);
-void R_WallSpriteColumn (bool useRt);
+void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *spans);
+void R_WallSpriteColumn (void (*drawfunc)(const BYTE *column, const FTexture::Span *spans));
 
 void R_CacheSprite (spritedef_t *sprite);
-void R_SortVisSprites (int (*compare)(const void *, const void *), size_t first);
+void R_SortVisSprites (int (STACK_ARGS *compare)(const void *, const void *), size_t first);
 void R_AddSprites (sector_t *sec, int lightlevel, int fakeside);
+void R_AddPSprites ();
 void R_DrawSprites ();
 void R_ClearSprites ();
 void R_DrawMasked ();
@@ -143,13 +127,12 @@ void R_CheckOffscreenBuffer(int width, int height, bool spansonly);
 
 enum { DVF_OFFSCREEN = 1, DVF_SPANSONLY = 2, DVF_MIRRORED = 4 };
 
-void R_DrawVoxel(const FVector3 &viewpos, FAngle viewangle,
-	const FVector3 &sprpos, DAngle dasprang,
-	fixed_t daxscale, fixed_t dayscale, struct FVoxel *voxobj,
+void R_DrawVoxel(fixed_t viewx, fixed_t viewy, fixed_t viewz, angle_t viewangle,
+	fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t dasprang,
+	fixed_t daxscale, fixed_t dayscale, FVoxel *voxobj,
 	lighttable_t *colormap, short *daumost, short *dadmost, int minslabz, int maxslabz, int flags);
 
 void R_ClipVisSprite (vissprite_t *vis, int xl, int xh);
 
-}
 
 #endif

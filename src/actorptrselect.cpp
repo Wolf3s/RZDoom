@@ -2,7 +2,6 @@
 #include "actor.h"
 #include "d_player.h"
 #include "p_pspr.h"
-#include "p_local.h"
 
 //==========================================================================
 //
@@ -35,8 +34,6 @@ AActor *COPY_AAPTR(AActor *origin, int selector)
 {
 	if (selector == AAPTR_DEFAULT) return origin;
 
-	FTranslatedLineTarget t;
-
 	if (origin)
 	{
 		if (origin->player)
@@ -44,9 +41,11 @@ AActor *COPY_AAPTR(AActor *origin, int selector)
 			switch (selector & AAPTR_PLAYER_SELECTORS)
 			{
 			case AAPTR_PLAYER_GETTARGET:
-				P_BulletSlope(origin, &t, ALF_PORTALRESTRICT);
-				return t.linetarget;
-
+				{
+					AActor *gettarget = NULL;
+					P_BulletSlope(origin, &gettarget);
+					return gettarget;
+				}
 			case AAPTR_PLAYER_GETCONVERSATION:
 				return origin->player->ConversationNPC;
 			}
@@ -61,8 +60,11 @@ AActor *COPY_AAPTR(AActor *origin, int selector)
 			return origin->FriendPlayer ? AAPTR_RESOLVE_PLAYERNUM(origin->FriendPlayer - 1) : NULL;
 
 		case AAPTR_GET_LINETARGET:
-			P_BulletSlope(origin, &t, ALF_PORTALRESTRICT);
-			return t.linetarget;
+			{
+				AActor *gettarget = NULL;
+				P_BulletSlope(origin, &gettarget);
+				return gettarget;
+			}
 		}
 	}
 

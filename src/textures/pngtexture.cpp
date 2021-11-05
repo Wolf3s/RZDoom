@@ -66,7 +66,6 @@ protected:
 	FString SourceFile;
 	BYTE *Pixels;
 	Span **Spans;
-	FileReader *fr;
 
 	BYTE BitDepth;
 	BYTE ColorType;
@@ -209,9 +208,6 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, const FString &filename
 	BYTE trans[256];
 	DWORD len, id;
 	int i;
-
-	if (lumpnum == -1) fr = &lump;
-	else fr = nullptr;
 
 	UseType = TEX_MiscPatch;
 	LeftOffset = 0;
@@ -466,7 +462,7 @@ void FPNGTexture::MakeTexture ()
 	}
 	else
 	{
-		lump = fr;// new FileReader(SourceFile.GetChars());
+		lump = new FileReader(SourceFile.GetChars());
 	}
 
 	Pixels = new BYTE[Width*Height];
@@ -536,7 +532,7 @@ void FPNGTexture::MakeTexture ()
 					{
 						if (!HaveTrans)
 						{
-							*out++ = RGB256k.RGB[in[0]>>2][in[1]>>2][in[2]>>2];
+							*out++ = RGB32k.RGB[in[0]>>3][in[1]>>3][in[2]>>3];
 						}
 						else
 						{
@@ -548,7 +544,7 @@ void FPNGTexture::MakeTexture ()
 							}
 							else
 							{
-								*out++ = RGB256k.RGB[in[0]>>2][in[1]>>2][in[2]>>2];
+								*out++ = RGB32k.RGB[in[0]>>3][in[1]>>3][in[2]>>3];
 							}
 						}
 						in += pitch;
@@ -593,7 +589,7 @@ void FPNGTexture::MakeTexture ()
 				{
 					for (y = Height; y > 0; --y)
 					{
-						*out++ = in[3] < 128 ? 0 : RGB256k.RGB[in[0]>>2][in[1]>>2][in[2]>>2];
+						*out++ = in[3] < 128 ? 0 : RGB32k.RGB[in[0]>>3][in[1]>>3][in[2]>>3];
 						in += pitch;
 					}
 					in -= backstep;
@@ -603,7 +599,7 @@ void FPNGTexture::MakeTexture ()
 			delete[] tempix;
 		}
 	}
-	if (lump != fr) delete lump;
+	delete lump;
 }
 
 //===========================================================================
@@ -628,7 +624,7 @@ int FPNGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
 	}
 	else
 	{
-		lump = fr;// new FileReader(SourceFile.GetChars());
+		lump = new FileReader(SourceFile.GetChars());
 	}
 
 	lump->Seek(33, SEEK_SET);
@@ -663,10 +659,6 @@ int FPNGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
 						transpal = true;
 				}
 			}
-			else
-			{
-				lump->Seek(len, SEEK_CUR);
-			}
 			break;
 		}
 		lump->Seek(4, SEEK_CUR);		// Skip CRC
@@ -687,7 +679,7 @@ int FPNGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
 	lump->Read(&len, 4);
 	lump->Read(&id, 4);
 	M_ReadIDAT (lump, Pixels, Width, Height, pixwidth, BitDepth, ColorType, Interlace, BigLong((unsigned int)len));
-	if (lump != fr) delete lump;
+	delete lump;
 
 	switch (ColorType)
 	{
@@ -705,7 +697,6 @@ int FPNGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
 		{
 			bmp->CopyPixelDataRGB(x, y, Pixels, Width, Height, 3, pixwidth, rotate, CF_RGBT, inf,
 				NonPaletteTrans[0], NonPaletteTrans[1], NonPaletteTrans[2]);
-			transpal = true;
 		}
 		break;
 

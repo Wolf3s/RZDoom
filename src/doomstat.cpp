@@ -39,10 +39,11 @@ FStringTable	GStrings;
 EGameSpeed		GameSpeed = SPEED_Normal;
 
 // Show developer messages if true.
-CVAR (Int, developer, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Bool, developer, false, 0)
 
 // [RH] Feature control cvars
 CVAR (Bool, var_friction, true, CVAR_SERVERINFO);
+CVAR (Bool, var_pushers, true, CVAR_SERVERINFO);
 
 CVAR (Bool, alwaysapplydmflags, false, CVAR_SERVERINFO);
 

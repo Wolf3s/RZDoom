@@ -71,10 +71,7 @@
 #include "doomstat.h"
 #include "m_argv.h"
 #include "po_man.h"
-#include "autosegs.h"
 #include "v_video.h"
-#include "textures/textures.h"
-#include "r_utility.h"
 #include "menu/menu.h"
 #include "intermission/intermission.h"
 
@@ -124,8 +121,7 @@ public:
 	int PolyNum;
 	int SideNum;
 };
-
-IMPLEMENT_CLASS(DSectorMarker, false, false)
+IMPLEMENT_CLASS(DSectorMarker)
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -154,7 +150,6 @@ int Pause = DEFAULT_GCPAUSE;
 int StepMul = DEFAULT_GCMUL;
 int StepCount;
 size_t Dept;
-bool FinalGC;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -293,22 +288,6 @@ void Mark(DObject **obj)
 
 //==========================================================================
 //
-// MarkArray
-//
-// Mark an array of objects gray.
-//
-//==========================================================================
-
-void MarkArray(DObject **obj, size_t count)
-{
-	for (size_t i = 0; i < count; ++i)
-	{
-		Mark(obj[i]);
-	}
-}
-
-//==========================================================================
-//
 // MarkRoot
 //
 // Mark the root set of objects.
@@ -328,10 +307,7 @@ static void MarkRoot()
 	DThinker::MarkRoots();
 	FCanvasTextureInfo::Mark();
 	Mark(DACSThinker::ActiveThinker);
-	for (auto &s : sectorPortals)
-	{
-		Mark(s.mSkybox);
-	}
+	Mark(level.DefaultSkybox);
 	// Mark dead bodies.
 	for (i = 0; i < BODYQUESIZE; ++i)
 	{
@@ -360,25 +336,6 @@ static void MarkRoot()
 	}
 	Mark(SectorMarker);
 	Mark(interpolator.Head);
-	// Mark action functions
-	if (!FinalGC)
-	{
-		FAutoSegIterator probe(ARegHead, ARegTail);
-
-		while (*++probe != NULL)
-		{
-			AFuncDesc *afunc = (AFuncDesc *)*probe;
-			Mark(*(afunc->VMPointer));
-		}
-	}
-	// Mark types
-	TypeTable.Mark();
-	for (unsigned int i = 0; i < PClass::AllClasses.Size(); ++i)
-	{
-		Mark(PClass::AllClasses[i]);
-	}
-	// Mark global symbols
-	GlobalSymbols.MarkSymbols();
 	// Mark bot stuff.
 	Mark(bglobal.firstthing);
 	Mark(bglobal.body1);
@@ -408,7 +365,7 @@ static void MarkRoot()
 //
 // Atomic
 //
-// If there were any propagations that needed to be done atomicly, they
+// If their were any propagations that needed to be done atomicly, they
 // would go here. It also sets things up for the sweep state.
 //
 //==========================================================================
@@ -684,6 +641,8 @@ size_t DSectorMarker::PropagateMark()
 		{
 			sector_t *sec = &sectors[SecNum + i];
 			GC::Mark(sec->SoundTarget);
+			GC::Mark(sec->SkyBoxes[sector_t::ceiling]);
+			GC::Mark(sec->SkyBoxes[sector_t::floor]);
 			GC::Mark(sec->SecActTarget);
 			GC::Mark(sec->floordata);
 			GC::Mark(sec->ceilingdata);

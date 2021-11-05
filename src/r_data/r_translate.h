@@ -5,7 +5,7 @@
 #include "tarray.h"
 
 class FNativePalette;
-class FSerializer;
+class FArchive;
 
 enum
 {
@@ -19,7 +19,6 @@ enum
 	TRANSLATION_Decorate,
 	TRANSLATION_Blood,
 	TRANSLATION_RainPillar,
-	TRANSLATION_Custom,
 
 	NUM_TRANSLATION_TABLES
 };
@@ -37,13 +36,12 @@ struct FRemapTable
 	void UpdateNative();
 	FNativePalette *GetNative();
 	bool IsIdentity() const;
-	void Serialize(FSerializer &arc);
-	static void StaticSerializeTranslations(FSerializer &arc);
+	void Serialize(FArchive &ar);
 	void AddIndexRange(int start, int end, int pal1, int pal2);
 	void AddColorRange(int start, int end, int r1,int g1, int b1, int r2, int g2, int b2);
 	void AddDesaturation(int start, int end, double r1, double g1, double b1, double r2, double g2, double b2);
 	void AddToTranslation(const char * range);
-	int StoreTranslation(int slot);
+	int StoreTranslation();
 
 	BYTE *Remap;				// For the software renderer
 	PalEntry *Palette;			// The ideal palette this maps to
@@ -109,9 +107,6 @@ extern const BYTE IcePalette[16][3];
 extern TArray<PalEntry> BloodTranslationColors;
 
 int CreateBloodTranslation(PalEntry color);
-
-int R_FindCustomTranslation(FName name);
-void R_ParseTrnslate();
 
 
 

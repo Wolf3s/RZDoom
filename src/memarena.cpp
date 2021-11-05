@@ -43,6 +43,8 @@
 #include "c_dispatch.h"
 #include "zstring.h"
 
+#define BLOCK_SIZE			(10*1024)
+
 struct FMemArena::Block
 {
 	Block *NextBlock;
@@ -72,11 +74,10 @@ static inline void *RoundPointer(void *ptr)
 //
 //==========================================================================
 
-FMemArena::FMemArena(size_t blocksize)
+FMemArena::FMemArena()
 {
 	TopBlock = NULL;
 	FreeBlocks = NULL;
-	BlockSize = blocksize;
 }
 
 //==========================================================================
@@ -190,14 +191,14 @@ FMemArena::Block *FMemArena::AddBlock(size_t size)
 	if (mem == NULL)
 	{
 		// Allocate a new block
-		if (size < BlockSize)
+		if (size < BLOCK_SIZE)
 		{
-			size = BlockSize;
+			size = BLOCK_SIZE;
 		}
 		else
 		{ // Stick some free space at the end so we can use this block for
 		  // other things.
-			size += BlockSize/2;
+			size += BLOCK_SIZE/2;
 		}
 		mem = (Block *)M_Malloc(size);
 		mem->Limit = (BYTE *)mem + size;

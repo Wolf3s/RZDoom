@@ -585,8 +585,3 @@ Intermission Inter_Chess
 		Position = 5, 135
 	}
 }
-
-DamageType Drowning
-{
-	NoArmor
-}

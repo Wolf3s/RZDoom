@@ -2,9 +2,6 @@
 #define __R_UTIL_H
 
 #include "r_state.h"
-#include "vectors.h"
-
-class FSerializer;
 //
 // Stuff from r_main.h that's needed outside the rendering code.
 
@@ -14,20 +11,19 @@ class FSerializer;
 
 extern DCanvas			*RenderTarget;
 
-extern DVector3			ViewPos;
-extern DAngle			ViewAngle;
-extern DAngle			ViewPitch;
-extern DAngle			ViewRoll;
-extern DVector3			ViewPath[2];
+extern fixed_t			viewx;
+extern fixed_t			viewy;
+extern fixed_t			viewz;
+extern int				viewpitch;
 
 extern "C" int			centerx, centerxwide;
 extern "C" int			centery;
 
 extern int				setblocks;
 
-extern double			ViewTanCos;
-extern double			ViewTanSin;
-extern double			FocalTangent;
+extern fixed_t			viewtancos;
+extern fixed_t			viewtansin;
+extern fixed_t			FocalTangent;
 
 extern bool				r_NoInterpolate;
 extern int				validcount;
@@ -35,14 +31,14 @@ extern int				validcount;
 extern angle_t			LocalViewAngle;			// [RH] Added to consoleplayer's angle
 extern int				LocalViewPitch;			// [RH] Used directly instead of consoleplayer's pitch
 extern bool				LocalKeyboardTurner;	// [RH] The local player used the keyboard to turn, so interpolate
-extern float			WidescreenRatio;
+extern int				WidescreenRatio;
 
-extern double			r_TicFracF;
+extern fixed_t			r_TicFrac;
 extern DWORD			r_FrameTime;
 extern int				extralight;
 extern unsigned int		R_OldBlend;
 
-const double			r_Yaspect = 200.0;		// Why did I make this a variable? It's never set anywhere.
+const int				r_Yaspect = 200;	// Why did I make this a variable? It's never set anywhere.
 
 //==========================================================================
 //
@@ -59,35 +55,17 @@ inline int R_PointOnSide (fixed_t x, fixed_t y, const node_t *node)
 {
 	return DMulScale32 (y-node->y, node->dx, node->x-x, node->dy) > 0;
 }
-inline int R_PointOnSide(double x, double y, const node_t *node)
-{
-	return DMulScale32(FLOAT2FIXED(y) - node->y, node->dx, node->x - FLOAT2FIXED(x), node->dy) > 0;
-}
-inline int R_PointOnSide(const DVector2 &pos, const node_t *node)
-{
-	return DMulScale32(FLOAT2FIXED(pos.Y) - node->y, node->dx, node->x - FLOAT2FIXED(pos.X), node->dy) > 0;
-}
 
-// Used for interpolation waypoints.
-struct DVector3a
-{
-	DVector3 pos;
-	DAngle angle;
-};
-
-
+angle_t R_PointToAngle2 (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2);
+inline angle_t R_PointToAngle (fixed_t x, fixed_t y) { return R_PointToAngle2 (viewx, viewy, x, y); }
 subsector_t *R_PointInSubsector (fixed_t x, fixed_t y);
-inline subsector_t *R_PointInSubsector(const DVector2 &pos)
-{
-	return R_PointInSubsector(FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y));
-}
+fixed_t R_PointToDist2 (fixed_t dx, fixed_t dy);
 void R_ResetViewInterpolation ();
 void R_RebuildViewInterpolation(player_t *player);
 bool R_GetViewInterpolationStatus();
-void R_ClearInterpolationPath();
-void R_AddInterpolationPoint(const DVector3a &vec);
 void R_SetViewSize (int blocks);
-void R_SetFOV (DAngle fov);
+void R_SetFOV (float fov);
+float R_GetFOV ();
 void R_SetupFrame (AActor * camera);
 void R_SetViewAngle ();
 
@@ -97,7 +75,7 @@ void R_ExecuteSetViewSize (void);
 
 // Called by M_Responder.
 void R_SetViewSize (int blocks);
-void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight, bool renderingToCanvas = false);
+void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight);
 
 
 extern void R_FreePastViewers ();
@@ -115,7 +93,7 @@ struct FCanvasTextureInfo
 	static void Add (AActor *viewpoint, FTextureID picnum, int fov);
 	static void UpdateAll ();
 	static void EmptyList ();
-	static void Serialize(FSerializer &arc);
+	static void Serialize (FArchive &arc);
 	static void Mark();
 
 private:

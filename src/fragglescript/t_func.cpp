@@ -56,6 +56,7 @@
 #include "c_console.h"
 #include "c_dispatch.h"
 #include "d_player.h"
+#include "a_doomglobal.h"
 #include "w_wad.h"
 #include "gi.h"
 #include "zstring.h"
@@ -65,14 +66,14 @@
 #include "v_palette.h"
 #include "v_font.h"
 #include "r_data/colormaps.h"
-#include "serializer.h"
+#include "farchive.h"
 #include "p_setup.h"
-#include "p_spec.h"
-#include "r_utility.h"
-#include "a_ammo.h"
-#include "math/cmath.h"
 
 static FRandom pr_script("FScript");
+
+
+#define AngleToFixed(x)  ((((double) x) / ((double) ANG45/45)) * FRACUNIT)
+#define FixedToAngle(x)  ((((double) x) / FRACUNIT) * ANG45/45)
 
 // functions. FParser::SF_ means Script Function not, well.. heh, me
 
@@ -227,7 +228,7 @@ static const char * const ActorNames_init[]=
 	"PointPuller",
 };
 
-static PClassActor * ActorTypes[countof(ActorNames_init)];
+static const PClass * ActorTypes[countof(ActorNames_init)];
 
 //==========================================================================
 //
@@ -243,32 +244,32 @@ static PClassActor * ActorTypes[countof(ActorNames_init)];
 // Doom index is only supported for the original things up to MBF
 //
 //==========================================================================
-PClassActor * T_GetMobjType(svalue_t arg)
+const PClass * T_GetMobjType(svalue_t arg)
 {
-	PClassActor * pclass=NULL;
+	const PClass * PClass=NULL;
 	
 	if (arg.type==svt_string)
 	{
-		pclass=PClass::FindActor(arg.string);
+		PClass=PClass::FindClass(arg.string);
 
 		// invalid object to spawn
-		if(!pclass) script_error("unknown object type: %s\n", arg.string.GetChars()); 
+		if(!PClass) script_error("unknown object type: %s\n", arg.string.GetChars()); 
 	}
 	else if (arg.type==svt_mobj)
 	{
 		AActor * mo = actorvalue(arg);
-		if (mo) pclass = mo->GetClass();
+		if (mo) PClass = mo->GetClass();
 	}
 	else
 	{
 		int objtype = intvalue(arg);
-		if (objtype>=0 && objtype<int(countof(ActorTypes))) pclass=ActorTypes[objtype];
-		else pclass=NULL;
+		if (objtype>=0 && objtype<int(countof(ActorTypes))) PClass=ActorTypes[objtype];
+		else PClass=NULL;
 
 		// invalid object to spawn
-		if(!pclass) script_error("unknown object type: %i\n", objtype); 
+		if(!PClass) script_error("unknown object type: %i\n", objtype); 
 	}
-	return pclass;
+	return PClass;
 }
 
 //==========================================================================
@@ -340,7 +341,7 @@ inline int T_FindFirstSectorFromTag(int tagnum)
 // Doom index is only supported for the 4 original ammo types
 //
 //==========================================================================
-static PClassAmmo * T_GetAmmo(const svalue_t &t)
+static const PClass * T_GetAmmo(const svalue_t &t)
 {
 	const char * p;
 
@@ -361,8 +362,8 @@ static PClassAmmo * T_GetAmmo(const svalue_t &t)
 		}
 		p=DefAmmo[ammonum];
 	}
-	PClassAmmo * am=dyn_cast<PClassAmmo>(PClass::FindActor(p));
-	if (am == NULL)
+	const PClass * am=PClass::FindClass(p);
+	if (!am->IsDescendantOf(RUNTIME_CLASS(AAmmo)))
 	{
 		script_error("unknown ammo type : %s", p);
 		return NULL;
@@ -498,7 +499,7 @@ DFsSection *FParser::looping_section()
 					if(!best || (current->start_index > best->start_index))
 						best = current;     // save it
 				}
-			current = current->next;
+				current = current->next;
 		}
 	}
 	
@@ -859,43 +860,43 @@ void FParser::SF_Player(void)
 
 void FParser::SF_Spawn(void)
 {
-	DVector3 pos;
-	PClassActor *pclass;
-	DAngle angle = 0.;
+	int x, y, z;
+	const PClass *PClass;
+	angle_t angle = 0;
 	
 	if (CheckArgs(3))
 	{
-		if (!(pclass=T_GetMobjType(t_argv[0]))) return;
+		if (!(PClass=T_GetMobjType(t_argv[0]))) return;
 		
-		pos.X = floatvalue(t_argv[1]);
-		pos.Y = floatvalue(t_argv[2]);
+		x = fixedvalue(t_argv[1]);
+		y = fixedvalue(t_argv[2]);
 
 		if(t_argc >= 5)
 		{
-			pos.Z = floatvalue(t_argv[4]);
+			z = fixedvalue(t_argv[4]);
 			// [Graf Zahl] added option of spawning with a relative z coordinate
 			if(t_argc > 5)
 			{
-				if (intvalue(t_argv[5])) pos.Z += P_PointInSector(pos)->floorplane.ZatPoint(pos);
+				if (intvalue(t_argv[5])) z+=P_PointInSector(x, y)->floorplane.ZatPoint(x,y);
 			}
 		}
 		else
 		{
 			// Legacy compatibility is more important than correctness.
-			pos.Z = ONFLOORZ;// (GetDefaultByType(PClass)->flags & MF_SPAWNCEILING) ? ONCEILINGZ : ONFLOORZ;
+			z = ONFLOORZ;// (GetDefaultByType(PClass)->flags & MF_SPAWNCEILING) ? ONCEILINGZ : ONFLOORZ;
 		}
 		
 		if(t_argc >= 4)
 		{
-			angle = floatvalue(t_argv[3]);
+			angle = intvalue(t_argv[3]) * (SQWORD)ANG45 / 45;
 		}
 		
 		t_return.type = svt_mobj;
-		t_return.value.mobj = Spawn(pclass, pos, ALLOW_REPLACE);
+		t_return.value.mobj = Spawn(PClass, x, y, z, ALLOW_REPLACE);
 
 		if (t_return.value.mobj)		
 		{
-			t_return.value.mobj->Angles.Yaw = angle;
+			t_return.value.mobj->angle = angle;
 
 			if (!DFraggleThinker::ActiveThinker->nocheckposition)
 			{
@@ -980,7 +981,8 @@ void FParser::SF_ObjX(void)
 		mo = Script->trigger;
 	}
 
-	t_return.setDouble(mo ? mo->X() : 0.);
+	t_return.type = svt_fixed;           // haleyjd: SoM's fixed-point fix
+	t_return.value.f = mo ? mo->X() : 0;   // null ptr check
 }
 
 //==========================================================================
@@ -1002,7 +1004,8 @@ void FParser::SF_ObjY(void)
 		mo = Script->trigger;
 	}
 
-	t_return.setDouble(mo ? mo->Y() : 0.);
+	t_return.type = svt_fixed;         // haleyjd
+	t_return.value.f = mo ? mo->Y() : 0; // null ptr check
 }
 
 //==========================================================================
@@ -1024,7 +1027,8 @@ void FParser::SF_ObjZ(void)
 		mo = Script->trigger;	
 	}
 
-	t_return.setDouble(mo ? mo->Z() : 0.);
+	t_return.type = svt_fixed;         // haleyjd
+	t_return.value.f = mo ? mo->Z() : 0; // null ptr check
 }
 
 
@@ -1047,7 +1051,8 @@ void FParser::SF_ObjAngle(void)
 		mo = Script->trigger;
 	}
 
-	t_return.setDouble(mo ? mo->Angles.Yaw.Degrees : 0.);
+	t_return.type = svt_fixed; // haleyjd: fixed-point -- SoM again :)
+	t_return.value.f = mo ? (fixed_t)AngleToFixed(mo->angle) : 0;   // null ptr check
 }
 
 
@@ -1251,9 +1256,10 @@ void FParser::SF_PushThing(void)
 		AActor * mo = actorvalue(t_argv[0]);
 		if(!mo) return;
 	
-		DAngle angle = floatvalue(t_argv[1]);
-		double force = floatvalue(t_argv[2]);
-		mo->Thrust(angle, force);
+		angle_t angle = (angle_t)FixedToAngle(fixedvalue(t_argv[1]));
+		fixed_t force = fixedvalue(t_argv[2]);
+	
+		P_ThrustMobj(mo, angle, force);
 	}
 }
 
@@ -1327,10 +1333,11 @@ void FParser::SF_MobjMomx(void)
 		if(t_argc > 1)
 		{
 			if(mo) 
-				mo->Vel.X = floatvalue(t_argv[1]);
+				mo->velx = fixedvalue(t_argv[1]);
 		}
 		
-		t_return.setDouble(mo ? mo->Vel.X : 0.);
+		t_return.type = svt_fixed;
+		t_return.value.f = mo ? mo->velx : 0;
 	}
 }
 
@@ -1349,11 +1356,12 @@ void FParser::SF_MobjMomy(void)
 		mo = actorvalue(t_argv[0]);
 		if(t_argc > 1)
 		{
-			if(mo) 
-				mo->Vel.Y = floatvalue(t_argv[1]);
+			if(mo)
+				mo->vely = fixedvalue(t_argv[1]);
 		}
 		
-		t_return.setDouble(mo ? mo->Vel.Y : 0.);
+		t_return.type = svt_fixed;
+		t_return.value.f = mo ? mo->vely : 0;
 	}
 }
 
@@ -1370,13 +1378,14 @@ void FParser::SF_MobjMomz(void)
 	if (CheckArgs(1))
 	{
 		mo = actorvalue(t_argv[0]);
-		if (t_argc > 1)
+		if(t_argc > 1)
 		{
-			if (mo)
-				mo->Vel.Z = floatvalue(t_argv[1]);
+			if(mo)
+				mo->velz = fixedvalue(t_argv[1]);
 		}
-
-		t_return.setDouble(mo ? mo->Vel.Z : 0.);
+		
+		t_return.type = svt_fixed;
+		t_return.value.f = mo ? mo->velz : 0;
 	}
 }
 
@@ -1393,12 +1402,15 @@ void FParser::SF_PointToAngle(void)
 {
 	if (CheckArgs(4))
 	{
-		double x1 = floatvalue(t_argv[0]);
-		double y1 = floatvalue(t_argv[1]);
-		double x2 = floatvalue(t_argv[2]);
-		double y2 = floatvalue(t_argv[3]);
+		fixed_t x1 = fixedvalue(t_argv[0]);
+		fixed_t y1 = fixedvalue(t_argv[1]);
+		fixed_t x2 = fixedvalue(t_argv[2]);
+		fixed_t y2 = fixedvalue(t_argv[3]);
 		
-		t_return.setDouble(DVector2(x2 - x1, y2 - y1).Angle().Normalized360().Degrees);
+		angle_t angle = R_PointToAngle2(x1, y1, x2, y2);
+		
+		t_return.type = svt_fixed;
+		t_return.value.f = (fixed_t)AngleToFixed(angle);
 	}
 }
 
@@ -1416,7 +1428,9 @@ void FParser::SF_PointToDist(void)
 		// Doing this in floating point is actually faster with modern computers!
 		double x = floatvalue(t_argv[2]) - floatvalue(t_argv[0]);
 		double y = floatvalue(t_argv[3]) - floatvalue(t_argv[1]);
-		t_return.setDouble(g_sqrt(x*x+y*y));
+   
+		t_return.type = svt_fixed;
+		t_return.value.f = FLOAT2FIXED(sqrt(x*x+y*y));
 	}
 }
 
@@ -1433,7 +1447,7 @@ void FParser::SF_PointToDist(void)
 
 void FParser::SF_SetCamera(void)
 {
-	DAngle angle;
+	angle_t angle;
 	player_t * player;
 	AActor * newcamera;
 	
@@ -1449,17 +1463,21 @@ void FParser::SF_SetCamera(void)
 			return;         // nullptr check
 		}
 		
-		angle = t_argc < 2 ? newcamera->Angles.Yaw : floatvalue(t_argv[1]);
+		angle = t_argc < 2 ? newcamera->angle : (fixed_t)FixedToAngle(fixedvalue(t_argv[1]));
 
-		newcamera->specialf1 = newcamera->Angles.Yaw.Degrees;
-		newcamera->specialf2 = newcamera->Z();
-		double z = t_argc < 3 ? newcamera->Sector->floorplane.ZatPoint(newcamera) + 41 : floatvalue(t_argv[2]);
-		newcamera->SetOrigin(newcamera->PosAtZ(z), false);
-		newcamera->Angles.Yaw = angle;
-		if (t_argc < 4) newcamera->Angles.Pitch = 0.;
-		else newcamera->Angles.Pitch = clamp(floatvalue(t_argv[3]), -50., 50.) * (20. / 32.);
+		newcamera->special1=newcamera->angle;
+		newcamera->special2=newcamera->Z();
+		newcamera->SetZ(t_argc < 3 ? (newcamera->Z() + (41 << FRACBITS)) : (intvalue(t_argv[2]) << FRACBITS));
+		newcamera->angle = angle;
+		if(t_argc < 4) newcamera->pitch = 0;
+		else
+		{
+			fixed_t pitch = fixedvalue(t_argv[3]);
+			if(pitch < -50*FRACUNIT) pitch = -50*FRACUNIT;
+			if(pitch > 50*FRACUNIT)  pitch =  50*FRACUNIT;
+			newcamera->pitch=(angle_t)((pitch/65536.0f)*(ANGLE_45/45.0f)*(20.0f/32.0f));
+		}
 		player->camera=newcamera;
-		R_ResetViewInterpolation();
 	}
 }
 
@@ -1479,8 +1497,8 @@ void FParser::SF_ClearCamera(void)
 	if (cam)
 	{
 		player->camera=player->mo;
-		cam->Angles.Yaw = cam->specialf1;
-		cam->SetZ(cam->specialf2);
+		cam->angle=cam->special1;
+		cam->SetZ(cam->special2);
 	}
 
 }
@@ -1537,6 +1555,29 @@ void FParser::SF_StartSectorSound(void)
 	}
 }
 
+/************* Sector functions ***************/
+
+//DMover::EResult P_MoveFloor (sector_t * m_Sector, fixed_t speed, fixed_t dest, int crush, int direction, int flags=0);
+//DMover::EResult P_MoveCeiling (sector_t * m_Sector, fixed_t speed, fixed_t dest, int crush, int direction, int flags=0);
+
+class DFloorChanger : public DFloor
+{
+public:
+	DFloorChanger(sector_t * sec)
+		: DFloor(sec) {}
+
+	bool Move(fixed_t speed, fixed_t dest, int crush, int direction)
+	{
+		bool res = DMover::crushed != MoveFloor(speed, dest, crush, direction, false);
+		Destroy();
+		m_Sector->floordata=NULL;
+		StopInterpolation(true);
+		m_Sector=NULL;
+		return res;
+	}
+};
+
+
 //==========================================================================
 //
 //
@@ -1548,8 +1589,8 @@ void FParser::SF_FloorHeight(void)
 {
 	int tagnum;
 	int secnum;
-	double dest;
-	double returnval = 1; // haleyjd: SoM's fixes
+	fixed_t dest;
+	int returnval = 1; // haleyjd: SoM's fixes
 	
 	if (CheckArgs(1))
 	{
@@ -1561,7 +1602,7 @@ void FParser::SF_FloorHeight(void)
 			int crush = (t_argc >= 3) ? intvalue(t_argv[2]) : false;
 			
 			i = -1;
-			dest = floatvalue(t_argv[1]);
+			dest = fixedvalue(t_argv[1]);
 			
 			// set all sectors with tag
 			
@@ -1570,12 +1611,12 @@ void FParser::SF_FloorHeight(void)
 			{
 				if (sectors[i].floordata) continue;	// don't move floors that are active!
 
-				if (sectors[i].MoveFloor(
-					fabs(dest - sectors[i].CenterFloor()), 
-					sectors[i].floorplane.PointToDist (sectors[i].centerspot, dest),
+				DFloorChanger * f = new DFloorChanger(&sectors[i]);
+				if (!f->Move(
+					abs(dest - sectors[i].CenterFloor()), 
+					sectors[i].floorplane.PointToDist (CenterSpot(&sectors[i]), dest), 
 					crush? 10:-1, 
-					(dest > sectors[i].CenterFloor()) ? 1 : -1,
-					false) == EMoveResult::crushed)
+					(dest > sectors[i].CenterFloor()) ? 1 : -1))
 				{
 					returnval = 0;
 				}
@@ -1589,13 +1630,44 @@ void FParser::SF_FloorHeight(void)
 				script_error("sector not found with tagnum %i\n", tagnum); 
 				return;
 			}
-			returnval = sectors[secnum].CenterFloor();
+			returnval = sectors[secnum].CenterFloor() >> FRACBITS;
 		}
 		
 		// return floor height
-		t_return.setDouble(returnval);
+		
+		t_return.type = svt_int;
+		t_return.value.i = returnval;
 	}
 }
+
+
+//=============================================================================
+//
+//
+//=============================================================================
+class DMoveFloor : public DFloor
+{
+public:
+	DMoveFloor(sector_t * sec,int moveheight,int _m_Direction,int crush,int movespeed)
+	: DFloor(sec)
+	{
+		m_Type = floorRaiseByValue;
+		m_Crush = crush;
+		m_Speed=movespeed;
+		m_Direction = _m_Direction;
+		m_FloorDestDist = moveheight;
+
+		// Do not interpolate instant movement floors.
+		fixed_t movedist = abs(-sec->floorplane.d - moveheight);
+		if (m_Speed >= movedist)
+		{
+			StopInterpolation(true);
+		}
+
+		StartFloorSound();
+	}
+};
+
 
 
 //==========================================================================
@@ -1607,14 +1679,14 @@ void FParser::SF_FloorHeight(void)
 void FParser::SF_MoveFloor(void)
 {
 	int secnum = -1;
-	int tagnum, crush;
-	double platspeed = 1, destheight;
+	sector_t *sec;
+	int tagnum, platspeed = 1, destheight, crush;
 	
 	if (CheckArgs(2))
 	{
 		tagnum = intvalue(t_argv[0]);
-		destheight = intvalue(t_argv[1]);
-		platspeed = t_argc > 2 ? floatvalue(t_argv[2]) : 1.;
+		destheight = intvalue(t_argv[1]) * FRACUNIT;
+		platspeed = t_argc > 2 ? fixedvalue(t_argv[2]) : FRACUNIT;
 		crush = (t_argc > 3 ? intvalue(t_argv[3]) : -1);
 		
 		// move all sectors with tag
@@ -1622,7 +1694,12 @@ void FParser::SF_MoveFloor(void)
 		FSSectorTagIterator itr(tagnum);
 		while ((secnum = itr.Next()) >= 0)
 		{
-			P_CreateFloor(&sectors[secnum], DFloor::floorMoveToValue, NULL, platspeed, destheight, crush, 0, false, false);
+			sec = &sectors[secnum];
+			// Don't start a second thinker on the same floor
+			if (sec->floordata) continue;
+			
+			new DMoveFloor(sec,sec->floorplane.PointToDist(CenterSpot(sec),destheight),
+				destheight < sec->CenterFloor() ? -1:1,crush,platspeed);
 		}
 	}
 }
@@ -1633,13 +1710,36 @@ void FParser::SF_MoveFloor(void)
 //
 //==========================================================================
 
+class DCeilingChanger : public DCeiling
+{
+public:
+	DCeilingChanger(sector_t * sec)
+		: DCeiling(sec) {}
+
+	bool Move(fixed_t speed, fixed_t dest, int crush, int direction)
+	{
+		bool res = DMover::crushed != MoveCeiling(speed, dest, crush, direction, false);
+		Destroy();
+		m_Sector->ceilingdata=NULL;
+		StopInterpolation (true);
+		m_Sector=NULL;
+		return res;
+	}
+};
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 // ceiling height of sector
 void FParser::SF_CeilingHeight(void)
 {
-	double dest;
+	fixed_t dest;
 	int secnum;
 	int tagnum;
-	double returnval = 1;
+	int returnval = 1;
 	
 	if (CheckArgs(1))
 	{
@@ -1651,7 +1751,7 @@ void FParser::SF_CeilingHeight(void)
 			int crush = (t_argc >= 3) ? intvalue(t_argv[2]) : false;
 			
 			i = -1;
-			dest = floatvalue(t_argv[1]);
+			dest = fixedvalue(t_argv[1]);
 			
 			// set all sectors with tag
 			FSSectorTagIterator itr(tagnum);
@@ -1659,12 +1759,12 @@ void FParser::SF_CeilingHeight(void)
 			{
 				if (sectors[i].ceilingdata) continue;	// don't move ceilings that are active!
 
-				if (sectors[i].MoveCeiling(
-					fabs(dest - sectors[i].CenterCeiling()), 
-					sectors[i].ceilingplane.PointToDist (sectors[i].centerspot, dest), 
+				DCeilingChanger * c = new DCeilingChanger(&sectors[i]);
+				if (!c->Move(
+					abs(dest - sectors[i].CenterCeiling()), 
+					sectors[i].ceilingplane.PointToDist (CenterSpot(&sectors[i]), dest), 
 					crush? 10:-1,
-					(dest > sectors[i].CenterCeiling()) ? 1 : -1,
-					false) == EMoveResult::crushed)
+					(dest > sectors[i].CenterCeiling()) ? 1 : -1))
 				{
 					returnval = 0;
 				}
@@ -1678,13 +1778,48 @@ void FParser::SF_CeilingHeight(void)
 				script_error("sector not found with tagnum %i\n", tagnum); 
 				return;
 			}
-			returnval = sectors[secnum].CenterCeiling();
+			returnval = sectors[secnum].CenterCeiling() >> FRACBITS;
 		}
 		
 		// return ceiling height
-		t_return.setDouble(returnval);
+		t_return.type = svt_int;
+		t_return.value.i = returnval;
 	}
 }
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+class DMoveCeiling : public DCeiling
+{
+public:
+
+	DMoveCeiling(sector_t * sec,int tag,fixed_t destheight,fixed_t speed,int silent,int crush)
+		: DCeiling(sec)
+	{
+		m_Crush = crush;
+		m_Speed2 = m_Speed = m_Speed1 = speed;
+		m_Silent = silent;
+		m_Type = DCeiling::ceilLowerByValue;	// doesn't really matter as long as it's no special value
+		m_Tag=tag;			
+		vertex_t * spot=CenterSpot(sec);
+		m_TopHeight=m_BottomHeight=sec->ceilingplane.PointToDist(spot,destheight);
+		m_Direction=destheight>sec->GetPlaneTexZ(sector_t::ceiling)? 1:-1;
+
+		// Do not interpolate instant movement ceilings.
+		fixed_t movedist = abs(sec->ceilingplane.d - m_BottomHeight);
+		if (m_Speed >= movedist)
+		{
+			StopInterpolation (true);
+			m_Silent=2;
+		}
+		PlayCeilingSound();
+	}
+};
 
 
 //==========================================================================
@@ -1696,16 +1831,16 @@ void FParser::SF_CeilingHeight(void)
 void FParser::SF_MoveCeiling(void)
 {
 	int secnum = -1;
-	int tagnum;
-	double platspeed = 1, destheight;
+	sector_t *sec;
+	int tagnum, platspeed = 1, destheight;
 	int crush;
 	int silent;
 	
 	if (CheckArgs(2))
 	{
 		tagnum = intvalue(t_argv[0]);
-		destheight = intvalue(t_argv[1]);
-		platspeed = /*FLOORSPEED **/ (t_argc > 2 ? floatvalue(t_argv[2]) : 1);
+		destheight = intvalue(t_argv[1]) * FRACUNIT;
+		platspeed = /*FLOORSPEED **/ (t_argc > 2 ? fixedvalue(t_argv[2]) : FRACUNIT);
 		crush=t_argc>3 ? intvalue(t_argv[3]):-1;
 		silent=t_argc>4 ? intvalue(t_argv[4]):1;
 		
@@ -1713,7 +1848,11 @@ void FParser::SF_MoveCeiling(void)
 		FSSectorTagIterator itr(tagnum);
 		while ((secnum = itr.Next()) >= 0)
 		{
-			P_CreateCeiling(&sectors[secnum], DCeiling::ceilMoveToValue, NULL, tagnum, platspeed, platspeed, destheight, crush, silent | 4, 0, DCeiling::ECrushMode::crushDoom);
+			sec = &sectors[secnum];
+			
+			// Don't start a second thinker on the same floor
+			if (sec->ceilingdata) continue;
+			new DMoveCeiling(sec, tagnum, destheight, platspeed, silent, crush);
 		}
 	}
 }
@@ -1781,18 +1920,20 @@ class DLightLevel : public DLighting
 public:
 
 	DLightLevel(sector_t * s,int destlevel,int speed);
-	void	Serialize(FSerializer &arc);
+	void	Serialize (FArchive &arc);
 	void		Tick ();
 	void		Destroy() { Super::Destroy(); m_Sector->lightingdata=NULL; }
 };
 
-IMPLEMENT_CLASS(DLightLevel, false, false)
 
-void DLightLevel::Serialize(FSerializer &arc)
+
+IMPLEMENT_CLASS (DLightLevel)
+
+void DLightLevel::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc("destlevel", destlevel)
-		("speed", speed);
+	arc << destlevel << speed;
+	if (arc.IsLoading()) m_Sector->lightingdata=this;
 }
 
 
@@ -2014,13 +2155,13 @@ void FParser::SF_CeilingTexture(void)
 
 void FParser::SF_ChangeHubLevel(void)
 {
-	script_error("FS hub system permanently disabled\n");
+	I_Error("FS hub system permanently disabled\n");
 }
 
 // for start map: start new game on a particular skill
 void FParser::SF_StartSkill(void)
 {
-	script_error("startskill is not supported by this implementation!\n");
+	I_Error("startskill is not supported by this implementation!\n");
 }
 
 //==========================================================================
@@ -2050,7 +2191,7 @@ void FParser::SF_OpenDoor(void)
 		if(t_argc > 2) speed = intvalue(t_argv[2]);
 		else speed = 1;    // 1= normal speed
 
-		EV_DoDoor(wait_time ? DDoor::doorRaise : DDoor::doorOpen, NULL, NULL, sectag, 2. * clamp(speed, 1, 127), wait_time, 0, 0);
+		EV_DoDoor(wait_time? DDoor::doorRaise:DDoor::doorOpen,NULL,NULL,sectag,2*FRACUNIT*clamp(speed,1,127),wait_time,0,0);
 	}
 }
 
@@ -2075,7 +2216,7 @@ void FParser::SF_CloseDoor(void)
 		if(t_argc > 1) speed = intvalue(t_argv[1]);
 		else speed = 1;    // 1= normal speed
 		
-		EV_DoDoor(DDoor::doorClose, NULL, NULL, sectag, 2.*clamp(speed, 1, 127), 0, 0, 0);
+		EV_DoDoor(DDoor::doorClose,NULL,NULL,sectag,2*FRACUNIT*clamp(speed,1,127),0,0,0);
 	}
 }
 
@@ -2185,7 +2326,7 @@ void FParser::SF_SetLineMonsterBlocking(void)
 {
 	if (CheckArgs(2))
 	{
-		int blocking = intvalue(t_argv[1]) ? (int)ML_BLOCKMONSTERS : 0;
+		int blocking = intvalue(t_argv[1]) ? ML_BLOCKMONSTERS : 0;
 		int tag=intvalue(t_argv[0]);
 
 		FLineIdIterator itr(tag);
@@ -2289,10 +2430,12 @@ void FParser::SF_SetLineTexture(void)
 
 void FParser::SF_Max(void)
 {
+	fixed_t n1, n2;
+	
 	if (CheckArgs(2))
 	{
-		auto n1 = fixedvalue(t_argv[0]);
-		auto n2 = fixedvalue(t_argv[1]);
+		n1 = fixedvalue(t_argv[0]);
+		n2 = fixedvalue(t_argv[1]);
 		
 		t_return.type = svt_fixed;
 		t_return.value.f = (n1 > n2) ? n1 : n2;
@@ -2308,10 +2451,12 @@ void FParser::SF_Max(void)
 
 void FParser::SF_Min(void)
 {
+	fixed_t   n1, n2;
+	
 	if (CheckArgs(1))
 	{
-		auto n1 = fixedvalue(t_argv[0]);
-		auto n2 = fixedvalue(t_argv[1]);
+		n1 = fixedvalue(t_argv[0]);
+		n2 = fixedvalue(t_argv[1]);
 		
 		t_return.type = svt_fixed;
 		t_return.value.f = (n1 < n2) ? n1 : n2;
@@ -2327,10 +2472,11 @@ void FParser::SF_Min(void)
 
 void FParser::SF_Abs(void)
 {
+	fixed_t   n1;
 	
 	if (CheckArgs(1))
 	{
-		auto n1 = fixedvalue(t_argv[0]);
+		n1 = fixedvalue(t_argv[0]);
 		
 		t_return.type = svt_fixed;
 		t_return.value.f = (n1 < 0) ? -n1 : n1;
@@ -2432,14 +2578,39 @@ static void FS_GiveInventory (AActor *actor, const char * type, int amount)
 	{
 		type = "BasicArmorPickup";
 	}
-	PClassInventory * info = dyn_cast<PClassInventory>(PClass::FindActor (type));
-	if (info == NULL)
+	const PClass * info = PClass::FindClass (type);
+	if (info == NULL || !info->IsDescendantOf (RUNTIME_CLASS(AInventory)))
 	{
 		Printf ("Unknown inventory item: %s\n", type);
 		return;
 	}
 
-	actor->GiveInventory(info, amount);
+	AWeapon *savedPendingWeap = actor->player != NULL? actor->player->PendingWeapon : NULL;
+	bool hadweap = actor->player != NULL ? actor->player->ReadyWeapon != NULL : true;
+
+	AInventory *item = static_cast<AInventory *>(Spawn (info, 0,0,0, NO_REPLACE));
+
+	// This shouldn't count for the item statistics!
+	item->ClearCounters();
+	if (info->IsDescendantOf (RUNTIME_CLASS(ABasicArmorPickup)) ||
+		info->IsDescendantOf (RUNTIME_CLASS(ABasicArmorBonus)))
+	{
+		static_cast<ABasicArmorPickup*>(item)->SaveAmount *= amount;
+	}
+	else
+	{
+		item->Amount = amount;
+	}
+	if (!item->CallTryPickup (actor))
+	{
+		item->Destroy ();
+	}
+	// If the item was a weapon, don't bring it up automatically
+	// unless the player was not already using a weapon.
+	if (savedPendingWeap != NULL && hadweap)
+	{
+		actor->player->PendingWeapon = savedPendingWeap;
+	}
 }
 
 //============================================================================
@@ -2460,7 +2631,7 @@ static void FS_TakeInventory (AActor *actor, const char * type, int amount)
 	{
 		return;
 	}
-	PClassActor * info = PClass::FindActor (type);
+	const PClass * info = PClass::FindClass (type);
 	if (info == NULL)
 	{
 		return;
@@ -2509,7 +2680,7 @@ static int FS_CheckInventory (AActor *activator, const char *type)
 		return activator->health;
 	}
 
-	PClassActor *info = PClass::FindActor (type);
+	const PClass *info = PClass::FindClass (type);
 	AInventory *item = activator->FindInventory (info);
 	return item ? item->Amount : 0;
 }
@@ -2569,7 +2740,7 @@ void FParser::SF_PlayerKeys(void)
 void FParser::SF_PlayerAmmo(void)
 {
 	int playernum, amount;
-	PClassAmmo * ammotype;
+	const PClass * ammotype;
 	
 	if (CheckArgs(2))
 	{
@@ -2605,7 +2776,7 @@ void FParser::SF_PlayerAmmo(void)
 void FParser::SF_MaxPlayerAmmo()
 {
 	int playernum, amount;
-	PClassAmmo * ammotype;
+	const PClass * ammotype;
 
 	if (CheckArgs(2))
 	{
@@ -2625,7 +2796,7 @@ void FParser::SF_MaxPlayerAmmo()
 			if(amount < 0) amount = 0;
 			if (!iammo) 
 			{
-				iammo = static_cast<AAmmo *>(Spawn (ammotype));
+				iammo = static_cast<AAmmo *>(Spawn (ammotype, 0, 0, 0, NO_REPLACE));
 				iammo->Amount = 0;
 				iammo->AttachToOwner (players[playernum].mo);
 			}
@@ -2677,13 +2848,13 @@ void FParser::SF_PlayerWeapon()
 		if (playernum==-1) return;
 		if (weaponnum<0 || weaponnum>9)
 		{
-			script_error("weaponnum out of range! %d\n", weaponnum);
+			script_error("weaponnum out of range! %s\n", weaponnum);
 			return;
 		}
-		PClassWeapon * ti = static_cast<PClassWeapon *>(PClass::FindActor(WeaponNames[weaponnum]));
+		const PClass * ti = PClass::FindClass(WeaponNames[weaponnum]);
 		if (!ti)
 		{
-			script_error("incompatibility in playerweapon %d\n", weaponnum);
+			script_error("incompatibility in playerweapon\n", weaponnum);
 			return;
 		}
 		
@@ -2758,13 +2929,13 @@ void FParser::SF_PlayerSelectedWeapon()
 
 			if (weaponnum<0 || weaponnum>=9)
 			{
-				script_error("weaponnum out of range! %d\n", weaponnum);
+				script_error("weaponnum out of range! %s\n", weaponnum);
 				return;
 			}
-			PClassWeapon * ti = static_cast<PClassWeapon *>(PClass::FindActor(WeaponNames[weaponnum]));
+			const PClass * ti = PClass::FindClass(WeaponNames[weaponnum]);
 			if (!ti)
 			{
-				script_error("incompatibility in playerweapon %d\n", weaponnum);
+				script_error("incompatibility in playerweapon\n", weaponnum);
 				return;
 			}
 
@@ -2865,7 +3036,7 @@ void FParser::SF_SetWeapon()
 		int playernum=T_GetPlayerNum(t_argv[0]);
 		if (playernum!=-1) 
 		{
-			AInventory *item = players[playernum].mo->FindInventory (PClass::FindActor (stringvalue(t_argv[1])));
+			AInventory *item = players[playernum].mo->FindInventory (PClass::FindClass (stringvalue(t_argv[1])));
 
 			if (item == NULL || !item->IsKindOf (RUNTIME_CLASS(AWeapon)))
 			{
@@ -2897,57 +3068,166 @@ void FParser::SF_SetWeapon()
 //
 // movecamera(camera, targetobj, targetheight, movespeed, targetangle, anglespeed)
 //
-// This has been completely rewritten in a sane fashion, using actual vector math.
-//
 //==========================================================================
 
 void FParser::SF_MoveCamera(void)
 {
+	fixed_t    x, y, z;  
+	fixed_t    zdist, xydist, movespeed;
+	fixed_t    xstep, ystep, zstep, targetheight;
+	angle_t    anglespeed, anglestep, angledist, targetangle, 
+		mobjangle, bigangle, smallangle;
+	
+	// I have to use floats for the math where angles are divided 
+	// by fixed values.  
+	double     fangledist, fanglestep, fmovestep;
+	int        angledir;  
+	AActor*    target;
+	int        moved;
+	int        quad1, quad2;
+	AActor		* cam;
+	
+	angledir = moved = 0;
+
 	if (CheckArgs(6))
 	{
-		AActor *cam = actorvalue(t_argv[0]);
-		AActor *target = actorvalue(t_argv[1]);
-		if(!cam || !target)
+		cam = actorvalue(t_argv[0]);
+
+		target = actorvalue(t_argv[1]);
+		if(!cam || !target) 
 		{ 
 			script_error("invalid target for camera\n"); return; 
 		}
-
-		double targetheight = floatvalue(t_argv[2]);
-		DVector3 campos = cam->Pos();
-		DVector3 targpos = DVector3(target->Pos(), targetheight);
-		if (campos != targpos)
+		
+		targetheight = fixedvalue(t_argv[2]);
+		movespeed    = fixedvalue(t_argv[3]);
+		targetangle  = (angle_t)FixedToAngle(fixedvalue(t_argv[4]));
+		anglespeed   = (angle_t)FixedToAngle(fixedvalue(t_argv[5]));
+		
+		// figure out how big one step will be
+		fixedvec2 dist = cam->Vec2To(target);
+		zdist = targetheight - cam->Z();
+		
+		// Angle checking...  
+		//    90  
+		//   Q1|Q0  
+		//180--+--0  
+		//   Q2|Q3  
+		//    270
+		quad1 = targetangle / ANG90;
+		quad2 = cam->angle / ANG90;
+		bigangle = targetangle > cam->angle ? targetangle : cam->angle;
+		smallangle = targetangle < cam->angle ? targetangle : cam->angle;
+		if((quad1 > quad2 && quad1 - 1 == quad2) || (quad2 > quad1 && quad2 - 1 == quad1) ||
+			quad1 == quad2)
 		{
-			DVector3 movement = targpos - campos;
-			double movelen = movement.Length();
-			double movespeed = floatvalue(t_argv[3]);
-			DVector3 movepos;
-			bool finished = (movespeed >= movelen);
-			if (finished) movepos = targpos;
-			else movepos = campos + movement.Resized(movespeed);
-
-			DAngle targetangle = floatvalue(t_argv[4]);
-			DAngle anglespeed = floatvalue(t_argv[5]);
-			DAngle diffangle = deltaangle(cam->Angles.Yaw, targetangle);
-
-			if (movespeed > 0 && anglespeed == 0.)
-			{
-				if (!finished) targetangle = diffangle * movespeed / movelen;
-			}
-			else
-			{
-				targetangle = cam->Angles.Yaw + anglespeed;
-			}
-
-			cam->radius = 1 / 8192.;
-			cam->Height = 1 / 8192.;
-			cam->SetOrigin(movepos, true);
-			t_return.value.i = 1;
+			angledist = bigangle - smallangle;
+			angledir = targetangle > cam->angle ? 1 : -1;
 		}
 		else
 		{
-			t_return.value.i = 0;
+			angle_t diff180 = (bigangle + ANG180) - (smallangle + ANG180);
+			
+			if(quad2 == 3 && quad1 == 0)
+			{
+				angledist = diff180;
+				angledir = 1;
+			}
+			else if(quad1 == 3 && quad2 == 0)
+			{
+				angledist = diff180;
+				angledir = -1;
+			}
+			else
+			{
+				angledist = bigangle - smallangle;
+				if(angledist > ANG180)
+				{
+					angledist = diff180;
+					angledir = targetangle > cam->angle ? -1 : 1;
+				}
+				else
+					angledir = targetangle > cam->angle ? 1 : -1;
+			}
 		}
+		
+		// set step variables based on distance and speed
+		mobjangle = cam->AngleTo(target);
+		xydist = cam->Distance2D(target);
+		
+		xstep = FixedMul(finecosine[mobjangle >> ANGLETOFINESHIFT], movespeed);
+		ystep = FixedMul(finesine[mobjangle >> ANGLETOFINESHIFT], movespeed);
+		
+		if(xydist && movespeed)
+			zstep = FixedDiv(zdist, FixedDiv(xydist, movespeed));
+		else
+			zstep = zdist > 0 ? movespeed : -movespeed;
+		
+		if(xydist && movespeed && !anglespeed)
+		{
+			fangledist = ((double)angledist / (ANG45/45));
+			fmovestep = ((double)FixedDiv(xydist, movespeed) / FRACUNIT);
+			if(fmovestep)
+				fanglestep = fangledist / fmovestep;
+			else
+				fanglestep = 360;
+			
+			anglestep =(angle_t) (fanglestep * (ANG45/45));
+		}
+		else
+			anglestep = anglespeed;
+		
+		if(abs(xstep) >= (abs(dist.x) - 1))
+			x = cam->X() + dist.x;
+		else
+		{
+			x = cam->X() + xstep;
+			moved = 1;
+		}
+		
+		if(abs(ystep) >= (abs(dist.y) - 1))
+			y = cam->Y() + dist.y;
+		else
+		{
+			y = cam->Y() + ystep;
+			moved = 1;
+		}
+		
+		if(abs(zstep) >= (abs(zdist) - 1))
+			z = targetheight;
+		else
+		{
+			z = cam->Z() + zstep;
+			moved = 1;
+		}
+		
+		if(anglestep >= angledist)
+			cam->angle = targetangle;
+		else
+		{
+			if(angledir == 1)
+			{
+				cam->angle += anglestep;
+				moved = 1;
+			}
+			else if(angledir == -1)
+			{
+				cam->angle -= anglestep;
+				moved = 1;
+			}
+		}
+
+		cam->radius=8;
+		cam->height=8;
+		if ((x != cam->X() || y != cam->Y()) && !P_TryMove(cam, x, y, true))
+		{
+			Printf("Illegal camera move to (%f, %f)\n", x/65536.f, y/65536.f);
+			return;
+		}
+		cam->SetZ(z);
+
 		t_return.type = svt_int;
+		t_return.value.i = moved;
 	}
 }
 
@@ -2976,7 +3256,7 @@ void FParser::SF_ObjAwaken(void)
 
 	if(mo)
 	{
-		mo->CallActivate(Script->trigger);
+		mo->Activate(Script->trigger);
 	}
 }
 
@@ -3069,22 +3349,22 @@ void FParser::SF_FixedValue(void)
 
 void FParser::SF_SpawnExplosion()
 {
-	DVector3 pos;
+	fixed_t   x, y, z;
 	AActor*   spawn;
-	PClassActor * pclass;
+	const PClass * PClass;
 	
 	if (CheckArgs(3))
 	{
-		if (!(pclass=T_GetMobjType(t_argv[0]))) return;
+		if (!(PClass=T_GetMobjType(t_argv[0]))) return;
 		
-		pos.X = floatvalue(t_argv[1]);
-		pos.Y = floatvalue(t_argv[2]);
+		x = fixedvalue(t_argv[1]);
+		y = fixedvalue(t_argv[2]);
 		if(t_argc > 3)
-			pos.Z = floatvalue(t_argv[3]);
+			z = fixedvalue(t_argv[3]);
 		else
-			pos.Z = P_PointInSector(pos)->floorplane.ZatPoint(pos);
+			z = P_PointInSector(x, y)->floorplane.ZatPoint(x,y);
 		
-		spawn = Spawn (pclass, pos, ALLOW_REPLACE);
+		spawn = Spawn (PClass, x, y, z, ALLOW_REPLACE);
 		t_return.type = svt_int;
 		t_return.value.i=0;
 		if (spawn)
@@ -3138,9 +3418,9 @@ void FParser::SF_SetObjPosition()
 		if (!mobj) return;
 
 		mobj->SetOrigin(
-			floatvalue(t_argv[1]),
-			(t_argc >= 3)? floatvalue(t_argv[2]) : mobj->Y(),
-			(t_argc >= 4)? floatvalue(t_argv[3]) : mobj->Z(), false);
+			fixedvalue(t_argv[1]),
+			(t_argc >= 3)? fixedvalue(t_argv[2]) : mobj->Y(),
+			(t_argc >= 4)? fixedvalue(t_argv[3]) : mobj->Z(), false);
 	}
 }
 
@@ -3242,15 +3522,15 @@ void FParser::SF_SpawnMissile()
 {
 	AActor *mobj;
 	AActor *target;
-	PClassActor * pclass;
+	const PClass * PClass;
 
 	if (CheckArgs(3))
 	{
-		if (!(pclass=T_GetMobjType(t_argv[2]))) return;
+		if (!(PClass=T_GetMobjType(t_argv[2]))) return;
 
 		mobj = actorvalue(t_argv[0]);
 		target = actorvalue(t_argv[1]);
-		if (mobj && target) P_SpawnMissile(mobj, target, pclass);
+		if (mobj && target) P_SpawnMissile(mobj, target, PClass);
 	}
 }
 
@@ -3471,9 +3751,14 @@ void FParser::SF_Resurrect()
 			return;
 
 		mo->SetState(state);
-		mo->Height = mo->GetDefault()->Height;
+		mo->height = mo->GetDefault()->height;
 		mo->radius = mo->GetDefault()->radius;
-		mo->Revive();
+		mo->flags =  mo->GetDefault()->flags;
+		mo->flags2 = mo->GetDefault()->flags2;
+		mo->flags3 = mo->GetDefault()->flags3;
+		mo->flags4 = mo->GetDefault()->flags4;
+		mo->flags5 = mo->GetDefault()->flags5;
+		mo->health = mo->GetDefault()->health;
 		mo->target = NULL;
 	}
 }
@@ -3487,15 +3772,14 @@ void FParser::SF_Resurrect()
 void FParser::SF_LineAttack()
 {
 	AActor	*mo;
-	int		damage;
-	DAngle angle, slope;
+	int		damage, angle, slope;
 
 	if (CheckArgs(3))
 	{
 		mo = actorvalue(t_argv[0]);
 		damage = intvalue(t_argv[2]);
 
-		angle = floatvalue(t_argv[1]);
+		angle = (intvalue(t_argv[1]) * (ANG45 / 45));
 		slope = P_AimLineAttack(mo, angle, MISSILERANGE);
 
 		P_LineAttack(mo, angle, MISSILERANGE, slope, damage, NAME_Hitscan, NAME_BulletPuff);
@@ -3541,11 +3825,19 @@ void FParser::SF_ObjType()
 //
 //==========================================================================
 
+inline fixed_t double2fixed(double t)
+{
+	return (fixed_t)(t*65536.0);
+}
+
+
+
 void FParser::SF_Sin()
 {
 	if (CheckArgs(1))
 	{
-		t_return.setDouble(g_sin(floatvalue(t_argv[0])));
+		t_return.type = svt_fixed;
+		t_return.value.f = double2fixed(sin(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3554,7 +3846,8 @@ void FParser::SF_ASin()
 {
 	if (CheckArgs(1))
 	{
-		t_return.setDouble(g_asin(floatvalue(t_argv[0])));
+		t_return.type = svt_fixed;
+		t_return.value.f = double2fixed(asin(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3563,7 +3856,8 @@ void FParser::SF_Cos()
 {
 	if (CheckArgs(1))
 	{
-		t_return.setDouble(g_cos(floatvalue(t_argv[0])));
+		t_return.type = svt_fixed;
+		t_return.value.f = double2fixed(cos(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3572,7 +3866,8 @@ void FParser::SF_ACos()
 {
 	if (CheckArgs(1))
 	{
-		t_return.setDouble(g_acos(floatvalue(t_argv[0])));
+		t_return.type = svt_fixed;
+		t_return.value.f = double2fixed(acos(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3581,7 +3876,8 @@ void FParser::SF_Tan()
 {
 	if (CheckArgs(1))
 	{
-		t_return.setDouble(g_tan(floatvalue(t_argv[0])));
+		t_return.type = svt_fixed;
+		t_return.value.f = double2fixed(tan(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3590,7 +3886,8 @@ void FParser::SF_ATan()
 {
 	if (CheckArgs(1))
 	{
-		t_return.setDouble(g_atan(floatvalue(t_argv[0])));
+		t_return.type = svt_fixed;
+		t_return.value.f = double2fixed(atan(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3599,7 +3896,8 @@ void FParser::SF_Exp()
 {
 	if (CheckArgs(1))
 	{
-		t_return.setDouble(g_exp(floatvalue(t_argv[0])));
+		t_return.type = svt_fixed;
+		t_return.value.f = double2fixed(exp(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3607,7 +3905,8 @@ void FParser::SF_Log()
 {
 	if (CheckArgs(1))
 	{
-		t_return.setDouble(g_log(floatvalue(t_argv[0])));
+		t_return.type = svt_fixed;
+		t_return.value.f = double2fixed(log(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3616,7 +3915,8 @@ void FParser::SF_Sqrt()
 {
 	if (CheckArgs(1))
 	{
-		t_return.setDouble(g_sqrt(floatvalue(t_argv[0])));
+		t_return.type = svt_fixed;
+		t_return.value.f = double2fixed(sqrt(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3626,7 +3926,7 @@ void FParser::SF_Floor()
 	if (CheckArgs(1))
 	{
 		t_return.type = svt_fixed;
-		t_return.value.f = fixedvalue(t_argv[0]) & 0xffff0000;
+		t_return.value.f = fixedvalue(t_argv[0]) & 0xffFF0000;
 	}
 }
 
@@ -3635,7 +3935,8 @@ void FParser::SF_Pow()
 {
 	if (CheckArgs(2))
 	{
-		t_return.setDouble(g_pow(floatvalue(t_argv[0]), floatvalue(t_argv[1])));
+		t_return.type = svt_fixed;
+		t_return.value.f = double2fixed(pow(floatvalue(t_argv[0]), floatvalue(t_argv[1])));
 	}
 }
 
@@ -3646,24 +3947,58 @@ void FParser::SF_Pow()
 //==========================================================================
 
 
+int HU_GetFSPic(FTextureID lumpnum, int xpos, int ypos);
+int HU_DeleteFSPic(unsigned int handle);
+int HU_ModifyFSPic(unsigned int handle, FTextureID lumpnum, int xpos, int ypos);
+int HU_FSDisplay(unsigned int handle, bool newval);
+
 void FParser::SF_NewHUPic()
 {
-	// disabled because it was never used and never tested
+	if (CheckArgs(3))
+	{
+		t_return.type = svt_int;
+		t_return.value.i = HU_GetFSPic(
+			TexMan.GetTexture(stringvalue(t_argv[0]), FTexture::TEX_MiscPatch, FTextureManager::TEXMAN_TryAny), 
+			intvalue(t_argv[1]), intvalue(t_argv[2]));
+	}
 }
 
 void FParser::SF_DeleteHUPic()
 {
-	// disabled because it was never used and never tested
+	if (CheckArgs(1))
+	{
+		if (HU_DeleteFSPic(intvalue(t_argv[0])) == -1)
+			script_error("deletehupic: Invalid sfpic handle: %i\n", intvalue(t_argv[0]));
+	}
 }
 
 void FParser::SF_ModifyHUPic()
 {
-	// disabled because it was never used and never tested
+	if (t_argc != 4)
+	{
+		script_error("modifyhupic: invalid number of arguments\n");
+		return;
+	}
+
+	if (HU_ModifyFSPic(intvalue(t_argv[0]), 
+			TexMan.GetTexture(stringvalue(t_argv[0]), FTexture::TEX_MiscPatch, FTextureManager::TEXMAN_TryAny),
+			intvalue(t_argv[2]), intvalue(t_argv[3])) == -1)
+	{
+		script_error("modifyhypic: invalid sfpic handle %i\n", intvalue(t_argv[0]));
+	}
+	return;
 }
 
 void FParser::SF_SetHUPicDisplay()
 {
-	// disabled because it was never used and never tested
+	if (t_argc != 2)
+	{
+		script_error("sethupicdisplay: invalud number of arguments\n");
+		return;
+	}
+
+	if (HU_FSDisplay(intvalue(t_argv[0]), intvalue(t_argv[1]) > 0 ? 1 : 0) == -1)
+		script_error("sethupicdisplay: invalid pic handle %i\n", intvalue(t_argv[0]));
 }
 
 
@@ -3681,9 +4016,10 @@ void FParser::SF_SetCorona(void)
 		return;
 	}
 	
-	int num = intvalue(t_argv[0]);    // which corona we want to modify
-	int what = intvalue(t_argv[1]);   // what we want to modify (type, color, offset,...)
-	double val = floatvalue(t_argv[2]);   // the value of what we modify
+	int num = t_argv[0].value.i;    // which corona we want to modify
+	int what = t_argv[1].value.i;   // what we want to modify (type, color, offset,...)
+	int ival = t_argv[2].value.i;   // the value of what we modify
+	double fval = ((double) t_argv[2].value.f / FRACUNIT);
 
   	/*
 	switch (what)
@@ -3714,7 +4050,7 @@ void FParser::SF_SetCorona(void)
 			break;
 		case 6:
 			lspr[num].dynamic_radius = fval;
-			lspr[num].dynamic_sqrradius = g_sqrt(lspr[num].dynamic_radius);
+			lspr[num].dynamic_sqrradius = sqrt(lspr[num].dynamic_radius);
 			break;
 		default:
 			CONS_Printf("Error in setcorona\n");
@@ -3726,6 +4062,30 @@ void FParser::SF_SetCorona(void)
 	t_return.type = svt_int;
 	t_return.value.i = 0;
 }
+
+//==========================================================================
+//
+// new for GZDoom: Call a Hexen line special (deprecated, superseded by direct use)
+//
+//==========================================================================
+
+void FParser::SF_Ls()
+{
+	int args[5]={0,0,0,0,0};
+	int spc;
+
+	if (CheckArgs(1))
+	{
+		spc=intvalue(t_argv[0]);
+		for(int i=0;i<5;i++)
+		{
+			if (t_argc>=i+2) args[i]=intvalue(t_argv[i+1]);
+		}
+		if (spc>=0 && spc<256)
+			P_ExecuteSpecial(spc, NULL,Script->trigger,false, args[0],args[1],args[2],args[3],args[4]);
+	}
+}
+
 
 //==========================================================================
 //
@@ -3756,9 +4116,11 @@ void FParser::SF_MobjRadius(void)
 		if(t_argc > 1)
 		{
 			if(mo) 
-				mo->radius = floatvalue(t_argv[1]);
+				mo->radius = fixedvalue(t_argv[1]);
 		}
-		t_return.setDouble(mo ? mo->radius : 0.);
+		
+		t_return.type = svt_fixed;
+		t_return.value.f = mo ? mo->radius : 0;
 	}
 }
 
@@ -3779,9 +4141,11 @@ void FParser::SF_MobjHeight(void)
 		if(t_argc > 1)
 		{
 			if(mo) 
-				mo->Height = floatvalue(t_argv[1]);
+				mo->height = fixedvalue(t_argv[1]);
 		}
-		t_return.setDouble(mo ? mo->Height : 0.);
+		
+		t_return.type = svt_fixed;
+		t_return.value.f = mo ? mo->height : 0;
 	}
 }
 
@@ -3794,7 +4158,7 @@ void FParser::SF_MobjHeight(void)
 
 void FParser::SF_ThingCount(void)
 {
-	PClassActor *pClass;
+	const PClass *pClass;
 	AActor * mo;
 	int count=0;
 	bool replacemented = false;
@@ -3805,7 +4169,7 @@ void FParser::SF_ThingCount(void)
 		pClass=T_GetMobjType(t_argv[0]);
 		if (!pClass) return;
 		// If we want to count map items we must consider actor replacement
-		pClass = pClass->GetReplacement();
+		pClass = pClass->ActorInfo->GetReplacement()->Class;
 		
 again:
 		TThinkerIterator<AActor> it;
@@ -3835,7 +4199,7 @@ again:
 		{
 			// Again, with decorate replacements
 			replacemented = true;
-			PClassActor *newkind = pClass->GetReplacement();
+			PClass *newkind = pClass->ActorInfo->GetReplacement()->Class;
 			if (newkind != pClass)
 			{
 				pClass = newkind;
@@ -3903,35 +4267,34 @@ void FParser::SF_SetColor(void)
 void FParser::SF_SpawnShot2(void)
 {
 	AActor *source = NULL;
-	PClassActor * pclass;
-	double z = 0;
-
+	const PClass * PClass;
+	int z=0;
+	
 	// t_argv[0] = type to spawn
 	// t_argv[1] = source mobj, optional, -1 to default
 	// shoots at source's angle
-
+	
 	if (CheckArgs(2))
 	{
-		if (t_argv[1].type == svt_int && t_argv[1].value.i < 0)
+		if(t_argv[1].type == svt_int && t_argv[1].value.i < 0)
 			source = Script->trigger;
 		else
 			source = actorvalue(t_argv[1]);
 
-		if (t_argc > 2) z = floatvalue(t_argv[2]);
-
-		if (!source)	return;
-
-		if (!(pclass = T_GetMobjType(t_argv[0]))) return;
-
+		if (t_argc>2) z=fixedvalue(t_argv[2]);
+		
+		if(!source)	return;
+		
+		if (!(PClass=T_GetMobjType(t_argv[0]))) return;
+		
 		t_return.type = svt_mobj;
 
-		AActor *mo = Spawn(pclass, source->PosPlusZ(z), ALLOW_REPLACE);
-		if (mo)
+		AActor *mo = Spawn (PClass, source->PosPlusZ(z), ALLOW_REPLACE);
+		if (mo) 
 		{
-			S_Sound(mo, CHAN_VOICE, mo->SeeSound, 1, ATTN_NORM);
+			S_Sound (mo, CHAN_VOICE, mo->SeeSound, 1, ATTN_NORM);
 			mo->target = source;
-			mo->Angles.Yaw = source->Angles.Yaw;
-			mo->Thrust();
+			P_ThrustMobj(mo, mo->angle = source->angle, mo->Speed);
 			if (!P_CheckMissileSpawn(mo, source->radius)) mo = NULL;
 		}
 		t_return.value.mobj = mo;
@@ -3959,6 +4322,17 @@ void  FParser::SF_KillInSector()
 			if (mo->flags3&MF3_ISMONSTER && tagManager.SectorHasTag(mo->Sector, tag)) P_DamageMobj(mo, NULL, NULL, 1000000, NAME_Massacre);
 		}
 	}
+}
+
+//==========================================================================
+//
+// new for GZDoom: Sets a sector's type
+//
+//==========================================================================
+
+void FParser::SF_SectorType(void)
+{
+	// I don't think this was ever used publicly so I'm not going to bother fixing it.
 }
 
 //==========================================================================
@@ -3992,6 +4366,30 @@ void FParser::SF_SetLineTrigger()
 
 		}
 	}
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FParser::SF_ChangeTag()
+{
+	// Development garbage!
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FParser::SF_WallGlow()
+{
+	// Development garbage!
 }
 
 
@@ -4216,7 +4614,7 @@ void init_functions(void)
 {
 	for(unsigned i=0;i<countof(ActorNames_init);i++)
 	{
-		ActorTypes[i]=PClass::FindActor(ActorNames_init[i]);
+		ActorTypes[i]=PClass::FindClass(ActorNames_init[i]);
 	}
 
 	DFsScript * gscr = global_script;
@@ -4229,10 +4627,9 @@ void init_functions(void)
 	gscr->NewVariable("trigger", svt_pMobj)->value.pMobj = &trigger_obj;
 
 	// Create constants for all existing line specials
-	int max = P_GetMaxLineSpecial();
-	for(int i=0; i<=max; i++)
+	for(int i=0; i<256; i++)
 	{
-		const FLineSpecial *ls = P_GetLineSpecialInfo(i);
+		const FLineSpecial *ls = LineSpecialsInfo[i];
 
 		if (ls != NULL && ls->max_args >= 0)	// specials with max args set to -1 can only be used in a map and are of no use hee.
 		{
@@ -4412,10 +4809,13 @@ void init_functions(void)
 	// new for GZDoom
 	gscr->NewFunction("spawnshot2", &FParser::SF_SpawnShot2);
 	gscr->NewFunction("setcolor", &FParser::SF_SetColor);
+	gscr->NewFunction("sectortype", &FParser::SF_SectorType);
+	gscr->NewFunction("wallglow", &FParser::SF_WallGlow);
 	gscr->NewFunction("objradius", &FParser::SF_MobjRadius);
 	gscr->NewFunction("objheight", &FParser::SF_MobjHeight);
 	gscr->NewFunction("thingcount", &FParser::SF_ThingCount);
 	gscr->NewFunction("killinsector", &FParser::SF_KillInSector);
+	gscr->NewFunction("changetag", &FParser::SF_ChangeTag);
 	gscr->NewFunction("levelnum", &FParser::SF_LevelNum);
 
 	// new inventory
@@ -4423,6 +4823,8 @@ void init_functions(void)
 	gscr->NewFunction("takeinventory", &FParser::SF_TakeInventory);
 	gscr->NewFunction("checkinventory", &FParser::SF_CheckInventory);
 	gscr->NewFunction("setweapon", &FParser::SF_SetWeapon);
+
+	gscr->NewFunction("ls", &FParser::SF_Ls);	// execute Hexen type line special
 
 	// Dummies - shut up warnings
 	gscr->NewFunction("setcorona", &FParser::SF_SetCorona);

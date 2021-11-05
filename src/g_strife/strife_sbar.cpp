@@ -12,13 +12,11 @@
 #include "m_swap.h"
 #include "templates.h"
 #include "a_keys.h"
-#include "a_armor.h"
-#include "a_ammo.h"
+#include "a_strifeglobal.h"
 #include "gi.h"
 #include "g_level.h"
 #include "colormatcher.h"
 #include "v_palette.h"
-#include "cmdlib.h"
 
 // Number of tics to move the popscreen up and down.
 #define POP_TIME (TICRATE/8)
@@ -174,10 +172,14 @@ void FHealthBar::MakeTexture ()
 
 void FHealthBar::FillBar (int min, int max, BYTE light, BYTE dark)
 {
-	for (int i = min*2; i < max*2; i++)
+#ifdef __BIG_ENDIAN__
+	SDWORD fill = (light << 24) | (dark << 16) | (light << 8) | dark;
+#else
+	SDWORD fill = light | (dark << 8) | (light << 16) | (dark << 24);
+#endif
+	if (max > min)
 	{
-		Pixels[i * 2] = light;
-		Pixels[i * 2 + 1] = dark;
+		clearbuf (&Pixels[min*4], max - min, fill);
 	}
 }
 
@@ -325,7 +327,7 @@ private:
 
 		if (ItemFlash > 0)
 		{
-			ItemFlash -= 1/14.;
+			ItemFlash -= FRACUNIT/14;
 			if (ItemFlash < 0)
 			{
 				ItemFlash = 0;
@@ -377,7 +379,7 @@ private:
 
 	void FlashItem (const PClass *itemtype)
 	{
-		ItemFlash = 0.75;
+		ItemFlash = FRACUNIT*3/4;
 	}
 
 	void DrawMainBar ()
@@ -436,7 +438,7 @@ private:
 		}
 
 		// Sigil
-		item = CPlayer->mo->FindInventory(PClass::FindActor(NAME_Sigil));
+		item = CPlayer->mo->FindInventory<ASigil>();
 		if (item != NULL)
 		{
 			DrawImage (TexMan(item->Icon), 253, 7);
@@ -452,7 +454,7 @@ private:
 				screen->DrawTexture (Images[CursorImage],
 					42 + 35*i + ST_X, 12 + ST_Y,
 					DTA_Bottom320x200, Scaled,
-					DTA_AlphaF, 1. - ItemFlash,
+					DTA_Alpha, FRACUNIT - ItemFlash,
 					TAG_DONE);
 			}
 			if (item->Icon.isValid())
@@ -524,7 +526,7 @@ private:
 						DTA_HUDRules, HUD_Normal,
 						DTA_LeftOffset, cursor->GetWidth(),
 						DTA_TopOffset, cursor->GetHeight(),
-						DTA_AlphaF, ItemFlash,
+						DTA_Alpha, ItemFlash,
 						TAG_DONE);
 				}
 				DrINumberOuter (CPlayer->mo->InvSel->Amount, -51, -10, false, 7);
@@ -574,14 +576,14 @@ private:
 		int bars = (CurrentPop == POP_Status) ? imgINVPOP : imgINVPOP2;
 		int back = (CurrentPop == POP_Status) ? imgINVPBAK : imgINVPBAK2;
 		// Extrapolate the height of the popscreen for smoother movement
-		int height = clamp<int> (PopHeight + int(r_TicFracF * PopHeightChange), -POP_HEIGHT, 0);
+		int height = clamp<int> (PopHeight + FixedMul (r_TicFrac, PopHeightChange), -POP_HEIGHT, 0);
 
 		xscale = CleanXfac;
 		yscale = CleanYfac;
 		left = screen->GetWidth()/2 - 160*CleanXfac;
 		top = bottom + height * yscale;
 
-		screen->DrawTexture (Images[back], left, top, DTA_CleanNoMove, true, DTA_AlphaF, 0.75, TAG_DONE);
+		screen->DrawTexture (Images[back], left, top, DTA_CleanNoMove, true, DTA_Alpha, FRACUNIT*3/4, TAG_DONE);
 		screen->DrawTexture (Images[bars], left, top, DTA_CleanNoMove, true, TAG_DONE);
 
 
@@ -625,7 +627,7 @@ private:
 			if (KeyPopScroll > 0)
 			{
 				// Extrapolate the scroll position for smoother scrolling
-				int scroll = MAX<int> (0,KeyPopScroll - int(r_TicFracF * (280./KEY_TIME)));
+				int scroll = MAX<int> (0,KeyPopScroll - FixedMul (r_TicFrac, 280/KEY_TIME));
 				pos -= 10;
 				leftcol = leftcol - 280 + scroll;
 			}
@@ -712,7 +714,7 @@ private:
 			};
 			for (i = 0; i < 7; ++i)
 			{
-				PClassActor *ammotype = PClass::FindActor(AmmoList[i].AmmoType);
+				const PClass *ammotype = PClass::FindClass(AmmoList[i].AmmoType);
 				item = CPlayer->mo->FindInventory (ammotype);
 
 				if (item == NULL)
@@ -845,10 +847,10 @@ private:
 	int CursorImage;
 	int CurrentPop, PendingPop, PopHeight, PopHeightChange;
 	int KeyPopPos, KeyPopScroll;
-	double ItemFlash;
+	fixed_t ItemFlash;
 };
 
-IMPLEMENT_CLASS(DStrifeStatusBar, false, false);
+IMPLEMENT_CLASS(DStrifeStatusBar);
 
 DBaseStatusBar *CreateStrifeStatusBar ()
 {

@@ -36,7 +36,7 @@ std2:
 	L	= [a-zA-Z_];
 	H	= [a-fA-F0-9];
 	E	= [Ee] [+-]? D+;
-	FS	= [fF];
+	FS	= [fFlL];
 	IS	= [uUlL];
 	ESC	= [\\] ([abcfnrtv?'"\\] | "x" H+ | O+);
 
@@ -49,36 +49,9 @@ std2:
 	TOK2 = (NWS\STOP1);
 	TOKC2 = (NWS\STOPC);
 */
-#define RET(x)	TokenType = (x); goto normal_token;
-	if (tokens && StateMode != 0)
+	if (tokens)	// A well-defined scanner, based on the c.re example.
 	{
-	/*!re2c
-		"/*"						{ goto comment; }	/* C comment */
-		"//" (any\"\n")* "\n"		{ goto newline; }	/* C++ comment */
-		("#region"|"#endregion") (any\"\n")* "\n"
-									{ goto newline; }	/* Region blocks [mxd] */
-
-		(["](([\\]["])|[^"])*["])	{ RET(TK_StringConst); }
-		'stop'						{ RET(TK_Stop); }
-		'wait'						{ RET(TK_Wait); }
-		'fail'						{ RET(TK_Fail); }
-		'loop'						{ RET(TK_Loop); }
-		'goto'						{ StateMode = 0; StateOptions = false; RET(TK_Goto); }
-		":"							{ RET(':'); }
-		";"							{ RET(';'); }
-		"}"							{ StateMode = 0; StateOptions = false; RET('}'); }
-		
-		WSP+						{ goto std1; }
-		"\n"						{ goto newline; }
-		
-		TOKS = (NWS\[/":;}]);
-		TOKS* ([/] (TOKS\[*]) TOKS*)*
-									{ RET(TK_NonWhitespace); }
-		
-	*/
-	}
-	else if (tokens)	// A well-defined scanner, based on the c.re example.
-	{
+#define RET(x)	TokenType = x; goto normal_token;
 	/*!re2c
 		"/*"						{ goto comment; }	/* C comment */
 		"//" (any\"\n")* "\n"		{ goto newline; }	/* C++ comment */
@@ -111,10 +84,6 @@ std2:
 		'sbyte'						{ RET(TK_SByte); }
 		'short'						{ RET(TK_Short); }
 		'ushort'					{ RET(TK_UShort); }
-		'int8'						{ RET(TK_Int8); }
-		'uint8'						{ RET(TK_UInt8); }
-		'int16'						{ RET(TK_Int16); }
-		'uint16'					{ RET(TK_UInt16); }
 		'int'						{ RET(TK_Int); }
 		'uint'						{ RET(TK_UInt); }
 		'long'						{ RET(TK_Long); }
@@ -122,14 +91,14 @@ std2:
 		'void'						{ RET(TK_Void); }
 		'struct'					{ RET(TK_Struct); }
 		'class'						{ RET(TK_Class); }
+		'mode'						{ RET(TK_Mode); }
 		'enum'						{ RET(TK_Enum); }
 		'name'						{ RET(TK_Name); }
 		'string'					{ RET(TK_String); }
 		'sound'						{ RET(TK_Sound); }
 		'state'						{ RET(TK_State); }
 		'color'						{ RET(TK_Color); }
-		'vector2'					{ RET(TK_Vector2); }
-		'vector3'					{ RET(TK_Vector3); }
+		'vector'					{ RET(TK_Vector); }
 		'map'						{ RET(TK_Map); }
 		'array'						{ RET(TK_Array); }
 		'in'						{ RET(TK_In); }
@@ -156,50 +125,47 @@ std2:
 		'transient'					{ RET(TK_Transient); }
 		'final'						{ RET(TK_Final); }
 		'throws'					{ RET(TK_Throws); }
-		'extend'					{ RET(TK_Extend); }
+		'extends'					{ RET(TK_Extends); }
 		'public'					{ RET(TK_Public); }
 		'protected'					{ RET(TK_Protected); }
 		'private'					{ RET(TK_Private); }
 		'dot'						{ RET(TK_Dot); }
 		'cross'						{ RET(TK_Cross); }
+		'ignores'					{ RET(TK_Ignores); }
 		'localized'					{ RET(TK_Localized); }
 		'latent'					{ RET(TK_Latent); }
 		'singular'					{ RET(TK_Singular); }
 		'config'					{ RET(TK_Config); }
 		'coerce'					{ RET(TK_Coerce); }
+		'iterator'					{ RET(TK_Iterator); }
 		'optional'					{ RET(TK_Optional); }
 		'export'					{ RET(TK_Export); }
 		'virtual'					{ RET(TK_Virtual); }
-		'override'					{ RET(TK_Override); }
 		'super'						{ RET(TK_Super); }
 		'global'					{ RET(TK_Global); }
+		'self'						{ RET(TK_Self); }
 		'stop'						{ RET(TK_Stop); }
-		'null'						{ RET(TK_Null); }
 
 		'is'						{ RET(TK_Is); }
 		'replaces'					{ RET(TK_Replaces); }
-		'states'					{ RET(TK_States); }
-		'meta'						{ RET(TK_Meta); }
-		'deprecated'				{ RET(TK_Deprecated); }
-		'action'					{ RET(TK_Action); }
-		'readonly'					{ RET(TK_ReadOnly); }
-		'let'						{ RET(TK_Let); }
 
-		/* Actor state options */
-		'bright'					{ RET(StateOptions ? TK_Bright : TK_Identifier); }
-		'fast'						{ RET(StateOptions ? TK_Fast : TK_Identifier); }
-		'slow'						{ RET(StateOptions ? TK_Slow : TK_Identifier); }
-		'nodelay'					{ RET(StateOptions ? TK_NoDelay : TK_Identifier); }
-		'canraise'					{ RET(StateOptions ? TK_CanRaise : TK_Identifier); }
-		'offset'					{ RET(StateOptions ? TK_Offset : TK_Identifier); }
-		'light'						{ RET(StateOptions ? TK_Light : TK_Identifier); }
-		
+		/* Needed for decorate action functions */
+		'action'					{ RET(TK_Action); }
+
 		/* other DECORATE top level keywords */
 		'#include'					{ RET(TK_Include); }
+		'fixed_t'					{ RET(TK_Fixed_t); }
+		'angle_t'					{ RET(TK_Angle_t); }
+		'abs'						{ RET(TK_Abs); }
+		'random'					{ RET(TK_Random); }
+		'random2'					{ RET(TK_Random2); }
+		'frandom'					{ RET(TK_FRandom); }
+		'randompick'				{ RET(TK_RandomPick); }
+		'frandompick'				{ RET(TK_FRandomPick); }
 
 		L (L|D)*					{ RET(TK_Identifier); }
 
-		("0" [xX] H+ IS?IS?) | ("0" D+ IS?IS?) | (D+ IS?IS?)
+		("0" [xX] H+ IS?) | ("0" D+ IS?) | (D+ IS?)
 									{ RET(TK_IntConst); }
 
 		(D+ E FS?) | (D* "." D+ E? FS?) | (D+ "." D* E? FS?)
@@ -238,10 +204,8 @@ std2:
 		"~=="						{ RET(TK_ApproxEq); }
 		"<>="						{ RET(TK_LtGtEq); }
 		"**"						{ RET(TK_MulMul); }
-		"::"						{ RET(TK_ColonColon); }
-		"->"						{ RET(TK_Arrow); }
-		";"							{ StateOptions = false; RET(';'); }
-		"{"							{ StateOptions = false; RET('{'); }
+		";"							{ RET(';'); }
+		"{"							{ RET('{'); }
 		"}"							{ RET('}'); }
 		","							{ RET(','); }
 		":"							{ RET(':'); }
@@ -396,10 +360,6 @@ normal_token:
 		{
 			memcpy (StringBuffer, tok+1, StringLen);
 		}
-		if (StateMode && TokenType == TK_StringConst)
-		{
-			TokenType = TK_NonWhitespace;
-		}
 	}
 	else
 	{
@@ -410,17 +370,6 @@ normal_token:
 		else
 		{
 			memcpy (StringBuffer, tok, StringLen);
-		}
-	}
-	if (tokens && StateMode)
-	{ // State mode is exited after two consecutive TK_NonWhitespace tokens
-		if (TokenType == TK_NonWhitespace)
-		{
-			StateMode--;
-		}
-		else
-		{
-			StateMode = 2;
 		}
 	}
 	if (StringLen < MAX_STRING_SIZE)

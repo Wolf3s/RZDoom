@@ -40,7 +40,6 @@
 #include "templates.h"
 #include "i_system.h"
 #include "r_data/r_translate.h"
-#include "r_data/sprites.h"
 #include "c_dispatch.h"
 #include "v_text.h"
 #include "sc_man.h"
@@ -49,6 +48,7 @@
 #include "cmdlib.h"
 #include "g_level.h"
 #include "m_fixed.h"
+#include "farchive.h"
 #include "v_video.h"
 #include "r_renderer.h"
 #include "r_sky.h"
@@ -72,10 +72,6 @@ FTextureManager::FTextureManager ()
 {
 	memset (HashFirst, -1, sizeof(HashFirst));
 
-	for (int i = 0; i < 2048; ++i)
-	{
-		sintable[i] = short(sin(i*(M_PI / 1024)) * 16384);
-	}
 }
 
 //==========================================================================
@@ -267,7 +263,7 @@ FTextureID FTextureManager::CheckForTexture (const char *name, int usetype, BITF
 //
 //==========================================================================
 
-int FTextureManager::ListTextures (const char *name, TArray<FTextureID> &list, bool listall)
+int FTextureManager::ListTextures (const char *name, TArray<FTextureID> &list)
 {
 	int i;
 
@@ -293,14 +289,11 @@ int FTextureManager::ListTextures (const char *name, TArray<FTextureID> &list, b
 			// NULL textures must be ignored.
 			if (tex->UseType!=FTexture::TEX_Null) 
 			{
-				unsigned int j = list.Size();
-				if (!listall)
+				unsigned int j;
+				for(j = 0; j < list.Size(); j++)
 				{
-					for (j = 0; j < list.Size(); j++)
-					{
-						// Check for overriding definitions from newer WADs
-						if (Textures[list[j].GetIndex()].Texture->UseType == tex->UseType) break;
-					}
+					// Check for overriding definitions from newer WADs
+					if (Textures[list[j].GetIndex()].Texture->UseType == tex->UseType) break;
 				}
 				if (j==list.Size()) list.Push(FTextureID(i));
 			}
@@ -576,8 +569,8 @@ void FTextureManager::AddHiresTextures (int wadnum)
 							// Replace the entire texture and adjust the scaling and offset factors.
 							newtex->bWorldPanning = true;
 							newtex->SetScaledSize(oldtex->GetScaledWidth(), oldtex->GetScaledHeight());
-							newtex->LeftOffset = int(oldtex->GetScaledLeftOffset() * newtex->Scale.X);
-							newtex->TopOffset = int(oldtex->GetScaledTopOffset() * newtex->Scale.Y);
+							newtex->LeftOffset = FixedMul(oldtex->GetScaledLeftOffset(), newtex->xScale);
+							newtex->TopOffset = FixedMul(oldtex->GetScaledTopOffset(), newtex->yScale);
 							ReplaceTexture(tlist[i], newtex, true);
 						}
 					}
@@ -665,8 +658,8 @@ void FTextureManager::LoadTextureDefs(int wadnum, const char *lumpname)
 									// Replace the entire texture and adjust the scaling and offset factors.
 									newtex->bWorldPanning = true;
 									newtex->SetScaledSize(oldtex->GetScaledWidth(), oldtex->GetScaledHeight());
-									newtex->LeftOffset = int(oldtex->GetScaledLeftOffset() * newtex->Scale.X);
-									newtex->TopOffset = int(oldtex->GetScaledTopOffset() * newtex->Scale.Y);
+									newtex->LeftOffset = FixedMul(oldtex->GetScaledLeftOffset(), newtex->xScale);
+									newtex->TopOffset = FixedMul(oldtex->GetScaledTopOffset(), newtex->yScale);
 									ReplaceTexture(tlist[i], newtex, true);
 								}
 							}
@@ -984,10 +977,6 @@ void FTextureManager::Init()
 	{
 		AddTexturesForWad(i);
 	}
-	for (unsigned i = 0; i < Textures.Size(); i++)
-	{
-		Textures[i].Texture->ResolvePatches();
-	}
 
 	// Add one marker so that the last WAD is easier to handle and treat
 	// Build tiles as a completely separate block.
@@ -1079,6 +1068,61 @@ FTextureID FTextureManager::PalCheck(FTextureID tex)
 	int *newtex = PalettedVersions.CheckKey(tex.GetIndex());
 	if (newtex == NULL || *newtex == 0) return tex;
 	return *newtex;
+}
+
+//==========================================================================
+//
+// FTextureManager :: WriteTexture
+//
+//==========================================================================
+
+void FTextureManager::WriteTexture (FArchive &arc, int picnum)
+{
+	FTexture *pic;
+
+	if (picnum < 0)
+	{
+		arc.WriteName(NULL);
+		return;
+	}
+	else if ((size_t)picnum >= Textures.Size())
+	{
+		pic = Textures[0].Texture;
+	}
+	else
+	{
+		pic = Textures[picnum].Texture;
+	}
+
+	if (Wads.GetLinkedTexture(pic->SourceLump) == pic)
+	{
+		arc.WriteName(Wads.GetLumpFullName(pic->SourceLump));
+	}
+	else
+	{
+		arc.WriteName(pic->Name);
+	}
+	arc.WriteCount(pic->UseType);
+}
+
+//==========================================================================
+//
+// FTextureManager :: ReadTexture
+//
+//==========================================================================
+
+int FTextureManager::ReadTexture (FArchive &arc)
+{
+	int usetype;
+	const char *name;
+
+	name = arc.ReadName ();
+	if (name != NULL)
+	{
+		usetype = arc.ReadCount ();
+		return GetTexture (name, usetype).GetIndex();
+	}
+	else return -1;
 }
 
 //===========================================================================
@@ -1178,6 +1222,63 @@ int FTextureManager::CountLumpTextures (int lumpnum)
 	return 0;
 }
 
+//===========================================================================
+//
+// R_PrecacheLevel
+//
+
+// Preloads all relevant graphics for the level.
+//
+//===========================================================================
+
+void FTextureManager::PrecacheLevel (void)
+{
+	BYTE *hitlist;
+	int cnt = NumTextures();
+
+	if (demoplayback)
+		return;
+
+	hitlist = new BYTE[cnt];
+	memset (hitlist, 0, cnt);
+
+	screen->GetHitlist(hitlist);
+
+	for (unsigned i = 0; i < level.info->PrecacheTextures.Size(); i++)
+	{
+		FTextureID tex = TexMan.CheckForTexture(level.info->PrecacheTextures[i], FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_TryAny|FTextureManager::TEXMAN_ReturnFirst);
+		if (tex.Exists()) hitlist[tex.GetIndex()] |= FTextureManager::HIT_Wall;
+	}
+
+	for (int i = cnt - 1; i >= 0; i--)
+	{
+		Renderer->PrecacheTexture(ByIndex(i), hitlist[i]);
+	}
+
+	delete[] hitlist;
+}
+
+
+
+
+//==========================================================================
+//
+// operator<<
+//
+//==========================================================================
+
+FArchive &operator<< (FArchive &arc, FTextureID &tex)
+{
+	if (arc.IsStoring())
+	{
+		TexMan.WriteTexture(arc, tex.texnum);
+	}
+	else
+	{
+		tex.texnum = TexMan.ReadTexture(arc);
+	}
+	return arc;
+}
 
 //==========================================================================
 //

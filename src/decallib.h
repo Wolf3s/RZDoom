@@ -43,7 +43,7 @@
 class FScanner;
 class FDecalTemplate;
 struct FDecalAnimator;
-class PClass;
+struct PClass;
 class DBaseDecal;
 struct side_t;
 
@@ -74,13 +74,13 @@ public:
 	const FDecalTemplate *GetDecal () const;
 	void ReplaceDecalRef (FDecalBase *from, FDecalBase *to);
 
-	double ScaleX, ScaleY;
+	fixed_t ScaleX, ScaleY;
 	DWORD ShadeColor;
 	DWORD Translation;
 	FRenderStyle RenderStyle;
 	FTextureID PicNum;
 	WORD RenderFlags;
-	double Alpha;				// same as actor->alpha
+	WORD Alpha;				// same as (actor->alpha >> 1)
 	const FDecalAnimator *Animator;
 	const FDecalBase *LowerDecal;
 

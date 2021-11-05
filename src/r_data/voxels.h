@@ -23,7 +23,9 @@ struct FVoxelMipLevel
 	int			SizeX;
 	int			SizeY;
 	int			SizeZ;
-	DVector3	Pivot;
+	fixed_t		PivotX;		// 24.8 fixed point
+	fixed_t		PivotY;		// ""
+	fixed_t		PivotZ;		// ""
 	int			*OffsetX;
 	short		*OffsetXY;
 	BYTE		*SlabData;
@@ -49,8 +51,8 @@ struct FVoxelDef
 	int PlacedSpin;			// degrees/sec to spin actors without MF_DROPPED set
 	int DroppedSpin;		// degrees/sec to spin actors with MF_DROPPED set
 	int VoxeldefIndex;		// Needed by GZDoom
-	double		Scale;
-	DAngle		AngleOffset;// added to actor's angle to compensate for wrong-facing voxels
+	fixed_t Scale;
+	angle_t AngleOffset;	// added to actor's angle to compensate for wrong-facing voxels
 };
 
 extern TDeletingArray<FVoxel *> Voxels;	// used only to auto-delete voxels on exit.

@@ -22,9 +22,7 @@
 #ifndef __M_BBOX_H__
 #define __M_BBOX_H__
 
-#include <float.h>
-#include "vectors.h"
-#include "m_fixed.h"
+#include "doomtype.h"
 
 struct line_t;
 struct node_t;
@@ -37,7 +35,7 @@ public:
 		ClearBox();
 	}
 
-	FBoundingBox(double left, double bottom, double right, double top)
+	FBoundingBox(fixed_t left, fixed_t bottom, fixed_t right, fixed_t top)
 	{
 		m_Box[BOXTOP] = top;
 		m_Box[BOXLEFT] = left;
@@ -45,24 +43,12 @@ public:
 		m_Box[BOXBOTTOM] = bottom;
 	}
 
-	FBoundingBox(double x, double y, double radius)
-	{
-		setBox(x, y, radius);
-	}
-
-
-	void setBox(double x, double y, double radius)
-	{
-		m_Box[BOXTOP] = y + radius;
-		m_Box[BOXLEFT] = x - radius;
-		m_Box[BOXRIGHT] = x + radius;
-		m_Box[BOXBOTTOM] = y - radius;
-	}
+	FBoundingBox(fixed_t x, fixed_t y, fixed_t radius);
 
 	void ClearBox ()
 	{
-		m_Box[BOXTOP] = m_Box[BOXRIGHT] = -FLT_MAX;
-		m_Box[BOXBOTTOM] = m_Box[BOXLEFT] = FLT_MAX;
+		m_Box[BOXTOP] = m_Box[BOXRIGHT] = FIXED_MIN;
+		m_Box[BOXBOTTOM] = m_Box[BOXLEFT] = FIXED_MAX;
 	}
 
 	// Returns a bounding box that encloses both bounding boxes
@@ -74,21 +60,19 @@ public:
 							m_Box[BOXTOP] > box2.m_Box[BOXTOP] ? m_Box[BOXTOP] : box2.m_Box[BOXTOP]);
 	}
 
-	void AddToBox(const DVector2 &pos);
+	void AddToBox (fixed_t x, fixed_t y);
 
-	inline double Top () const { return m_Box[BOXTOP]; }
-	inline double Bottom () const { return m_Box[BOXBOTTOM]; }
-	inline double Left () const { return m_Box[BOXLEFT]; }
-	inline double Right () const { return m_Box[BOXRIGHT]; }
-
-	bool inRange(const line_t *ld) const;
+	inline fixed_t Top () const { return m_Box[BOXTOP]; }
+	inline fixed_t Bottom () const { return m_Box[BOXBOTTOM]; }
+	inline fixed_t Left () const { return m_Box[BOXLEFT]; }
+	inline fixed_t Right () const { return m_Box[BOXRIGHT]; }
 
 	int BoxOnLineSide (const line_t *ld) const;
 
-	void Set(int index, double value) {m_Box[index] = value;}
+	void Set(int index, fixed_t value) {m_Box[index] = value;}
 
 protected:
-	double m_Box[4];
+	fixed_t m_Box[4];
 };
 
 

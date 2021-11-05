@@ -39,7 +39,6 @@
 #include "v_text.h"
 #include "w_wad.h"
 #include "gi.h"
-#include "i_system.h"
 
 // Console Doom LZSS wrapper.
 class FileReaderLZSS : public FileReaderBase
@@ -344,12 +343,6 @@ bool FWadFile::Open(bool quiet)
 		NumLumps = BigLong(header.NumLumps);
 		InfoTableOfs = BigLong(header.InfoTableOfs);
 		isBigEndian = true;
-
-		// Check again to detect broken wads
-		if (InfoTableOfs + NumLumps*sizeof(wadlump_t) > (unsigned)wadSize)
-		{
-			I_Error("Cannot load broken WAD file %s\n", Filename);
-		}
 	}
 
 	wadlump_t *fileinfo = new wadlump_t[NumLumps];
@@ -377,7 +370,7 @@ bool FWadFile::Open(bool quiet)
 
 	if (!quiet)
 	{
-		if (!batchrun) Printf(", %d lumps\n", NumLumps);
+		Printf(", %d lumps\n", NumLumps);
 
 		// don't bother with namespaces here. We won't need them.
 		SetNamespace("S_START", "S_END", ns_sprites);
@@ -471,7 +464,7 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 				{
 					// We can't add this to the flats namespace but 
 					// it needs to be flagged for the texture manager.
-					DPrintf(DMSG_NOTIFY, "Marking %s as potential flat\n", Lumps[i].Name);
+					DPrintf("Marking %s as potential flat\n", Lumps[i].Name);
 					Lumps[i].Flags |= LUMPF_MAYBEFLAT;
 				}
 			}
@@ -517,7 +510,7 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 		}
 
 		// we found a marked block
-		DPrintf(DMSG_NOTIFY, "Found %s block at (%d-%d)\n", startmarker, markers[start].index, end);
+		DPrintf("Found %s block at (%d-%d)\n", startmarker, markers[start].index, end);
 		for(int j = markers[start].index + 1; j < end; j++)
 		{
 			if (Lumps[j].Namespace != ns_global)
@@ -534,7 +527,7 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 				// ignore sprite lumps smaller than 8 bytes (the smallest possible)
 				// in size -- this was used by some dmadds wads
 				// as an 'empty' graphics resource
-				DPrintf(DMSG_WARNING, " Skipped empty sprite %s (lump %d)\n", Lumps[j].Name, j);
+				DPrintf(" Skipped empty sprite %s (lump %d)\n", Lumps[j].Name, j);
 			}
 			else
 			{

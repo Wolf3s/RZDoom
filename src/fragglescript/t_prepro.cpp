@@ -56,7 +56,7 @@
 #include "t_script.h"
 #include "i_system.h"
 #include "w_wad.h"
-#include "serializer.h"
+#include "farchive.h"
 
 
 //==========================================================================
@@ -71,11 +71,9 @@
 //
 //==========================================================================
 
-IMPLEMENT_CLASS(DFsSection, false, true)
-
-IMPLEMENT_POINTERS_START(DFsSection)
-	IMPLEMENT_POINTER(next)
-IMPLEMENT_POINTERS_END
+IMPLEMENT_POINTY_CLASS(DFsSection)
+ DECLARE_POINTER(next)
+END_POINTERS
 
 //==========================================================================
 //
@@ -83,14 +81,10 @@ IMPLEMENT_POINTERS_END
 //
 //==========================================================================
 
-void DFsSection::Serialize(FSerializer &arc)
+void DFsSection::Serialize(FArchive &ar)
 {
-	Super::Serialize(arc);
-	arc("type", type)
-		("start_index", start_index)
-		("end_index", end_index)
-		("loop_index", loop_index)
-		("next", next);
+	Super::Serialize(ar);
+	ar << type << start_index << end_index << loop_index << next;
 }
 
 //==========================================================================

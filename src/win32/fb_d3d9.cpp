@@ -91,7 +91,7 @@
 
 // TYPES -------------------------------------------------------------------
 
-IMPLEMENT_CLASS(D3DFB, false, false)
+IMPLEMENT_CLASS(D3DFB)
 
 struct D3DFB::PackedTexture
 {
@@ -1092,7 +1092,6 @@ void D3DFB::Update ()
 			DrawRateStuff();
 			DrawPackedTextures(d3d_showpacks);
 			EndBatch();		// Make sure all batched primitives are drawn.
-			In2D = 0;
 			Flip();
 		}
 		In2D = 0;
@@ -1220,24 +1219,6 @@ void D3DFB::Flip()
 		// Flip the TempRenderTexture to the other one now.
 		CurrRenderTexture ^= RenderTextureToggle;
 		TempRenderTexture = RenderTexture[CurrRenderTexture];
-	}
-
-	if (Windowed)
-	{
-		RECT box;
-		GetClientRect(Window, &box);
-		if (box.right > 0 && box.right > 0 && (Width != box.right || Height != box.bottom))
-		{
-			Resize(box.right, box.bottom);
-
-			TrueHeight = Height;
-			PixelDoubling = 0;
-			LBOffsetI = 0;
-			LBOffset = 0.0f;
-			Reset();
-
-			V_OutputResized(Width, Height);
-		}
 	}
 }
 
@@ -1375,16 +1356,17 @@ void D3DFB::Draw3DPart(bool copy3d)
 		D3DCOLOR color0, color1;
 		if (Accel2D)
 		{
-			auto &map = swrenderer::realfixedcolormap;
-			if (map == NULL)
+			if (realfixedcolormap == NULL)
 			{
 				color0 = 0;
 				color1 = 0xFFFFFFF;
 			}
 			else
 			{
-				color0 = D3DCOLOR_COLORVALUE(map->ColorizeStart[0] / 2, map->ColorizeStart[1] / 2, map->ColorizeStart[2] / 2, 0);
-				color1 = D3DCOLOR_COLORVALUE(map->ColorizeEnd[0] / 2, map->ColorizeEnd[1] / 2, map->ColorizeEnd[2] / 2, 1);
+				color0 = D3DCOLOR_COLORVALUE(realfixedcolormap->ColorizeStart[0]/2,
+					realfixedcolormap->ColorizeStart[1]/2, realfixedcolormap->ColorizeStart[2]/2, 0);
+				color1 = D3DCOLOR_COLORVALUE(realfixedcolormap->ColorizeEnd[0]/2,
+					realfixedcolormap->ColorizeEnd[1]/2, realfixedcolormap->ColorizeEnd[2]/2, 1);
 				SetPixelShader(Shaders[SHADER_SpecialColormapPal]);
 			}
 		}
@@ -1505,10 +1487,10 @@ void D3DFB::DoOffByOneCheck ()
 	float texbot = 1.f / float(FBHeight);
 	FBVERTEX verts[4] =
 	{
-		{ -0.5f,  -0.5f, 0.5f, 1.f, D3DCOLOR_RGBA(0,0,0,0), D3DCOLOR_RGBA(255,255,255,255),      0.f,    0.f },
-		{ 255.5f, -0.5f, 0.5f, 1.f, D3DCOLOR_RGBA(0,0,0,0), D3DCOLOR_RGBA(255,255,255,255), texright,    0.f },
-		{ 255.5f,  0.5f, 0.5f, 1.f, D3DCOLOR_RGBA(0,0,0,0), D3DCOLOR_RGBA(255,255,255,255), texright, texbot },
-		{ -0.5f,   0.5f, 0.5f, 1.f, D3DCOLOR_RGBA(0,0,0,0), D3DCOLOR_RGBA(255,255,255,255),      0.f, texbot }
+		{ -0.5f,  -0.5f, 0.5f, 1.f, 0, ~0,      0.f,    0.f },
+		{ 255.5f, -0.5f, 0.5f, 1.f, 0, ~0, texright,    0.f },
+		{ 255.5f,  0.5f, 0.5f, 1.f, 0, ~0, texright, texbot },
+		{ -0.5f,   0.5f, 0.5f, 1.f, 0, ~0,      0.f, texbot }
 	};
 	int i, c;
 
@@ -2780,14 +2762,17 @@ void D3DFB::DrawPixel(int x, int y, int palcolor, uint32 color)
 //
 //==========================================================================
 
-void D3DFB::DrawTextureParms (FTexture *img, DrawParms &parms)
+void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, double x, double y, uint32 tags_first, va_list tags)
 {
 	if (In2D < 2)
 	{
-		Super::DrawTextureParms(img, parms);
+		Super::DrawTextureV(img, x, y, tags_first, tags);
 		return;
 	}
-	if (!InScene)
+
+	DrawParms parms;
+
+	if (!InScene || !ParseDrawTextureTags(img, x, y, tags_first, tags, &parms, true))
 	{
 		return;
 	}
@@ -2823,11 +2808,10 @@ void D3DFB::DrawTextureParms (FTexture *img, DrawParms &parms)
 	}
 	if (parms.windowleft > 0 || parms.windowright < parms.texwidth)
 	{
-		double wi = MIN(parms.windowright, parms.texwidth);
 		x0 += parms.windowleft * xscale;
 		u0 = float(u0 + parms.windowleft * uscale);
-		x1 -= (parms.texwidth - wi) * xscale;
-		u1 = float(u1 - (parms.texwidth - wi) * uscale);
+		x1 -= (parms.texwidth - parms.windowright) * xscale;
+		u1 = float(u1 - (parms.texwidth - parms.windowright) * uscale);
 	}
 
 #if 0
@@ -3083,20 +3067,14 @@ void D3DFB::FlatFill(int left, int top, int right, int bottom, FTexture *src, bo
 //
 // Here, "simple" means that a simple triangle fan can draw it.
 //
-// Bottomclip is ignored by this implementation, since the hardware renderer
-// will unconditionally draw the status bar border every frame on top of the
-// polygons, so there's no need to waste time setting up a special scissor
-// rectangle here and needlessly forcing separate batches.
-//
 //==========================================================================
 
 void D3DFB::FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 	double originx, double originy, double scalex, double scaley,
-	DAngle rotation, FDynamicColormap *colormap, int lightlevel, int bottomclip)
+	angle_t rotation, FDynamicColormap *colormap, int lightlevel)
 {
 	// Use an equation similar to player sprites to determine shade
-	double fadelevel = clamp((LIGHT2SHADE(lightlevel)/65536. - 12) / NUMCOLORMAPS, 0.0, 1.0);
-	
+	fixed_t shade = LIGHT2SHADE(lightlevel) - 12*FRACUNIT;
 	BufferedTris *quad;
 	FBVERTEX *verts;
 	D3DTex *tex;
@@ -3105,7 +3083,8 @@ void D3DFB::FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 	D3DCOLOR color0, color1;
 	float ox, oy;
 	float cosrot, sinrot;
-	bool dorotate = rotation != 0;
+	float rot = float(rotation * M_PI / float(1u << 31));
+	bool dorotate = rot != 0;
 
 	if (npoints < 3)
 	{ // This is no polygon.
@@ -3113,7 +3092,7 @@ void D3DFB::FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 	}
 	if (In2D < 2)
 	{
-		Super::FillSimplePoly(texture, points, npoints, originx, originy, scalex, scaley, rotation, colormap, lightlevel, bottomclip);
+		Super::FillSimplePoly(texture, points, npoints, originx, originy, scalex, scaley, rotation, colormap, lightlevel);
 		return;
 	}
 	if (!InScene)
@@ -3126,8 +3105,8 @@ void D3DFB::FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 		return;
 	}
 
-	cosrot = (float)cos(rotation.Radians());
-	sinrot = (float)sin(rotation.Radians());
+	cosrot = cos(rot);
+	sinrot = sin(rot);
 
 	CheckQuadBatch(npoints - 2, npoints);
 	quad = &QuadExtra[QuadBatchPos];
@@ -3150,6 +3129,7 @@ void D3DFB::FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 			quad->ShaderNum = BQS_InGameColormap;
 			quad->Desat = colormap->Desaturate;
 			color0 = D3DCOLOR_ARGB(255, colormap->Color.r, colormap->Color.g, colormap->Color.b);
+			double fadelevel = clamp(shade / (NUMCOLORMAPS * 65536.0), 0.0, 1.0);
 			color1 = D3DCOLOR_ARGB(DWORD((1 - fadelevel) * 255),
 				DWORD(colormap->Fade.r * fadelevel),
 				DWORD(colormap->Fade.g * fadelevel),
@@ -3555,7 +3535,7 @@ bool D3DFB::SetStyle(D3DTex *tex, DrawParms &parms, D3DCOLOR &color0, D3DCOLOR &
 	}
 	else
 	{
-		alpha = clamp(parms.Alpha, 0.f, 1.f);
+		alpha = clamp<fixed_t> (parms.alpha, 0, FRACUNIT) / 65536.f;
 	}
 
 	style.CheckFuzz();
