@@ -52,7 +52,6 @@
 #include "i_video.h"
 #include "i_sound.h"
 #include "i_music.h"
-#include "x86.h"
 
 #include "d_main.h"
 #include "d_net.h"
