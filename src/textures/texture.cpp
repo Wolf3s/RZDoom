@@ -67,7 +67,6 @@ void FTexture::InitGrayMap()
 
 FTexture *IMGZTexture_TryCreate(FileReader &, int lumpnum);
 FTexture *PNGTexture_TryCreate(FileReader &, int lumpnum);
-FTexture *JPEGTexture_TryCreate(FileReader &, int lumpnum);
 FTexture *DDSTexture_TryCreate(FileReader &, int lumpnum);
 FTexture *PCXTexture_TryCreate(FileReader &, int lumpnum);
 FTexture *TGATexture_TryCreate(FileReader &, int lumpnum);
@@ -85,7 +84,6 @@ FTexture * FTexture::CreateTexture (int lumpnum, int usetype)
 	static TexCreateInfo CreateInfo[]={
 		{ IMGZTexture_TryCreate,		TEX_Any },
 		{ PNGTexture_TryCreate,			TEX_Any },
-		{ JPEGTexture_TryCreate,		TEX_Any },
 		{ DDSTexture_TryCreate,			TEX_Any },
 		{ PCXTexture_TryCreate,			TEX_Any },
 		{ TGATexture_TryCreate,			TEX_Any },

@@ -148,7 +148,6 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")
 option( NO_OPENAL "Disable OpenAL sound support" OFF )
 
 find_package( BZip2 )
-find_package( JPEG )
 find_package( ZLIB )
 # GME
 find_path( GME_INCLUDE_DIR gme/gme.h )
@@ -224,7 +223,6 @@ set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} ${REL_C_F
 set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${DEB_C_FLAGS} -D_DEBUG" )
 
 option(FORCE_INTERNAL_ZLIB "Use internal zlib")
-option(FORCE_INTERNAL_JPEG "Use internal jpeg")
 option(FORCE_INTERNAL_BZIP2 "Use internal bzip2")
 option(FORCE_INTERNAL_GME "Use internal gme")
 
@@ -245,16 +243,6 @@ else()
 	set( ZLIB_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/zlib )
 	set( ZLIB_LIBRARIES z )
 	set( ZLIB_LIBRARY z )
-endif()
-
-if( JPEG_FOUND AND NOT FORCE_INTERNAL_JPEG )
-	message( STATUS "Using system jpeg library, includes found at ${JPEG_INCLUDE_DIR}" )
-else()
-	message( STATUS "Using internal jpeg library" )
-	add_subdirectory( jpeg-6b )
-	set( JPEG_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/jpeg-6b )
-	set( JPEG_LIBRARIES jpeg )
-	set( JPEG_LIBRARY jpeg )
 endif()
 
 if( BZIP2_FOUND AND NOT FORCE_INTERNAL_BZIP2 )
