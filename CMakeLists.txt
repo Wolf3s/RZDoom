@@ -145,7 +145,6 @@ endif()
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")
 
-option( NO_FMOD "Disable FMODEx sound support" OFF )
 option( NO_OPENAL "Disable OpenAL sound support" OFF )
 
 find_package( BZip2 )
@@ -291,10 +290,6 @@ add_subdirectory( tools )
 add_subdirectory( gdtoa )
 add_subdirectory( wadsrc )
 add_subdirectory( src )
-
-if( NOT WIN32 AND NOT APPLE )
-	add_subdirectory( output_sdl )
-endif()
 
 if( NOT CMAKE_CROSSCOMPILING )
 	export(TARGETS ${CROSS_EXPORTS} FILE "${CMAKE_BINARY_DIR}/ImportExecutables.cmake" )

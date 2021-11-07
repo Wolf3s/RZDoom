@@ -953,11 +953,6 @@ struct TAngle
 	{
 		// Normalizing the angle converts it to a BAM, masks it, and converts it back to a float.
 
-		// This could have been kept entirely in floating point using fmod(), but the MSVCRT has lots
-		// of overhead for that function, despite the x87 offering the FPREM instruction which does
-		// exactly what fmod() is supposed to do. So fmod ends up being an order of magnitude slower
-		// than casting to and from an int.
-
 		// Casting Degrees to a volatile ensures that the compiler will not try to evaluate an expression
 		// such as "TAngle a(360*100+24); a.Normalize360();" at compile time. Normally, it would see that
 		// this expression is constant and attempt to remove the Normalize360() call entirely and store
