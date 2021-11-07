@@ -1867,7 +1867,7 @@ void G_DoLoadGame ()
 		}
 		else
 		{
-			Printf ("Savegame is from another ZDoom-based engine: %s\n", engine);
+			Printf ("Savegame is from another ZedDoom-based engine: %s\n", engine);
 			delete[] engine;
 		}
 		delete png;
@@ -1880,9 +1880,9 @@ void G_DoLoadGame ()
 	}
 
 	SaveVersion = 0;
-	if (!M_GetPNGText (png, "ZDoom Save Version", sigcheck, 20) ||
-		0 != strncmp (sigcheck, SAVESIG, 9) ||		// ZDOOMSAVE is the first 9 chars
-		(SaveVersion = atoi (sigcheck+9)) < MINSAVEVER)
+	if (!M_GetPNGText (png, "ZedDoom Save Version", sigcheck, 20) ||
+		0 != strncmp (sigcheck, SAVESIG, 11) ||		// ZEDDOOMSAVE is the first 11 chars
+		(SaveVersion = atoi (sigcheck+11)) < MINSAVEVER)
 	{
 		delete png;
 		fclose (stdfile);

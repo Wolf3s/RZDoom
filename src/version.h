@@ -36,12 +36,12 @@
 
 /** Lots of different version numbers **/
 
-#define VERSIONSTR "1.0.0"
+#define VERSIONSTR "2.9.0"
 
 // The version as seen in the Windows resource
-#define RC_FILEVERSION 1,0,0,0
-#define RC_PRODUCTVERSION 1,0,0,0
-#define RC_PRODUCTVERSION2 "1.0.0"
+#define RC_FILEVERSION 2,9,0,0
+#define RC_PRODUCTVERSION 2,9,0,0
+#define RC_PRODUCTVERSION2 "2.9.0"
 
 // Version identifier for network games.
 // Bump it every time you do a release unless you're certain you

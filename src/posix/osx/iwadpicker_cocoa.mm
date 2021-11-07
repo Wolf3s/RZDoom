@@ -269,7 +269,7 @@ static NSArray* GetKnownExtensions()
 	cancelled = false;
 
 	app = [NSApplication sharedApplication];
-	id windowTitle = [NSString stringWithFormat:@"%s %s", GAMENAME, GetVersionString()];
+	id windowTitle = [NSString stringWithFormat:@"%s %s", GAMENAME, VERSIONSTR];
 
 	NSRect frame = NSMakeRect(0, 0, 440, 450);
 	window = [[NSWindow alloc] initWithContentRect:frame styleMask:NSTitledWindowMask backing:NSBackingStoreBuffered defer:NO];
