@@ -67,7 +67,6 @@
 #include "i_sound.h"
 #include "i_music.h"
 #include "resource.h"
-#include "x86.h"
 #include "stats.h"
 
 #include "d_main.h"
@@ -689,7 +688,7 @@ void CalculateCPUSpeed()
 
 	QueryPerformanceFrequency (&freq);
 
-	if (freq.QuadPart != 0 && CPU.bRDTSC)
+	if (freq.QuadPart != 0)
 	{
 		LARGE_INTEGER count1, count2;
 		cycle_t ClockCalibration;
