@@ -8,8 +8,8 @@
    This file is part of bzip2/libbzip2, a program and library for
    lossless, block-sorting data compression.
 
-   bzip2/libbzip2 version 1.0.8 of 13 July 2019
-   Copyright (C) 1996-2019 Julian Seward <jseward@acm.org>
+   bzip2/libbzip2 version 1.0.5 of 10 December 2007
+   Copyright (C) 1996-2007 Julian Seward <jseward@bzip.org>
 
    Please read the WARNING, DISCLAIMER and PATENTS sections in the 
    README file.
@@ -47,7 +47,7 @@ extern "C" {
 
 typedef 
    struct {
-      char *next_in;
+      const char *next_in;
       unsigned int avail_in;
       unsigned int total_in_lo32;
       unsigned int total_in_hi32;
@@ -75,24 +75,8 @@ typedef
 #include <stdio.h>
 #endif
 
-#ifdef _WIN32
-#   include <windows.h>
-#   ifdef small
-      /* windows.h define small to char */
-#      undef small
-#   endif
-#   ifdef BZ_EXPORT
-#   define BZ_API(func) WINAPI func
-#   define BZ_EXTERN extern
-#   else
-   /* import windows dll dynamically */
-#   define BZ_API(func) (WINAPI * func)
-#   define BZ_EXTERN
-#   endif
-#else
-#   define BZ_API(func) func
-#   define BZ_EXTERN extern
-#endif
+#define BZ_API(func) func
+#define BZ_EXTERN extern
 
 
 /*-- Core (low-level) library functions --*/
@@ -116,7 +100,7 @@ BZ_EXTERN int BZ_API(BZ2_bzCompressEnd) (
 BZ_EXTERN int BZ_API(BZ2_bzDecompressInit) ( 
       bz_stream *strm, 
       int       verbosity, 
-      int       small
+      int       lowmem
    );
 
 BZ_EXTERN int BZ_API(BZ2_bzDecompress) ( 
@@ -140,7 +124,7 @@ BZ_EXTERN BZFILE* BZ_API(BZ2_bzReadOpen) (
       int*  bzerror,   
       FILE* f, 
       int   verbosity, 
-      int   small,
+      int   lowmem,
       void* unused,    
       int   nUnused 
    );
@@ -204,7 +188,7 @@ BZ_EXTERN void BZ_API(BZ2_bzWriteClose64) (
 BZ_EXTERN int BZ_API(BZ2_bzBuffToBuffCompress) ( 
       char*         dest, 
       unsigned int* destLen,
-      char*         source, 
+      const char*   source, 
       unsigned int  sourceLen,
       int           blockSize100k, 
       int           verbosity, 
@@ -214,9 +198,9 @@ BZ_EXTERN int BZ_API(BZ2_bzBuffToBuffCompress) (
 BZ_EXTERN int BZ_API(BZ2_bzBuffToBuffDecompress) ( 
       char*         dest, 
       unsigned int* destLen,
-      char*         source, 
+      const char*   source, 
       unsigned int  sourceLen,
-      int           small, 
+      int           lowmem, 
       int           verbosity 
    );
 

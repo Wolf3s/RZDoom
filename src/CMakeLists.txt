@@ -213,44 +213,6 @@ endif()
 
 find_package( FluidSynth )
 
-# Decide on SSE setup
-
-set( SSE_MATTERS NO )
-
-# with global use of SSE 2 we do not need special handling for selected files
-if (NOT ZDOOM_USE_SSE2)
-	# SSE only matters on 32-bit targets. We check compiler flags to know if we can do it.
-	if( CMAKE_SIZEOF_VOID_P MATCHES "4" AND NOT CMAKE_OSX_ARCHITECTURES MATCHES ppc )
-		CHECK_CXX_COMPILER_FLAG( "-msse2 -mfpmath=sse" CAN_DO_MFPMATH )
-		CHECK_CXX_COMPILER_FLAG( -arch:SSE2 CAN_DO_ARCHSSE2 )
-		if( CAN_DO_MFPMATH )
-			set( SSE1_ENABLE "-msse -mfpmath=sse" )
-			set( SSE2_ENABLE "-msse2 -mfpmath=sse" )
-			set( SSE_MATTERS YES )
-		elseif( CAN_DO_ARCHSSE2 )
-			set( SSE1_ENABLE -arch:SSE )
-			set( SSE2_ENABLE -arch:SSE2 )
-			set( SSE_MATTERS YES )
-		endif()
-	endif()
-endif()
-
-if( SSE_MATTERS )
-	if( WIN32 )
-		set( BACKPATCH 1 CACHE BOOL "Enable backpatching." )
-	else()
-		CHECK_FUNCTION_EXISTS(mprotect HAVE_MPROTECT)
-		if( HAVE_MPROTECT )
-			set( BACKPATCH 1 CACHE BOOL "Enable backpatching." )
-		else()
-			set( BACKPATCH 0 )
-		endif()
-	endif()
-	set( SSE 1 CACHE BOOL "Build SSE and SSE2 versions of key code." )
-else()
-	set( BACKPATCH 0 )
-endif()
-
 # Set up flags for GCC
 
 if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
@@ -401,7 +363,6 @@ endif()
 
 # Start defining source files for ZDoom
 set( PLAT_WIN32_SOURCES
-	win32/eaxedit.cpp
 	win32/fb_d3d9.cpp
 	win32/fb_d3d9_wipe.cpp
 	win32/fb_ddraw.cpp
@@ -998,9 +959,9 @@ set (PCH_SOURCES
 	r_data/r_translate.cpp
 	zzautozend.cpp
 )
-enable_precompiled_headers( g_pch.h PCH_SOURCES )
+#enable_precompiled_headers( g_pch.h PCH_SOURCES )
 
-add_executable( zdoom WIN32 MACOSX_BUNDLE
+add_executable( zeddoom WIN32 MACOSX_BUNDLE
 	${HEADER_FILES}
 	${NOT_COMPILED_SOURCE_FILES}
 	__autostart.cpp
@@ -1026,7 +987,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
 	set( ZDOOM_LIBS ${ZDOOM_LIBS} nsl socket)
 endif()
 
-target_link_libraries( zdoom ${ZDOOM_LIBS} gdtoa lzma )
+target_link_libraries( zeddoom ${ZDOOM_LIBS} gdtoa lzma )
 include_directories( .
 	g_doom
 	g_heretic
@@ -1048,10 +1009,10 @@ include_directories( .
 if( NOT ZDOOM_OUTPUT_OLDSTYLE )
 	# RUNTIME_OUTPUT_DIRECTORY does not exist in CMake 2.4.
 	# Linux distributions are slow to adopt 2.6. :(
-	set_target_properties( zdoom PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${ZDOOM_OUTPUT_DIR} )
-	set_target_properties( zdoom PROPERTIES OUTPUT_NAME ${ZDOOM_EXE_NAME} )
+	set_target_properties( zeddoom PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${ZDOOM_OUTPUT_DIR} )
+	set_target_properties( zeddoom PROPERTIES OUTPUT_NAME ${ZDOOM_EXE_NAME} )
 else()
-	set_target_properties( zdoom PROPERTIES
+	set_target_properties( zeddoom PROPERTIES
 		RUNTIME_OUTPUT_NAME ${ZDOOM_EXE_NAME}
 		RUNTIME_OUTPUT_DIRECTORY_RELEASE ${ZDOOM_OUTPUT_DIR}
 		RUNTIME_OUTPUT_NAME_DEBUG ${ZDOOM_EXE_NAME}d
@@ -1073,14 +1034,14 @@ if( MSVC )
 	if( NOT NO_OPENAL )
 		set( LINKERSTUFF "${LINKERSTUFF} /DELAYLOAD:\"libmpg123-0.dll\" /DELAYLOAD:\"libsndfile-1.dll\"" )
 	endif()
-	set_target_properties(zdoom PROPERTIES LINK_FLAGS ${LINKERSTUFF})
+	set_target_properties(zeddoom PROPERTIES LINK_FLAGS ${LINKERSTUFF})
 
-	add_custom_command(TARGET zdoom POST_BUILD
-		COMMAND "mt.exe" -manifest \"${CMAKE_CURRENT_SOURCE_DIR}\\win32\\zdoom.exe.manifest\" -outputresource:\"$<TARGET_FILE:zdoom>\"\;\#1
+	add_custom_command(TARGET zeddoom POST_BUILD
+		COMMAND "mt.exe" -manifest \"${CMAKE_CURRENT_SOURCE_DIR}\\win32\\zdoom.exe.manifest\" -outputresource:\"$<TARGET_FILE:zeddoom>\"\;\#1
 		COMMENT "Adding manifest..."
 	)
 
-	create_default_target_launcher( zdoom WORKING_DIRECTORY ${ZDOOM_OUTPUT_DIR} )
+	create_default_target_launcher( zeddoom WORKING_DIRECTORY ${ZDOOM_OUTPUT_DIR} )
 endif()
 
 if( NOT WIN32 )
@@ -1105,7 +1066,7 @@ if( WIN32 )
 else()
 	set( INSTALL_PATH bin CACHE STRING "Directory where the zdoom executable will be placed during install." )
 endif()
-install(TARGETS zdoom
+install(TARGETS zeddoom
 		DESTINATION ${INSTALL_PATH}
 		COMPONENT "Game executable")
 

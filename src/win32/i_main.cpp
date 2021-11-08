@@ -718,7 +718,7 @@ void ShowErrorPane(const char *text)
 	if (text != NULL)
 	{
 		char caption[100];
-		mysnprintf(caption, countof(caption), "Fatal Error - " GAMESIG " %s " X64 " (%s)", GetVersionString(), GetGitTime());
+		mysnprintf(caption, countof(caption), "Fatal Error - " GAMESIG " " VERSIONSTR);
 		SetWindowText (Window, caption);
 		ErrorIcon = CreateWindowEx (WS_EX_NOPARENTNOTIFY, "STATIC", NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | SS_OWNERDRAW, 0, 0, 0, 0, Window, NULL, g_hInst, NULL);
 		if (ErrorIcon != NULL)
@@ -947,7 +947,7 @@ void DoMain (HINSTANCE hInstance)
 		
 		/* create window */
 		char caption[100];
-		mysnprintf(caption, countof(caption), "" GAMESIG " %s " X64 " (%s)", GetVersionString(), GetGitTime());
+		mysnprintf(caption, countof(caption), "" GAMESIG " " VERSIONSTR);
 		Window = CreateWindowEx(
 				WS_EX_APPWINDOW,
 				(LPCTSTR)WinClassName,
@@ -1048,7 +1048,7 @@ void DoomSpecificInfo (char *buffer, size_t bufflen)
 	char *const buffend = buffer + bufflen - 2;	// -2 for CRLF at end
 	int i;
 
-	buffer += mysnprintf (buffer, buffend - buffer, GAMENAME " version %s (%s)", GetVersionString(), GetGitHash());
+	buffer += mysnprintf (buffer, buffend - buffer, GAMENAME " version " VERSIONSTR);
 	buffer += mysnprintf (buffer, buffend - buffer, "\r\nCommand line: %s\r\n", GetCommandLine());
 
 	for (i = 0; (arg = Wads.GetWadName (i)) != NULL; ++i)

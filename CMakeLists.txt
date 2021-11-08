@@ -14,6 +14,11 @@ list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR} )
 include( CreateLaunchers )
 include( FindPackageHandleStandardArgs )
 
+# Produce a warning if XP support will be missing.
+if( MSVC14 AND NOT CMAKE_GENERATOR_TOOLSET STREQUAL "v140_xp" )
+	message( WARNING "This project supports Windows XP (including XP x64), but you must set the optional toolset to v140_xp manually to have it in your build! Use -T \"v140_xp\" from the command prompt." )
+endif()
+
 # Support cross compiling
 option( FORCE_CROSSCOMPILE "Turn on cross compiling." NO )
 if( FORCE_CROSSCOMPILE )
@@ -55,7 +60,7 @@ function( add_pk3 PK3_NAME PK3_DIR )
 	if( NOT ZDOOM_OUTPUT_OLDSTYLE )
 		add_custom_command( OUTPUT ${ZDOOM_OUTPUT_DIR}/${PK3_NAME}
 			COMMAND zipdir -udf ${ZDOOM_OUTPUT_DIR}/${PK3_NAME} ${PK3_DIR}
-			COMMAND ${CMAKE_COMMAND} -E copy_if_different ${ZDOOM_OUTPUT_DIR}/${PK3_NAME} $<TARGET_FILE_DIR:zdoom>/${PK3_NAME}
+			COMMAND ${CMAKE_COMMAND} -E copy_if_different ${ZDOOM_OUTPUT_DIR}/${PK3_NAME} $<TARGET_FILE_DIR:zeddoom>/${PK3_NAME}
 			DEPENDS zipdir )
 	else()
 		add_custom_command( OUTPUT ${ZDOOM_OUTPUT_DIR}/${PK3_NAME}
@@ -116,11 +121,11 @@ IF( NOT CMAKE_BUILD_TYPE )
 		FORCE )
 ENDIF()
 
-set( ZDOOM_OUTPUT_DIR ${CMAKE_BINARY_DIR} CACHE PATH "Directory where zeddoom.pk3 and the executable will be created." )
+set( ZDOOM_OUTPUT_DIR ${CMAKE_BINARY_DIR} CACHE PATH "Directory where zdoom.pk3 and the executable will be created." )
 set( ZDOOM_EXE_NAME "zeddoom" CACHE FILEPATH "Name of the executable to create." )
 if( MSVC )
 	# Allow the user to use ZDOOM_OUTPUT_DIR as a single release point.
-	# Use zeddoomd, zeddoom for the binary names
+	# Use zeddoom for the binary names
 	option( ZDOOM_OUTPUT_OLDSTYLE "Don't use Release/Debug directories." OFF )
 else()
 	set( ZDOOM_OUTPUT_OLDSTYLE OFF )
@@ -149,13 +154,6 @@ option( NO_OPENAL "Disable OpenAL sound support" OFF )
 
 find_package( BZip2 )
 find_package( ZLIB )
-# GME
-find_path( GME_INCLUDE_DIR gme/gme.h )
-find_library( GME_LIBRARIES gme )
-mark_as_advanced( GME_INCLUDE_DIR GME_LIBRARIES )
-FIND_PACKAGE_HANDLE_STANDARD_ARGS( GME
-	REQUIRED_VARS GME_LIBRARIES GME_INCLUDE_DIR
-)
 
 if( MSVC )
 	# Eliminate unreferenced functions and data
@@ -166,16 +164,8 @@ if( MSVC )
 	# Function-level linking
 	# Disable run-time type information
 	set( ALL_C_FLAGS "/GF /Gy /GR-" )
-	
-	# Avoid CRT DLL dependancies in release builds, optionally generate assembly output for checking crash locations.
-	option( ZDOOM_GENERATE_ASM "Generate assembly output." OFF )
-	if( ZDOOM_GENERATE_ASM )
-		set( REL_C_FLAGS "/MT /Oy /Oi /FAcs" )
-	else()
-		set( REL_C_FLAGS "/MT /Oy /Oi" )
-	endif()
+	set( REL_C_FLAGS "/MT /Oy /Oi" )
 
-	
 	# Debug allocations in debug builds
 	set( DEB_C_FLAGS "/D _CRTDBG_MAP_ALLOC /MTd" )
 
@@ -224,7 +214,6 @@ set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${DEB_C_FLAGS} -D_DEBUG" )
 
 option(FORCE_INTERNAL_ZLIB "Use internal zlib")
 option(FORCE_INTERNAL_BZIP2 "Use internal bzip2")
-option(FORCE_INTERNAL_GME "Use internal gme")
 
 # Fast math flags, required by some subprojects
 set( ZD_FASTMATH_FLAG "" )
@@ -267,7 +256,7 @@ endif()
 if( WIN32 )
 	set( INSTALL_DOCS_PATH docs CACHE STRING "Directory where the documentation will be placed during install." )
 else()
-	set( INSTALL_DOCS_PATH share/doc/${ZDOOM_EXE_NAME} CACHE STRING "Directory where the zeddoom documentation will be placed during install." )
+	set( INSTALL_DOCS_PATH share/doc/${ZDOOM_EXE_NAME} CACHE STRING "Directory where the zdoom documentation will be placed during install." )
 endif()
 install(DIRECTORY docs/ 
 		DESTINATION ${INSTALL_DOCS_PATH} 
@@ -282,4 +271,3 @@ add_subdirectory( src )
 if( NOT CMAKE_CROSSCOMPILING )
 	export(TARGETS ${CROSS_EXPORTS} FILE "${CMAKE_BINARY_DIR}/ImportExecutables.cmake" )
 endif()
-

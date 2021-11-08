@@ -257,10 +257,6 @@ int main (int argc, char **argv)
 	// clear the setlocale call at least this will be correct.
 	// Note that the LANG environment variable is overridden by LC_*
 	setenv ("LC_NUMERIC", "C", 1);
-
-#ifndef NO_GTK
-	GtkAvailable = gtk_init_check (&argc, &argv);
-#endif
 	
 	setlocale (LC_ALL, "C");
 
