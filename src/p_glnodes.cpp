@@ -61,7 +61,6 @@
 #include "stats.h"
 #include "doomerrors.h"
 #include "p_setup.h"
-#include "x86.h"
 #include "version.h"
 #include "md5.h"
 #include "m_misc.h"

@@ -1,7 +1,6 @@
 #include "doomdata.h"
 #include "tarray.h"
 #include "r_defs.h"
-#include "x86.h"
 
 struct FPolySeg;
 struct FMiniBSP;

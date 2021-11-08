@@ -34,7 +34,6 @@
 #include "m_bbox.h"
 #include "g_game.h"
 #include "i_system.h"
-#include "x86.h"
 #include "w_wad.h"
 #include "doomdef.h"
 #include "p_local.h"

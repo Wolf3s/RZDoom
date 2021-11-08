@@ -53,7 +53,6 @@
 #include "g_level.h"
 #include "st_stuff.h"
 #include "gi.h"
-#include "x86.h"
 #include "colormatcher.h"
 #include "v_palette.h"
 #include "r_data/colormaps.h"
