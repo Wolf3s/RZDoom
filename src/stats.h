@@ -175,9 +175,6 @@ private:
 
 #else
 
-// Windows
-#include "x86.h"
-
 extern double PerfToSec, PerfToMillisec;
 
 #ifdef _MSC_VER
