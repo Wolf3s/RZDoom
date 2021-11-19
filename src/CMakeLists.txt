@@ -398,7 +398,7 @@ set( PLAT_SDL_SOURCES
 	posix/sdl/st_start.cpp )
 set( PLAT_OSX_SOURCES
 	posix/osx/iwadpicker_cocoa.mm
-	posix/osx/zdoom.icns
+	posix/osx/zeddoom.icns
 	posix/sdl/i_system.mm )
 
 if( WIN32 )
@@ -423,7 +423,7 @@ elseif( APPLE )
 
 	set( SYSTEM_SOURCES ${SYSTEM_SOURCES} ${PLAT_POSIX_SOURCES} ${PLAT_OSX_SOURCES} )
 
-	set_source_files_properties( posix/osx/zdoom.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources )
+	set_source_files_properties( posix/osx/zeddoom.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources )
 else( WIN32 )
 	set( SYSTEM_SOURCES_DIR posix posix/sdl )
 	set( SYSTEM_SOURCES ${PLAT_POSIX_SOURCES} ${PLAT_SDL_SOURCES} )
