@@ -42,7 +42,7 @@ END
 3 TEXTINCLUDE 
 BEGIN
     "#ifndef NO_MANIFEST\r\n"
-    "   CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST ""zdoom.exe.manifest""\r\n"
+    "   CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST ""zeddoom.exe.manifest""\r\n"
     "#endif\r\n"
     "\r\n"
     "/////////////////////////////////////////////////////////////////////////////\r\n"
@@ -462,7 +462,7 @@ IDB_DEADGUY             BITMAP                  "deadguy.bmp"
 // Generated from the TEXTINCLUDE 3 resource.
 //
 #ifndef NO_MANIFEST
-   CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "zdoom.exe.manifest"
+   CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "zeddoom.exe.manifest"
 #endif
 
 /////////////////////////////////////////////////////////////////////////////

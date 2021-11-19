@@ -409,11 +409,11 @@ if( WIN32 )
 	if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 		# CMake is not set up to compile and link rc files with GCC. :(
 		add_custom_command( OUTPUT zdoom-rc.o
-			COMMAND windres -o zdoom-rc.o -i ${CMAKE_CURRENT_SOURCE_DIR}/win32/zdoom.rc
-			DEPENDS win32/zdoom.rc )
+			COMMAND windres -o zdoom-rc.o -i ${CMAKE_CURRENT_SOURCE_DIR}/win32/zeddoom.rc
+			DEPENDS win32/zeddoom.rc )
 		set( SYSTEM_SOURCES ${SYSTEM_SOURCES} zdoom-rc.o )
 	else( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
-		set( SYSTEM_SOURCES ${SYSTEM_SOURCES} win32/zdoom.rc )
+		set( SYSTEM_SOURCES ${SYSTEM_SOURCES} win32/zeddoom.rc )
 	endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 elseif( APPLE )
 	set( SYSTEM_SOURCES_DIR posix posix/sdl )
@@ -1037,7 +1037,7 @@ if( MSVC )
 	set_target_properties(zeddoom PROPERTIES LINK_FLAGS ${LINKERSTUFF})
 
 	add_custom_command(TARGET zeddoom POST_BUILD
-		COMMAND "mt.exe" -manifest \"${CMAKE_CURRENT_SOURCE_DIR}\\win32\\zdoom.exe.manifest\" -outputresource:\"$<TARGET_FILE:zeddoom>\"\;\#1
+		COMMAND "mt.exe" -manifest \"${CMAKE_CURRENT_SOURCE_DIR}\\win32\\zeddoom.exe.manifest\" -outputresource:\"$<TARGET_FILE:zeddoom>\"\;\#1
 		COMMENT "Adding manifest..."
 	)
 
@@ -1097,7 +1097,7 @@ source_group("OS X Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/posix
 source_group("SDL Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/posix/sdl/.+")
 source_group("SFMT" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sfmt/.+")
 source_group("Shared Game" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_shared/.+")
-source_group("Versioning" FILES version.h win32/zdoom.rc)
+source_group("Versioning" FILES version.h win32/zeddoom.rc)
 source_group("Win32 Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/win32/.+")
 source_group("Xlat" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/xlat/.+" FILES ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.h)
 source_group("Source Files" FILES ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h sc_man_scanner.re)

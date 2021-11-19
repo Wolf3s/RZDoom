@@ -9,15 +9,15 @@
 	<key>CFBundleIconFile</key>
 	<string>zeddoom.icns</string>
 	<key>CFBundleIdentifier</key>
-	<string>org.zdoom.zdoom</string>
+	<string>org.zeddoom.zeddoom</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>ZDoom</string>
+	<string>ZedDoom</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>Version 2.8.0</string>
+	<string>Version 2.9.0</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>LSApplicationCategoryType</key>
