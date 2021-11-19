@@ -97,7 +97,7 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_ICON1               ICON                    "icon1.ico"
+IDI_ICON1               ICON                    "zeddoom.ico"
 IDI_BOING1              ICON                    "boing1.ico"
 IDI_BOING2              ICON                    "boing2.ico"
 IDI_BOING3              ICON                    "boing3.ico"
