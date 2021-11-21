@@ -329,7 +329,7 @@ FString M_GetSavegamesPath()
 
 FString M_GetCachePath(bool create)
 {
-	return NicePath("~/." GAMENAMELOWERCASE "/cache");
+	return NicePath("~/" GAME_DIR "/cache");
 }
 
 //===========================================================================
@@ -342,7 +342,7 @@ FString M_GetCachePath(bool create)
 
 FString M_GetAutoexecPath()
 {
-	return NicePath("~/." GAMENAMELOWERCASE "/autoexec.cfg");
+	return NicePath("~/" GAME_DIR "/autoexec.cfg");
 }
 
 //===========================================================================
@@ -391,7 +391,7 @@ FString M_GetConfigPath(bool for_reading)
 
 FString M_GetScreenshotsPath()
 {
-	return NicePath("~/." GAMENAMELOWERCASE "/screenshots/");
+	return NicePath("~/" GAME_DIR "/screenshots/");
 }
 
 //===========================================================================
@@ -404,7 +404,7 @@ FString M_GetScreenshotsPath()
 
 FString M_GetSavegamesPath()
 {
-	return NicePath("~/." GAMENAMELOWERCASE "/savedgames");
+	return NicePath("~/" GAME_DIR "/savedgames");
 }
 
 #else // Linux, et al.

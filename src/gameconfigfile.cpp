@@ -97,6 +97,7 @@ FGameConfigFile::FGameConfigFile ()
 		SetValueForKey ("Path", "$HOME", true);
 		SetValueForKey ("Path", "$PROGDIR", true);
 		SetValueForKey ("Path", "~/" "Games", true);
+		SetValueForKey ("Path", "~/" GAMENAME "/wads", true);
 #else
 		SetValueForKey ("Path", "~/" GAME_DIR, true);
 		// Arch Linux likes them in /usr/share/doom
