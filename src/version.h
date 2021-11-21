@@ -75,7 +75,7 @@
 
 #define SAVEVERSTRINGIFY2(x) #x
 #define SAVEVERSTRINGIFY(x) SAVEVERSTRINGIFY2(x)
-#define SAVESIG "ZEDDOOMSAVE" SAVEVERSTRINGIFY(SAVEVER)
+#define SAVESIG "ZDOOMSAVE" SAVEVERSTRINGIFY(SAVEVER)
 
 // This is so that derivates can use the same savegame versions without worrying about engine compatibility
 #define GAMESIG "ZEDDOOM"
@@ -87,7 +87,7 @@
 #define FORUM_URL ""
 #define BUGS_FORUM_URL	""
 
-#if defined(__APPLE__) || defined(_WIN32)
+#if defined(_WIN32)
 #define GAME_DIR GAMENAME
 #else
 #define GAME_DIR ".config/" GAMENAMELOWERCASE
