@@ -1,5 +1,5 @@
-cmake_minimum_required( VERSION 2.8.7 )
-project(ZDoom)
+cmake_minimum_required( VERSION 3.18.4 )
+project(ZedDoom)
 
 if( COMMAND cmake_policy )
 	if( POLICY CMP0011 )

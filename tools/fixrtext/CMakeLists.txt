@@ -1,4 +1,4 @@
-cmake_minimum_required( VERSION 2.8.7 )
+cmake_minimum_required( VERSION 3.18.4 )
 
 if( NOT CMAKE_CROSSCOMPILING )
 	add_executable( fixrtext fixrtext.c )
