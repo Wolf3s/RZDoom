@@ -127,50 +127,6 @@ private:
 		bool SOFT_loop_points;
 	} AL;
 
-	// EFX Extension function pointer variables. Loaded after context creation
-	// if EFX is supported. These pointers may be context- or device-dependant,
-	// thus can't be static
-	// Effect objects
-	LPALGENEFFECTS alGenEffects;
-	LPALDELETEEFFECTS alDeleteEffects;
-	LPALISEFFECT alIsEffect;
-	LPALEFFECTI alEffecti;
-	LPALEFFECTIV alEffectiv;
-	LPALEFFECTF alEffectf;
-	LPALEFFECTFV alEffectfv;
-	LPALGETEFFECTI alGetEffecti;
-	LPALGETEFFECTIV alGetEffectiv;
-	LPALGETEFFECTF alGetEffectf;
-	LPALGETEFFECTFV alGetEffectfv;
-	// Filter objects
-	LPALGENFILTERS alGenFilters;
-	LPALDELETEFILTERS alDeleteFilters;
-	LPALISFILTER alIsFilter;
-	LPALFILTERI alFilteri;
-	LPALFILTERIV alFilteriv;
-	LPALFILTERF alFilterf;
-	LPALFILTERFV alFilterfv;
-	LPALGETFILTERI alGetFilteri;
-	LPALGETFILTERIV alGetFilteriv;
-	LPALGETFILTERF alGetFilterf;
-	LPALGETFILTERFV alGetFilterfv;
-	// Auxiliary slot objects
-	LPALGENAUXILIARYEFFECTSLOTS alGenAuxiliaryEffectSlots;
-	LPALDELETEAUXILIARYEFFECTSLOTS alDeleteAuxiliaryEffectSlots;
-	LPALISAUXILIARYEFFECTSLOT alIsAuxiliaryEffectSlot;
-	LPALAUXILIARYEFFECTSLOTI alAuxiliaryEffectSloti;
-	LPALAUXILIARYEFFECTSLOTIV alAuxiliaryEffectSlotiv;
-	LPALAUXILIARYEFFECTSLOTF alAuxiliaryEffectSlotf;
-	LPALAUXILIARYEFFECTSLOTFV alAuxiliaryEffectSlotfv;
-	LPALGETAUXILIARYEFFECTSLOTI alGetAuxiliaryEffectSloti;
-	LPALGETAUXILIARYEFFECTSLOTIV alGetAuxiliaryEffectSlotiv;
-	LPALGETAUXILIARYEFFECTSLOTF alGetAuxiliaryEffectSlotf;
-	LPALGETAUXILIARYEFFECTSLOTFV alGetAuxiliaryEffectSlotfv;
-
-	ALvoid(AL_APIENTRY* alDeferUpdatesSOFT)(void);
-	ALvoid(AL_APIENTRY* alProcessUpdatesSOFT)(void);
-
-	void LoadReverb(const ReverbContainer* env);
 	void PurgeStoppedSources();
 	static FSoundChan* FindLowestChannel();
 
