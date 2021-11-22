@@ -173,41 +173,27 @@ else()
 	endif()
 endif()
 
-
-if( NOT NO_OPENAL )
-	find_package( OpenAL )
-	mark_as_advanced(CLEAR OPENAL_INCLUDE_DIR)
-	if( OPENAL_INCLUDE_DIR )
-		include_directories( ${OPENAL_INCLUDE_DIR} )
-		if( DYN_OPENAL )
-			add_definitions( -DDYN_OPENAL )
-		else()
-			mark_as_advanced(CLEAR OPENAL_LIBRARY)
-			if( OPENAL_LIBRARY )
-				set( ZDOOM_LIBS ${OPENAL_LIBRARY} ${ZDOOM_LIBS} )
-			else()
-				set( NO_OPENAL ON )
-			endif()
-		endif()
+find_package( OpenAL )
+mark_as_advanced(CLEAR OPENAL_INCLUDE_DIR)
+if( OPENAL_INCLUDE_DIR )
+	include_directories( ${OPENAL_INCLUDE_DIR} )
+	if( DYN_OPENAL )
+		add_definitions( -DDYN_OPENAL )
 	else()
-		set( NO_OPENAL ON )
+		mark_as_advanced(CLEAR OPENAL_LIBRARY)
+		if( OPENAL_LIBRARY )
+			set( ZDOOM_LIBS ${OPENAL_LIBRARY} ${ZDOOM_LIBS} )
+		else()
+			set( NO_OPENAL ON )
+		endif()
 	endif()
 endif()
 
-if( NO_OPENAL )
-	add_definitions( -DNO_OPENAL=1 )
+# Search for libSndFile
+find_package( SndFile )
 
-	set(MPG123_FOUND NO)
-	set(SNDFILE_FOUND NO)
-else()
-	# Search for libSndFile
-
-	find_package( SndFile )
-
-	# Search for libmpg123
-
-	find_package( MPG123 )
-endif()
+# Search for libmpg123
+find_package( MPG123 )
 
 # Search for FluidSynth
 
@@ -1031,9 +1017,7 @@ if( MSVC )
 	if( ZDOOM_GENERATE_MAPFILE )
 		set( LINKERSTUFF "${LINKERSTUFF} /MAP" )
 	endif()
-	if( NOT NO_OPENAL )
 		set( LINKERSTUFF "${LINKERSTUFF} /DELAYLOAD:\"libmpg123-0.dll\" /DELAYLOAD:\"libsndfile-1.dll\"" )
-	endif()
 	set_target_properties(zeddoom PROPERTIES LINK_FLAGS ${LINKERSTUFF})
 
 	add_custom_command(TARGET zeddoom POST_BUILD
