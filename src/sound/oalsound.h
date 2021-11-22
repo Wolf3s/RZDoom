@@ -130,7 +130,6 @@ private:
 	ALvoid(AL_APIENTRY* alDeferUpdatesSOFT)(void);
 	ALvoid(AL_APIENTRY* alProcessUpdatesSOFT)(void);
 
-	void LoadReverb(const ReverbContainer* env);
 	void PurgeStoppedSources();
 	static FSoundChan* FindLowestChannel();
 
