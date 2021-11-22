@@ -246,13 +246,6 @@ class OpenALSoundStream : public SoundStream
         alSourcef(Source, AL_SEC_OFFSET, 0.f);
         alSourcei(Source, AL_SOURCE_RELATIVE, AL_TRUE);
         alSourcei(Source, AL_LOOPING, AL_FALSE);
-        if (Renderer->EnvSlot)
-        {
-            alSourcef(Source, AL_ROOM_ROLLOFF_FACTOR, 0.f);
-            alSourcef(Source, AL_AIR_ABSORPTION_FACTOR, 0.f);
-            alSourcei(Source, AL_DIRECT_FILTER, AL_FILTER_NULL);
-            alSource3i(Source, AL_AUXILIARY_SEND_FILTER, 0, 0, AL_FILTER_NULL);
-        }
 
         alGenBuffers(BufferCount, Buffers);
         return (getALError() == AL_NO_ERROR);
@@ -667,9 +660,8 @@ static void LoadALFunc(const char* name, T* x)
 
 #define LOAD_FUNC(x)  (LoadALFunc(#x, &x))
 OpenALSoundRenderer::OpenALSoundRenderer()
-    : Device(NULL), Context(NULL), SFXPaused(0), PrevEnvironment(NULL), EnvSlot(0)
+    : Device(NULL), Context(NULL), SFXPaused(0), PrevEnvironment(NULL)
 {
-    EnvFilters[0] = EnvFilters[1] = 0;
 
     Printf("I_InitSound: Initializing OpenAL\n");
 
