@@ -5,6 +5,10 @@
 #include "s_sound.h"
 #include "menu/menu.h"
 
+#ifndef NO_OPENAL
+
+#define AL_NO_PROTOTYPES
+
 #include "al.h"
 #include "alc.h"
 
@@ -65,29 +69,29 @@ public:
 
 	virtual void SetSfxVolume(float volume);
 	virtual void SetMusicVolume(float volume);
-	virtual SoundHandle LoadSound(BYTE* sfxdata, int length);
-	virtual SoundHandle LoadSoundRaw(BYTE* sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend = -1);
+	virtual SoundHandle LoadSound(BYTE *sfxdata, int length);
+	virtual SoundHandle LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend = -1);
 	virtual void UnloadSound(SoundHandle sfx);
 	virtual unsigned int GetMSLength(SoundHandle sfx);
 	virtual unsigned int GetSampleLength(SoundHandle sfx);
 	virtual float GetOutputRate();
 
 	// Streaming sounds.
-	virtual SoundStream* CreateStream(SoundStreamCallback callback, int buffbytes, int flags, int samplerate, void* userdata);
-	virtual SoundStream* OpenStream(FileReader* reader, int flags);
+	virtual SoundStream *CreateStream(SoundStreamCallback callback, int buffbytes, int flags, int samplerate, void *userdata);
+	virtual SoundStream *OpenStream(FileReader *reader, int flags);
 
 	// Starts a sound.
-	virtual FISoundChannel* StartSound(SoundHandle sfx, float vol, int pitch, int chanflags, FISoundChannel* reuse_chan);
-	virtual FISoundChannel* StartSound3D(SoundHandle sfx, SoundListener* listener, float vol, FRolloffInfo* rolloff, float distscale, int pitch, int priority, const FVector3& pos, const FVector3& vel, int channum, int chanflags, FISoundChannel* reuse_chan);
+	virtual FISoundChannel *StartSound(SoundHandle sfx, float vol, int pitch, int chanflags, FISoundChannel *reuse_chan);
+	virtual FISoundChannel *StartSound3D(SoundHandle sfx, SoundListener *listener, float vol, FRolloffInfo *rolloff, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, int channum, int chanflags, FISoundChannel *reuse_chan);
 
 	// Changes a channel's volume.
-	virtual void ChannelVolume(FISoundChannel* chan, float volume);
+	virtual void ChannelVolume(FISoundChannel *chan, float volume);
 
 	// Stops a sound channel.
-	virtual void StopChannel(FISoundChannel* chan);
+	virtual void StopChannel(FISoundChannel *chan);
 
 	// Returns position of sound on this channel, in samples.
-	virtual unsigned int GetPosition(FISoundChannel* chan);
+	virtual unsigned int GetPosition(FISoundChannel *chan);
 
 	// Synchronizes following sound startups.
 	virtual void Sync(bool sync);
@@ -99,9 +103,9 @@ public:
 	virtual void SetInactive(SoundRenderer::EInactiveState inactive);
 
 	// Updates the volume, separation, and pitch of a sound channel.
-	virtual void UpdateSoundParams3D(SoundListener* listener, FISoundChannel* chan, bool areasound, const FVector3& pos, const FVector3& vel);
+	virtual void UpdateSoundParams3D(SoundListener *listener, FISoundChannel *chan, bool areasound, const FVector3 &pos, const FVector3 &vel);
 
-	virtual void UpdateListener(SoundListener*);
+	virtual void UpdateListener(SoundListener *);
 	virtual void UpdateSounds();
 	virtual void UpdateMusic();
 
@@ -115,24 +119,24 @@ public:
 	virtual FString GatherStats();
 
 private:
-	struct {
-		bool EXT_EFX;
-		bool EXT_disconnect;
-	} ALC;
-	struct {
-		bool EXT_source_distance_model;
-		bool SOFT_deferred_updates;
-		bool SOFT_loop_points;
-	} AL;
+    struct {
+        bool EXT_disconnect;
+    } ALC;
+    struct {
+        bool EXT_source_distance_model;
+        bool SOFT_deferred_updates;
+        bool SOFT_loop_points;
+    } AL;
 
-	ALvoid(AL_APIENTRY* alDeferUpdatesSOFT)(void);
-	ALvoid(AL_APIENTRY* alProcessUpdatesSOFT)(void);
+    ALvoid (AL_APIENTRY*alDeferUpdatesSOFT)(void);
+    ALvoid (AL_APIENTRY*alProcessUpdatesSOFT)(void);
 
+	void LoadReverb(const ReverbContainer *env);
 	void PurgeStoppedSources();
-	static FSoundChan* FindLowestChannel();
+	static FSoundChan *FindLowestChannel();
 
-	ALCdevice* Device;
-	ALCcontext* Context;
+	ALCdevice *Device;
+	ALCcontext *Context;
 
 	TArray<ALuint> Sources;
 
@@ -145,20 +149,22 @@ private:
 	TArray<ALuint> ReverbSfx;
 	TArray<ALuint> SfxGroup;
 
-	const ReverbContainer* PrevEnvironment;
+	const ReverbContainer *PrevEnvironment;
 
-	typedef TMap<WORD, ALuint> EffectMap;
-	typedef TMapIterator<WORD, ALuint> EffectMapIter;
-	ALuint EnvSlot;
-	ALuint EnvFilters[2];
-	EffectMap EnvEffects;
+    typedef TMap<WORD,ALuint> EffectMap;
+    typedef TMapIterator<WORD,ALuint> EffectMapIter;
+    ALuint EnvSlot;
+    ALuint EnvFilters[2];
+    EffectMap EnvEffects;
 
-	bool WasInWater;
+    bool WasInWater;
 
-	TArray<OpenALSoundStream*> Streams;
-	friend class OpenALSoundStream;
+    TArray<OpenALSoundStream*> Streams;
+    friend class OpenALSoundStream;
 
-	ALCdevice* InitDevice();
+	ALCdevice *InitDevice();
 };
+
+#endif // NO_OPENAL
 
 #endif
