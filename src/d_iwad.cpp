@@ -440,11 +440,6 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 		{
 			CheckIWAD (gog_paths[i], &wads[0]);
 		}
-		TArray<FString> steam_path = I_GetSteamPath();
-		for (i = 0; i < steam_path.Size(); ++i)
-		{
-			CheckIWAD (steam_path[i], &wads[0]);
-		}
 	}
 
 	if (iwadparm != NULL && !wads[0].Path.IsEmpty())

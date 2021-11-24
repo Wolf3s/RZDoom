@@ -425,8 +425,6 @@ bool FScanner::ScanString (bool tokens)
 	LastGotPtr = ScriptPtr;
 	LastGotLine = Line;
 
-	// In case the generated scanner does not use marker, avoid compiler warnings.
-	marker;
 #include "sc_man_scanner.h"
 	LastGotToken = tokens;
 	return return_val;
