@@ -54,8 +54,6 @@
 #define AL_FORMAT_71CHN32                        0x1212
 #endif
 
-#include "efx.h"
-
 
 class OpenALSoundStream;
 
