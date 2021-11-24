@@ -189,16 +189,6 @@ if( OPENAL_INCLUDE_DIR )
 	endif()
 endif()
 
-# Search for libSndFile
-find_package( SndFile )
-
-# Search for libmpg123
-find_package( MPG123 )
-
-# Search for FluidSynth
-
-find_package( FluidSynth )
-
 # Set up flags for GCC
 
 if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
@@ -330,23 +320,6 @@ message( STATUS "Fluid synth libs: ${FLUIDSYNTH_LIBRARIES}" )
 set( ZDOOM_LIBS ${ZDOOM_LIBS} "${ZLIB_LIBRARIES}" "${BZIP2_LIBRARIES}" )
 include_directories( "${ZLIB_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" )
 
-if( SNDFILE_FOUND )
-    set( ZDOOM_LIBS ${ZDOOM_LIBS} "${SNDFILE_LIBRARIES}" )
-    include_directories( "${SNDFILE_INCLUDE_DIRS}" )
-endif()
-if( MPG123_FOUND )
-    set( ZDOOM_LIBS ${ZDOOM_LIBS} "${MPG123_LIBRARIES}" )
-    include_directories( "${MPG123_INCLUDE_DIR}" )
-endif()
-if( NOT DYN_FLUIDSYNTH )
-	if( FLUIDSYNTH_FOUND )
-		set( ZDOOM_LIBS ${ZDOOM_LIBS} "${FLUIDSYNTH_LIBRARIES}" )
-		include_directories( "${FLUIDSYNTH_INCLUDE_DIR}" )
-	endif()
-else()
-	set( ZDOOM_LIBS ${ZDOOM_LIBS} ${CMAKE_DL_LIBS} )
-endif()
-
 # Start defining source files for ZDoom
 set( PLAT_WIN32_SOURCES
 	win32/fb_d3d9.cpp
@@ -425,18 +398,6 @@ add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h
 	DEPENDS re2c ${CMAKE_CURRENT_SOURCE_DIR}/sc_man_scanner.re )
 
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
-
-if( SNDFILE_FOUND )
-    add_definitions( -DHAVE_SNDFILE )
-endif()
-if( MPG123_FOUND )
-    add_definitions( -DHAVE_MPG123 )
-endif()
-if( DYN_FLUIDSYNTH )
-	add_definitions( -DHAVE_FLUIDSYNTH -DDYN_FLUIDSYNTH )
-elseif( FLUIDSYNTH_FOUND )
-	add_definitions( -DHAVE_FLUIDSYNTH )
-endif()
 
 # Project files should be aware of the header files. We can GLOB these since
 # there's generally a new cpp for every header so this file will get changed
@@ -621,7 +582,6 @@ set( FASTMATH_SOURCES
 	oplsynth/opl_mus_player.cpp
 	sound/i_music.cpp
 	sound/i_sound.cpp
-	sound/mpg123_decoder.cpp
 	sound/music_cd.cpp
 	sound/music_mus_midiout.cpp
 	sound/music_smf_midiout.cpp
@@ -874,7 +834,6 @@ set (PCH_SOURCES
 	sfmt/SFMT.cpp
 	sound/i_music.cpp
 	sound/i_sound.cpp
-	sound/mpg123_decoder.cpp
 	sound/music_cd.cpp
 	sound/music_mus_midiout.cpp
 	sound/music_smf_midiout.cpp

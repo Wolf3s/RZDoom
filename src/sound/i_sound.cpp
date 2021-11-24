@@ -55,9 +55,6 @@ extern HINSTANCE g_hInst;
 #include "except.h"
 #include "oalsound.h"
 
-#include "mpg123_decoder.h"
-#include "sndfile_decoder.h"
-
 #include "m_swap.h"
 #include "stats.h"
 #include "files.h"
@@ -580,24 +577,6 @@ SoundDecoder *SoundRenderer::CreateDecoder(FileReader *reader)
     SoundDecoder *decoder = NULL;
     int pos = reader->Tell();
 
-#ifdef HAVE_MPG123
-		decoder = new MPG123Decoder;
-		if (decoder->open(reader))
-			return decoder;
-		reader->Seek(pos, SEEK_SET);
-
-		delete decoder;
-		decoder = NULL;
-#endif
-#ifdef HAVE_SNDFILE
-		decoder = new SndFileDecoder;
-		if (decoder->open(reader))
-			return decoder;
-		reader->Seek(pos, SEEK_SET);
-
-		delete decoder;
-		decoder = NULL;
-#endif
     return decoder;
 }
 
