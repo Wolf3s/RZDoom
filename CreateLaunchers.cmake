@@ -44,6 +44,10 @@ if(__create_launchers)
 endif()
 set(__create_launchers YES)
 
+if( POLICY CMP0026 )
+	cmake_policy( SET CMP0026 OLD )
+endif( POLICY CMP0026 )
+
 include(CleanDirectoryList)
 
 # We must run the following at "include" time, not at function call time,
