@@ -1481,7 +1481,6 @@ OptionMenu SoundOptions
 	Slider "Music volume",		"snd_musicvolume", 0, 1, 0.05
 	Option "MIDI device",		"snd_mididevice", "MidiDevices"
 	StaticText " "
-	Option "Underwater reverb",	"snd_waterreverb", "OnOff"
 	Option "Randomize pitches",	"snd_pitched", "OnOff"
 	Slider "Sound channels",	"snd_channels", 8, 256, 8, 0
 	StaticText " "
@@ -1648,10 +1647,6 @@ OptionMenu VideoModeMenu
 	Title "VIDEO MODE"
 	
 	Option "Fullscreen",			"fullscreen", "YesNo"
-	IfOption(Mac)
-	{
-		Option "Retina/HiDPI support", "vid_hidpi", "YesNo"
-	}
 	Option "Aspect ratio",			"menu_screenratios", "Ratios"
 	Option "Force aspect ratio",	"vid_aspect", "ForceRatios"
 	Option "Enable 5:4 aspect ratio","vid_tft", "YesNo"

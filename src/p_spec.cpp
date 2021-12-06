@@ -1,4 +1,4 @@
-// Emacs style mode select	 -*- C++ -*- 
+// Emacs style mode select	 -*- C++ -*-
 //-----------------------------------------------------------------------------
 //
 // $Id:$
@@ -601,7 +601,6 @@ void P_GiveSecret(AActor *actor, bool printmessage, bool playsound, int sectornu
 					C_MidPrint(SmallFont, s);
 				}
 			}
-            if (playsound) S_Sound (CHAN_BODY, "misc/teleport", 1, ATTN_NORM);
 		}
 	}
 	level.found_secrets++;

@@ -2530,14 +2530,6 @@ void D_DoomMain (void)
 
 		if (!restart)
 		{
-			// start the apropriate game based on parms
-			v = Args->CheckValue ("-record");
-
-			if (v)
-			{
-				G_RecordDemo (v);
-				autostart = true;
-			}
 
 			delete StartScreen;
 			StartScreen = NULL;
@@ -2558,14 +2550,6 @@ void D_DoomMain (void)
 				FixPathSeperator (file);
 				DefaultExtension (file, ".zds");
 				G_LoadGame (file);
-			}
-
-			v = Args->CheckValue("-playdemo");
-			if (v != NULL)
-			{
-				singledemo = true;				// quit after one demo
-				G_DeferedPlayDemo (v);
-				D_DoomLoop ();	// never returns
 			}
 
 			v = Args->CheckValue ("-timedemo");
