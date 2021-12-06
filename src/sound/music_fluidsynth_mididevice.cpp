@@ -58,8 +58,11 @@
 #endif
 #else
 #include <dlfcn.h>
-
 #define FLUIDSYNTHLIB	"libfluidsynth.so.2"
+//Gibbon - MacOS version
+#ifdef __APPLE__
+#define FLUIDSYNTHLIB    "libfluidsynth.3.dylib"
+#endif
 #endif
 
 #define FLUID_REVERB_DEFAULT_ROOMSIZE 0.2f
