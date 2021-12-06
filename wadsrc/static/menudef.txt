@@ -882,11 +882,7 @@ OptionMenu "MiscOptions"
 	IfOption(Windows)
 	{
 		Option "Merge left+right Alt/Ctrl/Shift", 		"k_mergekeys", "OnOff"
-		Option "Alt-Enter toggles fullscreen",			"k_allowfullscreentoggle", "OnOff"
-	}
-	IfOption(Mac)
-	{
-		Option "Command-F toggles fullscreen",			"k_allowfullscreentoggle", "OnOff"
+		Option "Alt-Enter toggles fullscreen",		"k_allowfullscreentoggle", "OnOff"
 	}
 	Option "Show IWAD selection dialog",			"queryiwad", "OnOff"
 	StaticText " "
@@ -1650,6 +1646,8 @@ OptionMenu VideoModeMenu
 	Option "Aspect ratio",			"menu_screenratios", "Ratios"
 	Option "Force aspect ratio",	"vid_aspect", "ForceRatios"
 	Option "Enable 5:4 aspect ratio","vid_tft", "YesNo"
+IfOption(Windows)
+{
 	StaticText " "
 	ScreenResolution "res_0"
 	ScreenResolution "res_1"
@@ -1664,6 +1662,7 @@ OptionMenu VideoModeMenu
 	StaticTextSwitchable "Press ENTER to set mode", "", "VMEnterText"
 	StaticText " "
 	StaticTextSwitchable "T to test mode for 5 seconds", "Please wait 5 seconds...", "VMTestText"
+}
 	class VideoModeMenu
 }
 
