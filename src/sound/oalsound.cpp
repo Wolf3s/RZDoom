@@ -59,6 +59,7 @@
 #include "oalload.h"
 
 CVAR (String, snd_aldevice, "Default", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Bool, snd_efx, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 #ifdef _WIN32
 static HMODULE hmodOpenAL;
@@ -147,6 +148,7 @@ void I_BuildALDeviceList(FOptionValues *opt)
 
 EXTERN_CVAR (Int, snd_channels)
 EXTERN_CVAR (Int, snd_samplerate)
+EXTERN_CVAR (Bool, snd_waterreverb)
 EXTERN_CVAR (Bool, snd_pitched)
 
 
@@ -264,6 +266,13 @@ class OpenALSoundStream : public SoundStream
         alSourcef(Source, AL_SEC_OFFSET, 0.f);
         alSourcei(Source, AL_SOURCE_RELATIVE, AL_TRUE);
         alSourcei(Source, AL_LOOPING, AL_FALSE);
+        if(Renderer->EnvSlot)
+        {
+            alSourcef(Source, AL_ROOM_ROLLOFF_FACTOR, 0.f);
+            alSourcef(Source, AL_AIR_ABSORPTION_FACTOR, 0.f);
+            alSourcei(Source, AL_DIRECT_FILTER, AL_FILTER_NULL);
+            alSource3i(Source, AL_AUXILIARY_SEND_FILTER, 0, 0, AL_FILTER_NULL);
+        }
 
         alGenBuffers(BufferCount, Buffers);
         return (getALError() == AL_NO_ERROR);
@@ -615,6 +624,8 @@ public:
 };
 
 
+extern ReverbContainer *ForcedEnvironment;
+
 #define AREA_SOUND_RADIUS  (128.f)
 
 #define PITCH_MULT (0.7937005f) /* Approx. 4 semitones lower; what Nash suggested */
@@ -677,8 +688,9 @@ static void LoadALFunc(const char *name, T *x)
 
 #define LOAD_FUNC(x)  (LoadALFunc(#x, &x))
 OpenALSoundRenderer::OpenALSoundRenderer()
-    : Device(NULL), Context(NULL), SFXPaused(0)
+    : Device(NULL), Context(NULL), SFXPaused(0), PrevEnvironment(NULL), EnvSlot(0)
 {
+    EnvFilters[0] = EnvFilters[1] = 0;
 
     Printf("I_InitSound: Initializing OpenAL\n");
 
@@ -729,7 +741,9 @@ OpenALSoundRenderer::OpenALSoundRenderer()
     DPrintf("  Vendor: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_VENDOR));
     DPrintf("  Renderer: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_RENDERER));
     DPrintf("  Version: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_VERSION));
+    DPrintf("  Extensions: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_EXTENSIONS));
 
+    ALC.EXT_EFX = !!alcIsExtensionPresent(Device, "ALC_EXT_EFX");
     ALC.EXT_disconnect = !!alcIsExtensionPresent(Device, "ALC_EXT_disconnect");;
     AL.EXT_source_distance_model = !!alIsExtensionPresent("AL_EXT_source_distance_model");
     AL.SOFT_deferred_updates = !!alIsExtensionPresent("AL_SOFT_deferred_updates");
@@ -790,6 +804,93 @@ OpenALSoundRenderer::OpenALSoundRenderer()
     }
     FreeSfx = Sources;
     DPrintf("  Allocated " TEXTCOLOR_BLUE"%u" TEXTCOLOR_NORMAL" sources\n", Sources.Size());
+
+    WasInWater = false;
+    if(*snd_efx && ALC.EXT_EFX)
+    {
+        // EFX function pointers
+        LOAD_FUNC(alGenEffects);
+        LOAD_FUNC(alDeleteEffects);
+        LOAD_FUNC(alIsEffect);
+        LOAD_FUNC(alEffecti);
+        LOAD_FUNC(alEffectiv);
+        LOAD_FUNC(alEffectf);
+        LOAD_FUNC(alEffectfv);
+        LOAD_FUNC(alGetEffecti);
+        LOAD_FUNC(alGetEffectiv);
+        LOAD_FUNC(alGetEffectf);
+        LOAD_FUNC(alGetEffectfv);
+
+        LOAD_FUNC(alGenFilters);
+        LOAD_FUNC(alDeleteFilters);
+        LOAD_FUNC(alIsFilter);
+        LOAD_FUNC(alFilteri);
+        LOAD_FUNC(alFilteriv);
+        LOAD_FUNC(alFilterf);
+        LOAD_FUNC(alFilterfv);
+        LOAD_FUNC(alGetFilteri);
+        LOAD_FUNC(alGetFilteriv);
+        LOAD_FUNC(alGetFilterf);
+        LOAD_FUNC(alGetFilterfv);
+
+        LOAD_FUNC(alGenAuxiliaryEffectSlots);
+        LOAD_FUNC(alDeleteAuxiliaryEffectSlots);
+        LOAD_FUNC(alIsAuxiliaryEffectSlot);
+        LOAD_FUNC(alAuxiliaryEffectSloti);
+        LOAD_FUNC(alAuxiliaryEffectSlotiv);
+        LOAD_FUNC(alAuxiliaryEffectSlotf);
+        LOAD_FUNC(alAuxiliaryEffectSlotfv);
+        LOAD_FUNC(alGetAuxiliaryEffectSloti);
+        LOAD_FUNC(alGetAuxiliaryEffectSlotiv);
+        LOAD_FUNC(alGetAuxiliaryEffectSlotf);
+        LOAD_FUNC(alGetAuxiliaryEffectSlotfv);
+        if(getALError() == AL_NO_ERROR)
+        {
+            ALuint envReverb;
+            alGenEffects(1, &envReverb);
+            if(getALError() == AL_NO_ERROR)
+            {
+                alEffecti(envReverb, AL_EFFECT_TYPE, AL_EFFECT_EAXREVERB);
+                if(alGetError() == AL_NO_ERROR)
+                    DPrintf("  EAX Reverb found\n");
+                alEffecti(envReverb, AL_EFFECT_TYPE, AL_EFFECT_REVERB);
+                if(alGetError() == AL_NO_ERROR)
+                    DPrintf("  Standard Reverb found\n");
+
+                alDeleteEffects(1, &envReverb);
+                getALError();
+            }
+
+            alGenAuxiliaryEffectSlots(1, &EnvSlot);
+            alGenFilters(2, EnvFilters);
+            if(getALError() == AL_NO_ERROR)
+            {
+                alFilteri(EnvFilters[0], AL_FILTER_TYPE, AL_FILTER_LOWPASS);
+                alFilteri(EnvFilters[1], AL_FILTER_TYPE, AL_FILTER_LOWPASS);
+                if(getALError() == AL_NO_ERROR)
+                    DPrintf("  Lowpass found\n");
+                else
+                {
+                    alDeleteFilters(2, EnvFilters);
+                    EnvFilters[0] = EnvFilters[1] = 0;
+                    alDeleteAuxiliaryEffectSlots(1, &EnvSlot);
+                    EnvSlot = 0;
+                    getALError();
+                }
+            }
+            else
+            {
+                alDeleteFilters(2, EnvFilters);
+                alDeleteAuxiliaryEffectSlots(1, &EnvSlot);
+                EnvFilters[0] = EnvFilters[1] = 0;
+                EnvSlot = 0;
+                getALError();
+            }
+        }
+    }
+
+    if(EnvSlot)
+        Printf("  EFX enabled\n");
 }
 #undef LOAD_FUNC
 
@@ -806,6 +907,24 @@ OpenALSoundRenderer::~OpenALSoundRenderer()
     FreeSfx.Clear();
     SfxGroup.Clear();
     PausableSfx.Clear();
+    ReverbSfx.Clear();
+
+    if(EnvEffects.CountUsed() > 0)
+    {
+        EffectMapIter iter(EnvEffects);
+        EffectMap::Pair *pair;
+        while(iter.NextPair(pair))
+            alDeleteEffects(1, &(pair->Value));
+    }
+    EnvEffects.Clear();
+
+    if(EnvSlot)
+    {
+        alDeleteAuxiliaryEffectSlots(1, &EnvSlot);
+        alDeleteFilters(2, EnvFilters);
+    }
+    EnvSlot = 0;
+    EnvFilters[0] = EnvFilters[1] = 0;
 
     alcMakeContextCurrent(NULL);
     alcDestroyContext(Context);
@@ -1085,7 +1204,25 @@ FISoundChannel *OpenALSoundRenderer::StartSound(SoundHandle sfx, float vol, int 
     alSourcef(source, AL_ROLLOFF_FACTOR, 0.f);
     alSourcef(source, AL_MAX_GAIN, SfxVolume);
     alSourcef(source, AL_GAIN, SfxVolume*vol);
-    alSourcef(source, AL_PITCH, PITCH(pitch));
+
+    if(EnvSlot)
+    {
+        if(!(chanflags&SNDF_NOREVERB))
+        {
+            alSourcei(source, AL_DIRECT_FILTER, EnvFilters[0]);
+            alSource3i(source, AL_AUXILIARY_SEND_FILTER, EnvSlot, 0, EnvFilters[1]);
+        }
+        else
+        {
+            alSourcei(source, AL_DIRECT_FILTER, AL_FILTER_NULL);
+            alSource3i(source, AL_AUXILIARY_SEND_FILTER, 0, 0, AL_FILTER_NULL);
+        }
+        alSourcef(source, AL_ROOM_ROLLOFF_FACTOR, 0.f);
+    }
+    if(WasInWater && !(chanflags&SNDF_NOREVERB))
+        alSourcef(source, AL_PITCH, PITCH(pitch)*PITCH_MULT);
+    else
+        alSourcef(source, AL_PITCH, PITCH(pitch));
 
     if(!reuse_chan)
         alSourcef(source, AL_SEC_OFFSET, 0.f);
@@ -1112,6 +1249,8 @@ FISoundChannel *OpenALSoundRenderer::StartSound(SoundHandle sfx, float vol, int 
         return NULL;
     }
 
+    if(!(chanflags&SNDF_NOREVERB))
+        ReverbSfx.Push(source);
     if(!(chanflags&SNDF_NOPAUSE))
         PausableSfx.Push(source);
     SfxGroup.Push(source);
@@ -1240,7 +1379,24 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
     alSourcef(source, AL_MAX_GAIN, SfxVolume);
     alSourcef(source, AL_GAIN, SfxVolume*vol);
 
-    alSourcef(source, AL_PITCH, PITCH(pitch));
+    if(EnvSlot)
+    {
+        if(!(chanflags&SNDF_NOREVERB))
+        {
+            alSourcei(source, AL_DIRECT_FILTER, EnvFilters[0]);
+            alSource3i(source, AL_AUXILIARY_SEND_FILTER, EnvSlot, 0, EnvFilters[1]);
+        }
+        else
+        {
+            alSourcei(source, AL_DIRECT_FILTER, AL_FILTER_NULL);
+            alSource3i(source, AL_AUXILIARY_SEND_FILTER, 0, 0, AL_FILTER_NULL);
+        }
+        alSourcef(source, AL_ROOM_ROLLOFF_FACTOR, 0.f);
+    }
+    if(WasInWater && !(chanflags&SNDF_NOREVERB))
+        alSourcef(source, AL_PITCH, PITCH(pitch)*PITCH_MULT);
+    else
+        alSourcef(source, AL_PITCH, PITCH(pitch));
 
     if(!reuse_chan)
         alSourcef(source, AL_SEC_OFFSET, 0.f);
@@ -1267,6 +1423,8 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
         return NULL;
     }
 
+    if(!(chanflags&SNDF_NOREVERB))
+        ReverbSfx.Push(source);
     if(!(chanflags&SNDF_NOPAUSE))
         PausableSfx.Push(source);
     SfxGroup.Push(source);
@@ -1312,6 +1470,8 @@ void OpenALSoundRenderer::StopChannel(FISoundChannel *chan)
     uint32 i;
     if((i=PausableSfx.Find(source)) < PausableSfx.Size())
         PausableSfx.Delete(i);
+    if((i=ReverbSfx.Find(source)) < ReverbSfx.Size())
+        ReverbSfx.Delete(i);
 
     SfxGroup.Delete(SfxGroup.Find(source));
     FreeSfx.Push(source);
@@ -1473,6 +1633,79 @@ void OpenALSoundRenderer::UpdateListener(SoundListener *listener)
                               listener->velocity.Y,
                              -listener->velocity.Z);
     getALError();
+
+    const ReverbContainer *env = ForcedEnvironment;
+    if(!env)
+    {
+        env = listener->Environment;
+        if(!env)
+            env = DefaultEnvironments[0];
+    }
+    if(env != PrevEnvironment || env->Modified)
+    {
+        PrevEnvironment = env;
+        DPrintf("Reverb Environment %s\n", env->Name);
+
+        if(EnvSlot != 0)
+            LoadReverb(env);
+
+        const_cast<ReverbContainer*>(env)->Modified = false;
+    }
+
+    // NOTE: Moving into and out of water will undo pitch variations on sounds.
+    if(listener->underwater || env->SoftwareWater)
+    {
+        if(!WasInWater)
+        {
+            WasInWater = true;
+
+            if(EnvSlot != 0 && *snd_waterreverb)
+            {
+                // Find the "Underwater" reverb environment
+                env = S_FindEnvironment(0x1600);
+                LoadReverb(env ? env : DefaultEnvironments[0]);
+
+                alFilterf(EnvFilters[0], AL_LOWPASS_GAIN, 1.f);
+                alFilterf(EnvFilters[0], AL_LOWPASS_GAINHF, 0.125f);
+                alFilterf(EnvFilters[1], AL_LOWPASS_GAIN, 1.f);
+                alFilterf(EnvFilters[1], AL_LOWPASS_GAINHF, 1.f);
+
+                // Apply the updated filters on the sources
+                for(uint32 i = 0;i < ReverbSfx.Size();++i)
+                {
+                    alSourcei(ReverbSfx[i], AL_DIRECT_FILTER, EnvFilters[0]);
+                    alSource3i(ReverbSfx[i], AL_AUXILIARY_SEND_FILTER, EnvSlot, 0, EnvFilters[1]);
+                }
+            }
+
+            for(uint32 i = 0;i < ReverbSfx.Size();++i)
+                alSourcef(ReverbSfx[i], AL_PITCH, PITCH_MULT);
+            getALError();
+        }
+    }
+    else if(WasInWater)
+    {
+        WasInWater = false;
+
+        if(EnvSlot != 0)
+        {
+            LoadReverb(env);
+
+            alFilterf(EnvFilters[0], AL_LOWPASS_GAIN, 1.f);
+            alFilterf(EnvFilters[0], AL_LOWPASS_GAINHF, 1.f);
+            alFilterf(EnvFilters[1], AL_LOWPASS_GAIN, 1.f);
+            alFilterf(EnvFilters[1], AL_LOWPASS_GAINHF, 1.f);
+            for(uint32 i = 0;i < ReverbSfx.Size();++i)
+            {
+                alSourcei(ReverbSfx[i], AL_DIRECT_FILTER, EnvFilters[0]);
+                alSource3i(ReverbSfx[i], AL_AUXILIARY_SEND_FILTER, EnvSlot, 0, EnvFilters[1]);
+            }
+        }
+
+        for(uint32 i = 0;i < ReverbSfx.Size();++i)
+            alSourcef(ReverbSfx[i], AL_PITCH, 1.f);
+        getALError();
+    }
 }
 
 void OpenALSoundRenderer::UpdateSounds()
@@ -1545,12 +1778,27 @@ void OpenALSoundRenderer::PrintStatus()
     {
         Printf("Device sample rate: " TEXTCOLOR_BLUE"%d" TEXTCOLOR_NORMAL"hz\n", frequency);
         Printf("ALC Version: " TEXTCOLOR_BLUE"%d.%d\n", major, minor);
+        Printf("ALC Extensions: " TEXTCOLOR_ORANGE"%s\n", alcGetString(Device, ALC_EXTENSIONS));
         Printf("Available sources: " TEXTCOLOR_BLUE"%d" TEXTCOLOR_NORMAL" (" TEXTCOLOR_BLUE"%d" TEXTCOLOR_NORMAL" mono, " TEXTCOLOR_BLUE"%d" TEXTCOLOR_NORMAL" stereo)\n", mono+stereo, mono, stereo);
     }
-    ALCint sends;
+    if(!alcIsExtensionPresent(Device, "ALC_EXT_EFX"))
+        Printf("EFX not found\n");
+    else
+    {
+        ALCint sends;
+        alcGetIntegerv(Device, ALC_EFX_MAJOR_VERSION, 1, &major);
+        alcGetIntegerv(Device, ALC_EFX_MINOR_VERSION, 1, &minor);
+        alcGetIntegerv(Device, ALC_MAX_AUXILIARY_SENDS, 1, &sends);
+        if(getALCError(Device) == AL_NO_ERROR)
+        {
+            Printf("EFX Version: " TEXTCOLOR_BLUE"%d.%d\n", major, minor);
+            Printf("Auxiliary sends: " TEXTCOLOR_BLUE"%d\n", sends);
+        }
+    }
     Printf("Vendor: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_VENDOR));
     Printf("Renderer: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_RENDERER));
     Printf("Version: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_VERSION));
+    Printf("Extensions: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_EXTENSIONS));
     getALError();
 }
 
@@ -1628,6 +1876,112 @@ void OpenALSoundRenderer::PurgeStoppedSources()
     getALError();
 }
 
+void OpenALSoundRenderer::LoadReverb(const ReverbContainer *env)
+{
+    ALuint *envReverb = EnvEffects.CheckKey(env->ID);
+    bool doLoad = (env->Modified || !envReverb);
+
+    if(!envReverb)
+    {
+        bool ok = false;
+
+        envReverb = &EnvEffects.Insert(env->ID, 0);
+        alGenEffects(1, envReverb);
+        if(getALError() == AL_NO_ERROR)
+        {
+            alEffecti(*envReverb, AL_EFFECT_TYPE, AL_EFFECT_EAXREVERB);
+            ok = (alGetError() == AL_NO_ERROR);
+            if(!ok)
+            {
+                alEffecti(*envReverb, AL_EFFECT_TYPE, AL_EFFECT_REVERB);
+                ok = (alGetError() == AL_NO_ERROR);
+            }
+            if(!ok)
+            {
+                alEffecti(*envReverb, AL_EFFECT_TYPE, AL_EFFECT_NULL);
+                ok = (alGetError() == AL_NO_ERROR);
+            }
+            if(!ok)
+            {
+                alDeleteEffects(1, envReverb);
+                getALError();
+            }
+        }
+        if(!ok)
+        {
+            *envReverb = 0;
+            doLoad = false;
+        }
+    }
+
+    if(doLoad)
+    {
+        const REVERB_PROPERTIES &props = env->Properties;
+        ALint type = AL_EFFECT_NULL;
+
+        alGetEffecti(*envReverb, AL_EFFECT_TYPE, &type);
+#define mB2Gain(x) ((float)pow(10., (x)/2000.))
+        if(type == AL_EFFECT_EAXREVERB)
+        {
+            ALfloat reflectpan[3] = { props.ReflectionsPan0,
+                                      props.ReflectionsPan1,
+                                      props.ReflectionsPan2 };
+            ALfloat latepan[3] = { props.ReverbPan0, props.ReverbPan1,
+                                   props.ReverbPan2 };
+#undef SETPARAM
+#define SETPARAM(e,t,v) alEffectf((e), AL_EAXREVERB_##t, clamp((v), AL_EAXREVERB_MIN_##t, AL_EAXREVERB_MAX_##t))
+            SETPARAM(*envReverb, DIFFUSION, props.EnvDiffusion);
+            SETPARAM(*envReverb, DENSITY, powf(props.EnvSize, 3.0f) * 0.0625f);
+            SETPARAM(*envReverb, GAIN, mB2Gain(props.Room));
+            SETPARAM(*envReverb, GAINHF, mB2Gain(props.RoomHF));
+            SETPARAM(*envReverb, GAINLF, mB2Gain(props.RoomLF));
+            SETPARAM(*envReverb, DECAY_TIME, props.DecayTime);
+            SETPARAM(*envReverb, DECAY_HFRATIO, props.DecayHFRatio);
+            SETPARAM(*envReverb, DECAY_LFRATIO, props.DecayLFRatio);
+            SETPARAM(*envReverb, REFLECTIONS_GAIN, mB2Gain(props.Reflections));
+            SETPARAM(*envReverb, REFLECTIONS_DELAY, props.ReflectionsDelay);
+            alEffectfv(*envReverb, AL_EAXREVERB_REFLECTIONS_PAN, reflectpan);
+            SETPARAM(*envReverb, LATE_REVERB_GAIN, mB2Gain(props.Reverb));
+            SETPARAM(*envReverb, LATE_REVERB_DELAY, props.ReverbDelay);
+            alEffectfv(*envReverb, AL_EAXREVERB_LATE_REVERB_PAN, latepan);
+            SETPARAM(*envReverb, ECHO_TIME, props.EchoTime);
+            SETPARAM(*envReverb, ECHO_DEPTH, props.EchoDepth);
+            SETPARAM(*envReverb, MODULATION_TIME, props.ModulationTime);
+            SETPARAM(*envReverb, MODULATION_DEPTH, props.ModulationDepth);
+            SETPARAM(*envReverb, AIR_ABSORPTION_GAINHF, mB2Gain(props.AirAbsorptionHF));
+            SETPARAM(*envReverb, HFREFERENCE, props.HFReference);
+            SETPARAM(*envReverb, LFREFERENCE, props.LFReference);
+            SETPARAM(*envReverb, ROOM_ROLLOFF_FACTOR, props.RoomRolloffFactor);
+            alEffecti(*envReverb, AL_EAXREVERB_DECAY_HFLIMIT,
+                      (props.Flags&REVERB_FLAGS_DECAYHFLIMIT)?AL_TRUE:AL_FALSE);
+#undef SETPARAM
+        }
+        else if(type == AL_EFFECT_REVERB)
+        {
+#define SETPARAM(e,t,v) alEffectf((e), AL_REVERB_##t, clamp((v), AL_REVERB_MIN_##t, AL_REVERB_MAX_##t))
+            SETPARAM(*envReverb, DIFFUSION, props.EnvDiffusion);
+            SETPARAM(*envReverb, DENSITY, powf(props.EnvSize, 3.0f) * 0.0625f);
+            SETPARAM(*envReverb, GAIN, mB2Gain(props.Room));
+            SETPARAM(*envReverb, GAINHF, mB2Gain(props.RoomHF));
+            SETPARAM(*envReverb, DECAY_TIME, props.DecayTime);
+            SETPARAM(*envReverb, DECAY_HFRATIO, props.DecayHFRatio);
+            SETPARAM(*envReverb, REFLECTIONS_GAIN, mB2Gain(props.Reflections));
+            SETPARAM(*envReverb, REFLECTIONS_DELAY, props.ReflectionsDelay);
+            SETPARAM(*envReverb, LATE_REVERB_GAIN, mB2Gain(props.Reverb));
+            SETPARAM(*envReverb, LATE_REVERB_DELAY, props.ReverbDelay);
+            SETPARAM(*envReverb, AIR_ABSORPTION_GAINHF, mB2Gain(props.AirAbsorptionHF));
+            SETPARAM(*envReverb, ROOM_ROLLOFF_FACTOR, props.RoomRolloffFactor);
+            alEffecti(*envReverb, AL_REVERB_DECAY_HFLIMIT,
+                      (props.Flags&REVERB_FLAGS_DECAYHFLIMIT)?AL_TRUE:AL_FALSE);
+#undef SETPARAM
+        }
+#undef mB2Gain
+    }
+
+    alAuxiliaryEffectSloti(EnvSlot, AL_EFFECTSLOT_EFFECT, *envReverb);
+    getALError();
+}
+
 FSoundChan *OpenALSoundRenderer::FindLowestChannel()
 {
     FSoundChan *schan = Channels;
@@ -1647,4 +2001,3 @@ FSoundChan *OpenALSoundRenderer::FindLowestChannel()
 }
 
 #endif // NO_OPENAL
-

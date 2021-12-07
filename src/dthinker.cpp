@@ -221,7 +221,7 @@ DThinker::DThinker (int statnum) throw()
 
 DThinker::DThinker(no_link_type foo) throw()
 {
-
+	foo;	// Avoid unused argument warnings.
 }
 
 DThinker::~DThinker ()

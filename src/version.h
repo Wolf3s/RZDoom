@@ -34,6 +34,11 @@
 #ifndef __VERSION_H__
 #define __VERSION_H__
 
+const char *GetGitDescription();
+const char *GetGitHash();
+const char *GetGitTime();
+const char *GetVersionString();
+
 /** Lots of different version numbers **/
 
 #define VERSIONSTR "2.9.0"

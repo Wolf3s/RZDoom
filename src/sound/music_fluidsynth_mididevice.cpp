@@ -58,11 +58,8 @@
 #endif
 #else
 #include <dlfcn.h>
-#define FLUIDSYNTHLIB	"libfluidsynth.so.2"
-//Gibbon - MacOS version
-#ifdef __APPLE__
-#define FLUIDSYNTHLIB    "libfluidsynth.3.dylib"
-#endif
+
+#define FLUIDSYNTHLIB	"libfluidsynth.so.1"
 #endif
 
 #define FLUID_REVERB_DEFAULT_ROOMSIZE 0.2f
@@ -77,6 +74,7 @@
 #define FLUID_CHORUS_DEFAULT_LEVEL 2.0f
 #define FLUID_CHORUS_DEFAULT_SPEED 0.3f
 #define FLUID_CHORUS_DEFAULT_DEPTH 8.0f
+#define FLUID_CHORUS_DEFAULT_TYPE FLUID_CHORUS_MOD_SINE
 
 #endif
 
@@ -241,9 +239,11 @@ CUSTOM_CVAR(Float, fluid_chorus_depth, 8, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 		currSong->FluidSettingInt("z.chorus-changed", 0);
 }
 
-CUSTOM_CVAR(Int, fluid_chorus_type, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, fluid_chorus_type, FLUID_CHORUS_DEFAULT_TYPE, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
-	if (currSong != NULL)
+	if (self != FLUID_CHORUS_MOD_SINE && self != FLUID_CHORUS_MOD_TRIANGLE)
+		self = FLUID_CHORUS_DEFAULT_TYPE;
+	else if (currSong != NULL)
 		currSong->FluidSettingInt("z.chorus-changed", 0);
 }
 
@@ -621,16 +621,17 @@ FString FluidSynthMIDIDevice::GetStats()
 	int polyphony = fluid_synth_get_polyphony(FluidSynth);
 	int voices = fluid_synth_get_active_voice_count(FluidSynth);
 	double load = fluid_synth_get_cpu_load(FluidSynth);
-	int chorus, reverb, maxpoly;
-	fluid_settings_getint(FluidSettings, "synth.chorus.active", &chorus);
-	fluid_settings_getint(FluidSettings, "synth.reverb.active", &reverb);
+	char *chorus, *reverb;
+	int maxpoly;
+	fluid_settings_getstr(FluidSettings, "synth.chorus.active", &chorus);
+	fluid_settings_getstr(FluidSettings, "synth.reverb.active", &reverb);
 	fluid_settings_getint(FluidSettings, "synth.polyphony", &maxpoly);
 	CritSec.Leave();
 
 	out.Format("Voices: " TEXTCOLOR_YELLOW "%3d" TEXTCOLOR_NORMAL "/" TEXTCOLOR_ORANGE "%3d" TEXTCOLOR_NORMAL "(" TEXTCOLOR_RED "%3d" TEXTCOLOR_NORMAL ")"
 			   TEXTCOLOR_YELLOW "%6.2f" TEXTCOLOR_NORMAL "%% CPU   "
-			   "Reverb: " TEXTCOLOR_YELLOW "%3d" TEXTCOLOR_NORMAL
-			   " Chorus: " TEXTCOLOR_YELLOW "%3d",
+			   "Reverb: " TEXTCOLOR_YELLOW "%3s" TEXTCOLOR_NORMAL
+			   " Chorus: " TEXTCOLOR_YELLOW "%3s",
 		voices, polyphony, maxpoly, load, reverb, chorus);
 	return out;
 }

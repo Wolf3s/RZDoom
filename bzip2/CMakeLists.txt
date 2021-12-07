@@ -1,10 +1,10 @@
-cmake_minimum_required( VERSION 3.18.4 )
+cmake_minimum_required( VERSION 3.15 )
 
 make_release_only()
 
 if( ZD_CMAKE_COMPILER_IS_GNUC_COMPATIBLE )
 	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -fomit-frame-pointer" )
-endif()
+endif( ZD_CMAKE_COMPILER_IS_GNUC_COMPATIBLE )
 
 add_definitions( -DBZ_NO_STDIO )
 add_library( bz2

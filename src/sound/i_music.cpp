@@ -190,6 +190,9 @@ void I_ShutdownMusic(bool onexit)
 	}
 	Timidity::FreeAll();
 	if (onexit) WildMidi_Shutdown();
+#ifdef _WIN32
+	I_ShutdownMusicWin32();
+#endif // _WIN32
 }
 
 void I_ShutdownMusicExit()
@@ -472,6 +475,16 @@ retry_as_sndsys:
 		(id[0] == MAKE_ID('A','D','L','I') && *((BYTE *)id + 4) == 'B'))		// Martin Fernandez's modified IMF
 	{
 		info = new OPLMUSSong (*reader, device != NULL? device->args.GetChars() : "");
+	}
+	// Check for game music
+	else if ((fmt = GME_CheckFormat(id[0])) != NULL && fmt[0] != '\0')
+	{
+		info = GME_OpenSong(*reader, fmt);
+	}
+	// Check for module formats
+	else
+	{
+		info = MOD_OpenSong(*reader);
 	}
 
     if (info == NULL)

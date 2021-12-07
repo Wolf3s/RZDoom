@@ -2201,7 +2201,7 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 
 	SaveVersion = SAVEVER;
 	PutSavePic (stdfile, SAVEPICWIDTH, SAVEPICHEIGHT);
-	mysnprintf(buf, countof(buf), GAMENAME VERSIONSTR);
+	mysnprintf(buf, countof(buf), GAMENAME " %s", GetVersionString());
 	M_AppendPNGText (stdfile, "Software", buf);
 	M_AppendPNGText (stdfile, "Engine", GAMESIG);
 	M_AppendPNGText (stdfile, "ZDoom Save Version", SAVESIG);

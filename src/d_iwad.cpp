@@ -440,6 +440,11 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 		{
 			CheckIWAD (gog_paths[i], &wads[0]);
 		}
+		TArray<FString> steam_path = I_GetSteamPath();
+		for (i = 0; i < steam_path.Size(); ++i)
+		{
+			CheckIWAD (steam_path[i], &wads[0]);
+		}
 	}
 
 	if (iwadparm != NULL && !wads[0].Path.IsEmpty())
@@ -510,8 +515,8 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 					  "2. Edit your " GAMENAMELOWERCASE "-username.ini and add the directories of your iwads\n"
 					  "to the list beneath [IWADSearch.Directories]");
 #elif defined(__APPLE__)
-					  "1. Place one or more of these wads in ~/" GAMENAME "/wads\n"
-					  "2. View and / or edit your ~/.zeddoom" ".ini file and add the directories\n"
+					  "1. Place one or more of these wads in ~/Library/Application Support/" GAMENAMELOWERCASE "/\n"
+					  "2. Edit your ~/Library/Preferences/" GAMENAMELOWERCASE ".ini and add the directories\n"
 					  "of your iwads to the list beneath [IWADSearch.Directories]");
 #else
 					  "1. Place one or more of these wads in ~/.config/" GAMENAMELOWERCASE "/.\n"

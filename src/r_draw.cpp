@@ -42,6 +42,7 @@
 
 #include "gi.h"
 #include "stats.h"
+#include "x86.h"
 
 #undef RANGECHECK
 
@@ -1485,6 +1486,7 @@ void R_FillSpan (void)
 
 // Actually, this is just R_DrawColumn with an extra width parameter.
 
+#ifndef X86_ASM
 static const BYTE *slabcolormap;
 
 extern "C" void R_SetupDrawSlabC(const BYTE *colormap)
@@ -1564,6 +1566,8 @@ extern "C" void STACK_ARGS R_DrawSlabC(int dx, fixed_t v, int dy, fixed_t vi, co
 		dy--;
 	}
 }
+#endif
+
 
 /****************************************************/
 /****************************************************/
@@ -1591,7 +1595,6 @@ void setupvline (int fracbits)
 	vlinebits = fracbits;
 }
 
-#if !defined(X86_ASM)
 DWORD STACK_ARGS vlinec1 ()
 {
 	DWORD fracstep = dc_iscale;
@@ -1629,20 +1632,12 @@ void STACK_ARGS vlinec4 ()
 		dest += dc_pitch;
 	} while (--count);
 }
-#endif
 
 void setupmvline (int fracbits)
 {
-#if defined(X86_ASM)
-	setupmvlineasm (fracbits);
-	domvline1 = mvlineasm1;
-	domvline4 = mvlineasm4;
-#else
 	mvlinebits = fracbits;
-#endif
 }
 
-#if !defined(X86_ASM)
 DWORD STACK_ARGS mvlinec1 ()
 {
 	DWORD fracstep = dc_iscale;
@@ -1686,7 +1681,6 @@ void STACK_ARGS mvlinec4 ()
 		dest += dc_pitch;
 	} while (--count);
 }
-#endif
 
 extern "C" short spanend[MAXHEIGHT];
 extern fixed_t rw_light;

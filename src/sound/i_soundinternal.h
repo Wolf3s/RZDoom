@@ -9,6 +9,7 @@
 
 class FileReader;
 
+// For convenience, this structure matches FMOD_REVERB_PROPERTIES.
 // Since I can't very well #include system-specific stuff in the
 // main game files, I duplicate it here.
 struct REVERB_PROPERTIES

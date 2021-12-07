@@ -732,6 +732,8 @@ struct _sample * _WM_load_gus_pat(const char *filename, int fix_release) {
 	};
 	unsigned long int tmp_loop;
 
+	/*unused*/fix_release;
+
 	SAMPLE_CONVERT_DEBUG(__FUNCTION__); SAMPLE_CONVERT_DEBUG(filename);
 
 	if ((gus_patch = _WM_BufferFile(filename, &gus_size)) == NULL) {

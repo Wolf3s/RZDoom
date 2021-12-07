@@ -36,7 +36,6 @@
 #include <signal.h>
 #include <time.h>
 
-#include "version.h"
 #include "hardware.h"
 #include "i_video.h"
 #include "i_system.h"
@@ -58,56 +57,55 @@ IVideo *Video;
 
 void I_ShutdownGraphics ()
 {
-    if (screen)
-    {
-        DFrameBuffer *s = screen;
-        screen = NULL;
-        s->ObjectFlags |= OF_YesReallyDelete;
-        delete s;
-    }
-    if (Video)
-        delete Video, Video = NULL;
+	if (screen)
+	{
+		DFrameBuffer *s = screen;
+		screen = NULL;
+		s->ObjectFlags |= OF_YesReallyDelete;
+		delete s;
+	}
+	if (Video)
+		delete Video, Video = NULL;
 
-    SDL_QuitSubSystem (SDL_INIT_VIDEO);
+	SDL_QuitSubSystem (SDL_INIT_VIDEO);
 }
 
 void I_InitGraphics ()
 {
-    if (SDL_InitSubSystem (SDL_INIT_VIDEO) < 0)
-    {
-        I_FatalError ("Could not initialize SDL video:\n%s\n", SDL_GetError());
-        return;
-    }
+	if (SDL_InitSubSystem (SDL_INIT_VIDEO) < 0)
+	{
+		I_FatalError ("Could not initialize SDL video:\n%s\n", SDL_GetError());
+		return;
+	}
 
-    Printf("Using video driver %s\n", SDL_GetCurrentVideoDriver());
+	Printf("Using video driver %s\n", SDL_GetCurrentVideoDriver());
 
-    UCVarValue val;
+	UCVarValue val;
 
-    val.Bool = !!Args->CheckParm ("-devparm");
-    ticker.SetGenericRepDefault (val, CVAR_Bool);
-    
-    Video = new SDLVideo (0);
-    
-    if (Video == NULL)
-        I_FatalError ("Failed to initialize display");
+	val.Bool = !!Args->CheckParm ("-devparm");
+	ticker.SetGenericRepDefault (val, CVAR_Bool);
 
-    atterm (I_ShutdownGraphics);
+	Video = new SDLVideo (0);
+	if (Video == NULL)
+		I_FatalError ("Failed to initialize display");
 
-    Video->SetWindowedScale (vid_winscale);
+	atterm (I_ShutdownGraphics);
+
+	Video->SetWindowedScale (vid_winscale);
 }
 
 static void I_DeleteRenderer()
 {
-    if (Renderer != NULL) delete Renderer;
+	if (Renderer != NULL) delete Renderer;
 }
 
 void I_CreateRenderer()
 {
-    if (Renderer == NULL)
-    {
-        Renderer = new FSoftwareRenderer;
-        atterm(I_DeleteRenderer);
-    }
+	if (Renderer == NULL)
+	{
+		Renderer = new FSoftwareRenderer;
+		atterm(I_DeleteRenderer);
+	}
 }
 
 
@@ -117,78 +115,78 @@ void I_CreateRenderer()
 
 DFrameBuffer *I_SetMode (int &width, int &height, DFrameBuffer *old)
 {
-    bool fs = false;
-    switch (Video->GetDisplayType ())
-    {
-    case DISPLAY_WindowOnly:
-        fs = false;
-        break;
-    case DISPLAY_FullscreenOnly:
-        fs = true;
-        break;
-    case DISPLAY_Both:
-        fs = fullscreen;
-        break;
-    }
-    DFrameBuffer *res = Video->CreateFrameBuffer (width, height, fs, old);
+	bool fs = false;
+	switch (Video->GetDisplayType ())
+	{
+	case DISPLAY_WindowOnly:
+		fs = false;
+		break;
+	case DISPLAY_FullscreenOnly:
+		fs = true;
+		break;
+	case DISPLAY_Both:
+		fs = fullscreen;
+		break;
+	}
+	DFrameBuffer *res = Video->CreateFrameBuffer (width, height, fs, old);
 
-    /* Right now, CreateFrameBuffer cannot return NULL
-    if (res == NULL)
-    {
-        I_FatalError ("Mode %dx%d is unavailable\n", width, height);
-    }
-    */
-    return res;
+	/* Right now, CreateFrameBuffer cannot return NULL
+	if (res == NULL)
+	{
+		I_FatalError ("Mode %dx%d is unavailable\n", width, height);
+	}
+	*/
+	return res;
 }
 
 bool I_CheckResolution (int width, int height, int bits)
 {
-    int twidth, theight;
+	int twidth, theight;
 
-    Video->StartModeIterator (bits, screen ? screen->IsFullscreen() : fullscreen);
-    while (Video->NextMode (&twidth, &theight, NULL))
-    {
-        if (width == twidth && height == theight)
-            return true;
-    }
-    return false;
+	Video->StartModeIterator (bits, screen ? screen->IsFullscreen() : fullscreen);
+	while (Video->NextMode (&twidth, &theight, NULL))
+	{
+		if (width == twidth && height == theight)
+			return true;
+	}
+	return false;
 }
 
 void I_ClosestResolution (int *width, int *height, int bits)
 {
-    int twidth, theight;
-    int cwidth = 0, cheight = 0;
-    int iteration;
-    DWORD closest = 4294967295u;
+	int twidth, theight;
+	int cwidth = 0, cheight = 0;
+	int iteration;
+	DWORD closest = 4294967295u;
 
-    for (iteration = 0; iteration < 2; iteration++)
-    {
-        Video->StartModeIterator (bits, screen ? screen->IsFullscreen() : fullscreen);
-        while (Video->NextMode (&twidth, &theight, NULL))
-        {
-            if (twidth == *width && theight == *height)
-                return;
+	for (iteration = 0; iteration < 2; iteration++)
+	{
+		Video->StartModeIterator (bits, screen ? screen->IsFullscreen() : fullscreen);
+		while (Video->NextMode (&twidth, &theight, NULL))
+		{
+			if (twidth == *width && theight == *height)
+				return;
 
-            if (iteration == 0 && (twidth < *width || theight < *height))
-                continue;
+			if (iteration == 0 && (twidth < *width || theight < *height))
+				continue;
 
-            DWORD dist = (twidth - *width) * (twidth - *width)
-                + (theight - *height) * (theight - *height);
+			DWORD dist = (twidth - *width) * (twidth - *width)
+				+ (theight - *height) * (theight - *height);
 
-            if (dist < closest)
-            {
-                closest = dist;
-                cwidth = twidth;
-                cheight = theight;
-            }
-        }
-        if (closest != 4294967295u)
-        {
-            *width = cwidth;
-            *height = cheight;
-            return;
-        }
-    }
+			if (dist < closest)
+			{
+				closest = dist;
+				cwidth = twidth;
+				cheight = theight;
+			}
+		}
+		if (closest != 4294967295u)
+		{
+			*width = cwidth;
+			*height = cheight;
+			return;
+		}
+	}
 }
 
 //==========================================================================
@@ -211,52 +209,52 @@ Semaphore FPSLimitSemaphore;
 
 static void FPSLimitNotify(sigval val)
 {
-    SEMAPHORE_SIGNAL(FPSLimitSemaphore)
+	SEMAPHORE_SIGNAL(FPSLimitSemaphore)
 }
 
 void I_SetFPSLimit(int limit)
 {
-    static sigevent FPSLimitEvent;
-    static timer_t FPSLimitTimer;
-    static bool FPSLimitTimerEnabled = false;
-    static bool EventSetup = false;
-    if(!EventSetup)
-    {
-        EventSetup = true;
-        FPSLimitEvent.sigev_notify = SIGEV_THREAD;
-        FPSLimitEvent.sigev_signo = 0;
-        FPSLimitEvent.sigev_value.sival_int = 0;
-        FPSLimitEvent.sigev_notify_function = FPSLimitNotify;
-        FPSLimitEvent.sigev_notify_attributes = NULL;
+	static sigevent FPSLimitEvent;
+	static timer_t FPSLimitTimer;
+	static bool FPSLimitTimerEnabled = false;
+	static bool EventSetup = false;
+	if(!EventSetup)
+	{
+		EventSetup = true;
+		FPSLimitEvent.sigev_notify = SIGEV_THREAD;
+		FPSLimitEvent.sigev_signo = 0;
+		FPSLimitEvent.sigev_value.sival_int = 0;
+		FPSLimitEvent.sigev_notify_function = FPSLimitNotify;
+		FPSLimitEvent.sigev_notify_attributes = NULL;
 
-        SEMAPHORE_INIT(FPSLimitSemaphore, 0, 0)
-    }
+		SEMAPHORE_INIT(FPSLimitSemaphore, 0, 0)
+	}
 
-    if (limit < 0)
-    {
-        limit = vid_maxfps;
-    }
-    // Kill any leftover timer.
-    if (FPSLimitTimerEnabled)
-    {
-        timer_delete(FPSLimitTimer);
-        FPSLimitTimerEnabled = false;
-    }
-    if (limit == 0)
-    { // no limit
-        DPrintf(DMSG_NOTIFY, "FPS timer disabled\n");
-    }
-    else
-    {
-        FPSLimitTimerEnabled = true;
-        if(timer_create(CLOCK_REALTIME, &FPSLimitEvent, &FPSLimitTimer) == -1)
-            Printf(DMSG_WARNING, "Failed to create FPS limitter event\n");
-        itimerspec period = { {0, 0}, {0, 0} };
-        period.it_value.tv_nsec = period.it_interval.tv_nsec = 1000000000 / limit;
-        if(timer_settime(FPSLimitTimer, 0, &period, NULL) == -1)
-            Printf(DMSG_WARNING, "Failed to set FPS limitter timer\n");
-        DPrintf(DMSG_NOTIFY, "FPS timer set to %u ms\n", (unsigned int) period.it_interval.tv_nsec / 1000000);
-    }
+	if (limit < 0)
+	{
+		limit = vid_maxfps;
+	}
+	// Kill any leftover timer.
+	if (FPSLimitTimerEnabled)
+	{
+		timer_delete(FPSLimitTimer);
+		FPSLimitTimerEnabled = false;
+	}
+	if (limit == 0)
+	{ // no limit
+		DPrintf("FPS timer disabled\n");
+	}
+	else
+	{
+		FPSLimitTimerEnabled = true;
+		if(timer_create(CLOCK_REALTIME, &FPSLimitEvent, &FPSLimitTimer) == -1)
+			Printf("Failed to create FPS limitter event\n");
+		itimerspec period = { {0, 0}, {0, 0} };
+		period.it_value.tv_nsec = period.it_interval.tv_nsec = 1000000000 / limit;
+		if(timer_settime(FPSLimitTimer, 0, &period, NULL) == -1)
+			Printf("Failed to set FPS limitter timer\n");
+		DPrintf("FPS timer set to %u ms\n", (unsigned int) period.it_interval.tv_nsec / 1000000);
+	}
 }
 #else
 // So Apple doesn't support POSIX timers and I can't find a good substitute short of
@@ -268,75 +266,75 @@ void I_SetFPSLimit(int limit)
 
 CUSTOM_CVAR (Int, vid_maxfps, 200, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
-    if (vid_maxfps < TICRATE && vid_maxfps != 0)
-    {
-        vid_maxfps = TICRATE;
-    }
-    else if (vid_maxfps > 1000)
-    {
-        vid_maxfps = 1000;
-    }
-    else if (cl_capfps == 0)
-    {
-        I_SetFPSLimit(vid_maxfps);
-    }
+	if (vid_maxfps < TICRATE && vid_maxfps != 0)
+	{
+		vid_maxfps = TICRATE;
+	}
+	else if (vid_maxfps > 1000)
+	{
+		vid_maxfps = 1000;
+	}
+	else if (cl_capfps == 0)
+	{
+		I_SetFPSLimit(vid_maxfps);
+	}
 }
 
 extern int NewWidth, NewHeight, NewBits, DisplayBits;
 
 CUSTOM_CVAR (Bool, fullscreen, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
-    NewWidth = screen->GetWidth();
-    NewHeight = screen->GetHeight();
-    NewBits = DisplayBits;
-    setmodeneeded = true;
+	NewWidth = screen->GetWidth();
+	NewHeight = screen->GetHeight();
+	NewBits = DisplayBits;
+	setmodeneeded = true;
 }
 
 CUSTOM_CVAR (Float, vid_winscale, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
-    if (self < 1.f)
-    {
-        self = 1.f;
-    }
-    else if (Video)
-    {
-        Video->SetWindowedScale (self);
-        NewWidth = screen->GetWidth();
-        NewHeight = screen->GetHeight();
-        NewBits = DisplayBits;
-        setmodeneeded = true;
-    }
+	if (self < 1.f)
+	{
+		self = 1.f;
+	}
+	else if (Video)
+	{
+		Video->SetWindowedScale (self);
+		NewWidth = screen->GetWidth();
+		NewHeight = screen->GetHeight();
+		NewBits = DisplayBits;
+		setmodeneeded = true;
+	}
 }
 
 CCMD (vid_listmodes)
 {
-    static const char *ratios[7] = { "", " - 16:9", " - 16:10", "", " - 5:4", "", " - 21:9" };
-    int width, height, bits;
-    bool letterbox;
+	static const char *ratios[5] = { "", " - 16:9", " - 16:10", "", " - 5:4" };
+	int width, height, bits;
+	bool letterbox;
 
-    if (Video == NULL)
-    {
-        return;
-    }
-    for (bits = 1; bits <= 32; bits++)
-    {
-        Video->StartModeIterator (bits, screen->IsFullscreen());
-        while (Video->NextMode (&width, &height, &letterbox))
-        {
-            bool thisMode = (width == DisplayWidth && height == DisplayHeight && bits == DisplayBits);
-            int ratio = CheckRatio (width, height);
-            Printf (thisMode ? PRINT_BOLD : PRINT_HIGH,
-                "%s%4d x%5d x%3d%s%s\n",
-                thisMode || !(ratio & 3) ? "" : TEXTCOLOR_GOLD,
-                width, height, bits,
-                ratios[ratio],
-                thisMode || !letterbox ? "" : TEXTCOLOR_BROWN " LB"
-                );
-        }
-    }
+	if (Video == NULL)
+	{
+		return;
+	}
+	for (bits = 1; bits <= 32; bits++)
+	{
+		Video->StartModeIterator (bits, screen->IsFullscreen());
+		while (Video->NextMode (&width, &height, &letterbox))
+		{
+			bool thisMode = (width == DisplayWidth && height == DisplayHeight && bits == DisplayBits);
+			int ratio = CheckRatio (width, height);
+			Printf (thisMode ? PRINT_BOLD : PRINT_HIGH,
+				"%s%4d x%5d x%3d%s%s\n",
+				thisMode || !(ratio & 3) ? "" : TEXTCOLOR_GOLD,
+				width, height, bits,
+				ratios[ratio],
+				thisMode || !letterbox ? "" : TEXTCOLOR_BROWN " LB"
+				);
+		}
+	}
 }
 
 CCMD (vid_currentmode)
 {
-    Printf ("%dx%dx%d\n", DisplayWidth, DisplayHeight, DisplayBits);
+	Printf ("%dx%dx%d\n", DisplayWidth, DisplayHeight, DisplayBits);
 }

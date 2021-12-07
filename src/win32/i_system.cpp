@@ -67,6 +67,7 @@
 #include "i_sound.h"
 #include "i_music.h"
 #include "resource.h"
+#include "x86.h"
 #include "stats.h"
 
 #include "d_main.h"
@@ -97,6 +98,7 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
+extern void CheckCPUID(CPUInfo *cpu);
 extern void LayoutMainWindow(HWND hWnd, HWND pane);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -688,7 +690,7 @@ void CalculateCPUSpeed()
 
 	QueryPerformanceFrequency (&freq);
 
-	if (freq.QuadPart != 0)
+	if (freq.QuadPart != 0 && CPU.bRDTSC)
 	{
 		LARGE_INTEGER count1, count2;
 		cycle_t ClockCalibration;
@@ -736,6 +738,10 @@ void CalculateCPUSpeed()
 
 void I_Init()
 {
+	CheckCPUID(&CPU);
+	CalculateCPUSpeed();
+	DumpCPUInfo(&CPU);
+
 	I_GetTime = I_GetTimeSelect;
 	I_WaitForTic = I_WaitForTicSelect;
 
@@ -1142,7 +1148,7 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 			FString newlabel;
 
 			GetWindowText(hDlg, label, countof(label));
-			newlabel.Format(GAMESIG " " VERSIONSTR " % s: ", label);
+			newlabel.Format(GAMESIG " %s: %s", GetVersionString(), label);
 			SetWindowText(hDlg, newlabel.GetChars());
 		}
 		// Populate the list with all the IWADs found

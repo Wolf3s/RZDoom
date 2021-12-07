@@ -329,7 +329,22 @@ FString M_GetSavegamesPath()
 
 FString M_GetCachePath(bool create)
 {
-	return NicePath("~/" GAME_DIR "/cache");
+	FString path;
+
+	char pathstr[PATH_MAX];
+	FSRef folder;
+
+	if (noErr == FSFindFolder(kUserDomain, kApplicationSupportFolderType, create ? kCreateFolder : 0, &folder) &&
+		noErr == FSRefMakePath(&folder, (UInt8*)pathstr, PATH_MAX))
+	{
+		path = pathstr;
+	}
+	else
+	{
+		path = progdir;
+	}
+	path += "/zdoom/cache";
+	return path;
 }
 
 //===========================================================================
@@ -342,7 +357,17 @@ FString M_GetCachePath(bool create)
 
 FString M_GetAutoexecPath()
 {
-	return NicePath("~/" GAME_DIR "/autoexec.cfg");
+	FString path;
+
+	char cpath[PATH_MAX];
+	FSRef folder;
+	
+	if (noErr == FSFindFolder(kUserDomain, kDocumentsFolderType, kCreateFolder, &folder) &&
+		noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
+	{
+		path << cpath << "/" GAME_DIR "/autoexec.cfg";
+	}
+	return path;
 }
 
 //===========================================================================
@@ -378,7 +403,18 @@ FString M_GetCajunPath(const char *botfilename)
 
 FString M_GetConfigPath(bool for_reading)
 {
-	return NicePath("~/." GAMENAMELOWERCASE ".ini");
+	char cpath[PATH_MAX];
+	FSRef folder;
+	
+	if (noErr == FSFindFolder(kUserDomain, kPreferencesFolderType, kCreateFolder, &folder) &&
+		noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
+	{
+		FString path;
+		path << cpath << "/" GAMENAMELOWERCASE ".ini";
+		return path;
+	}
+	// Ungh.
+	return GAMENAMELOWERCASE ".ini";
 }
 
 //===========================================================================
@@ -391,7 +427,20 @@ FString M_GetConfigPath(bool for_reading)
 
 FString M_GetScreenshotsPath()
 {
-	return NicePath("~/" GAME_DIR "/screenshots/");
+	FString path;
+	char cpath[PATH_MAX];
+	FSRef folder;
+	
+	if (noErr == FSFindFolder(kUserDomain, kDocumentsFolderType, kCreateFolder, &folder) &&
+		noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
+	{
+		path << cpath << "/" GAME_DIR "/Screenshots/";
+	}
+	else
+	{
+		path = "~/";
+	}
+	return path;
 }
 
 //===========================================================================
@@ -404,7 +453,16 @@ FString M_GetScreenshotsPath()
 
 FString M_GetSavegamesPath()
 {
-	return NicePath("~/" GAME_DIR "/savedgames");
+	FString path;
+	char cpath[PATH_MAX];
+	FSRef folder;
+
+	if (noErr == FSFindFolder(kUserDomain, kDocumentsFolderType, kCreateFolder, &folder) &&
+		noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
+	{
+		path << cpath << "/" GAME_DIR "/Savegames/";
+	}
+	return path;
 }
 
 #else // Linux, et al.
@@ -479,7 +537,7 @@ FString M_GetCachePath(bool create)
 {
 	// Don't use GAME_DIR and such so that ZDoom and its child ports can
 	// share the node cache.
-	FString path = NicePath("~/.config/zeddoom/cache");
+	FString path = NicePath("~/.config/zdoom/cache");
 	if (create)
 	{
 		CreatePath(path);

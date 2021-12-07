@@ -2232,7 +2232,7 @@ void D_DoomMain (void)
 		hashfile = fopen(filename, "w");
 		if (hashfile)
 		{
-			fprintf(hashfile, GAMENAME, VERSIONSTR);
+			fprintf(hashfile, "%s version %s (%s)\n", GAMENAME, GetVersionString(), GetGitHash());
 #ifdef __VERSION__
 			fprintf(hashfile, "Compiler version: %s\n", __VERSION__);
 #endif
@@ -2530,6 +2530,14 @@ void D_DoomMain (void)
 
 		if (!restart)
 		{
+			// start the apropriate game based on parms
+			v = Args->CheckValue ("-record");
+
+			if (v)
+			{
+				G_RecordDemo (v);
+				autostart = true;
+			}
 
 			delete StartScreen;
 			StartScreen = NULL;
@@ -2550,6 +2558,14 @@ void D_DoomMain (void)
 				FixPathSeperator (file);
 				DefaultExtension (file, ".zds");
 				G_LoadGame (file);
+			}
+
+			v = Args->CheckValue("-playdemo");
+			if (v != NULL)
+			{
+				singledemo = true;				// quit after one demo
+				G_DeferedPlayDemo (v);
+				D_DoomLoop ();	// never returns
 			}
 
 			v = Args->CheckValue ("-timedemo");

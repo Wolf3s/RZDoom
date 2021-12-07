@@ -1106,8 +1106,18 @@ int ClassifyLineBackpatchC (node_t &node, const FSimpleVert *v1, const FSimpleVe
 #endif
 //	printf ("Patching for SSE %d @ %p %d\n", SSELevel, calleroffset, *calleroffset);
 
-	func = ClassifyLine2;
-	diff = int((char *)ClassifyLine2 - (char *)calleroffset);
+#ifndef DISABLE_SSE
+	if (CPU.bSSE2)
+	{
+		func = ClassifyLineSSE2;
+		diff = int((char *)ClassifyLineSSE2 - (char *)calleroffset);
+	}
+	else
+#endif
+	{
+		func = ClassifyLine2;
+		diff = int((char *)ClassifyLine2 - (char *)calleroffset);
+	}
 
 	calleroffset--;
 	// Patch the caller.

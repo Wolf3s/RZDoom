@@ -150,7 +150,7 @@ static int DoomSpecificInfo (char *buffer, char *end)
 	int i, p;
 
 	p = 0;
-	p += snprintf (buffer+p, size-p, GAMENAME " " VERSIONSTR);
+	p += snprintf (buffer+p, size-p, GAMENAME" version %s (%s)\n", GetVersionString(), GetGitHash());
 #ifdef __VERSION__
 	p += snprintf (buffer+p, size-p, "Compiler version: %s\n", __VERSION__);
 #endif
@@ -198,10 +198,10 @@ static int DoomSpecificInfo (char *buffer, char *end)
 // matter.
 extern "C"
 {
-	void *rtext_a_start, *rtext_a_end;
-	void *rtext_tmap_start, *rtext_tmap_end;
-	void *rtext_tmap2_start, *rtext_tmap2_end;
-	void *rtext_tmap3_start, *rtext_tmap3_end;
+	extern void *rtext_a_start, *rtext_a_end;
+	extern void *rtext_tmap_start, *rtext_tmap_end;
+	extern void *rtext_tmap2_start, *rtext_tmap2_end;
+	extern void *rtext_tmap3_start, *rtext_tmap3_end;
 };
 
 static void unprotect_pages(long pagesize, void *start, void *end)
@@ -244,7 +244,8 @@ int main (int argc, char **argv)
 	}
 #endif // !__APPLE__
 
-	printf(GAMENAME " " VERSIONSTR" SDL version\nCompiled on %s\n",__DATE__);
+	printf(GAMENAME" %s - %s - SDL version\nCompiled on %s\n",
+		GetVersionString(), GetGitTime(), __DATE__);
 
 	seteuid (getuid ());
     std::set_new_handler (NewFailure);
@@ -257,6 +258,10 @@ int main (int argc, char **argv)
 	// clear the setlocale call at least this will be correct.
 	// Note that the LANG environment variable is overridden by LC_*
 	setenv ("LC_NUMERIC", "C", 1);
+
+#ifndef NO_GTK
+	GtkAvailable = gtk_init_check (&argc, &argv);
+#endif
 	
 	setlocale (LC_ALL, "C");
 
