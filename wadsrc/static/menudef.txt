@@ -1515,7 +1515,6 @@ OptionMenu SoundOptions
 	Slider "Music volume",		"snd_musicvolume", 0, 1, 0.05
 	Option "MIDI device",		"snd_mididevice", "MidiDevices"
 	StaticText " "
-	Option "Underwater reverb",	"snd_waterreverb", "OnOff"
 	Option "Randomize pitches",	"snd_pitched", "OnOff"
 	Slider "Sound channels",	"snd_channels", 8, 256, 8, 0
 	StaticText " "

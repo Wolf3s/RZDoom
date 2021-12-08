@@ -148,7 +148,6 @@ void I_BuildALDeviceList(FOptionValues *opt)
 
 EXTERN_CVAR (Int, snd_channels)
 EXTERN_CVAR (Int, snd_samplerate)
-EXTERN_CVAR (Bool, snd_waterreverb)
 EXTERN_CVAR (Bool, snd_pitched)
 
 
@@ -622,9 +621,6 @@ public:
         return true;
     }
 };
-
-
-extern ReverbContainer *ForcedEnvironment;
 
 #define AREA_SOUND_RADIUS  (128.f)
 
@@ -1633,79 +1629,6 @@ void OpenALSoundRenderer::UpdateListener(SoundListener *listener)
                               listener->velocity.Y,
                              -listener->velocity.Z);
     getALError();
-
-    const ReverbContainer *env = ForcedEnvironment;
-    if(!env)
-    {
-        env = listener->Environment;
-        if(!env)
-            env = DefaultEnvironments[0];
-    }
-    if(env != PrevEnvironment || env->Modified)
-    {
-        PrevEnvironment = env;
-        DPrintf("Reverb Environment %s\n", env->Name);
-
-        if(EnvSlot != 0)
-            LoadReverb(env);
-
-        const_cast<ReverbContainer*>(env)->Modified = false;
-    }
-
-    // NOTE: Moving into and out of water will undo pitch variations on sounds.
-    if(listener->underwater || env->SoftwareWater)
-    {
-        if(!WasInWater)
-        {
-            WasInWater = true;
-
-            if(EnvSlot != 0 && *snd_waterreverb)
-            {
-                // Find the "Underwater" reverb environment
-                env = S_FindEnvironment(0x1600);
-                LoadReverb(env ? env : DefaultEnvironments[0]);
-
-                alFilterf(EnvFilters[0], AL_LOWPASS_GAIN, 1.f);
-                alFilterf(EnvFilters[0], AL_LOWPASS_GAINHF, 0.125f);
-                alFilterf(EnvFilters[1], AL_LOWPASS_GAIN, 1.f);
-                alFilterf(EnvFilters[1], AL_LOWPASS_GAINHF, 1.f);
-
-                // Apply the updated filters on the sources
-                for(uint32 i = 0;i < ReverbSfx.Size();++i)
-                {
-                    alSourcei(ReverbSfx[i], AL_DIRECT_FILTER, EnvFilters[0]);
-                    alSource3i(ReverbSfx[i], AL_AUXILIARY_SEND_FILTER, EnvSlot, 0, EnvFilters[1]);
-                }
-            }
-
-            for(uint32 i = 0;i < ReverbSfx.Size();++i)
-                alSourcef(ReverbSfx[i], AL_PITCH, PITCH_MULT);
-            getALError();
-        }
-    }
-    else if(WasInWater)
-    {
-        WasInWater = false;
-
-        if(EnvSlot != 0)
-        {
-            LoadReverb(env);
-
-            alFilterf(EnvFilters[0], AL_LOWPASS_GAIN, 1.f);
-            alFilterf(EnvFilters[0], AL_LOWPASS_GAINHF, 1.f);
-            alFilterf(EnvFilters[1], AL_LOWPASS_GAIN, 1.f);
-            alFilterf(EnvFilters[1], AL_LOWPASS_GAINHF, 1.f);
-            for(uint32 i = 0;i < ReverbSfx.Size();++i)
-            {
-                alSourcei(ReverbSfx[i], AL_DIRECT_FILTER, EnvFilters[0]);
-                alSource3i(ReverbSfx[i], AL_AUXILIARY_SEND_FILTER, EnvSlot, 0, EnvFilters[1]);
-            }
-        }
-
-        for(uint32 i = 0;i < ReverbSfx.Size();++i)
-            alSourcef(ReverbSfx[i], AL_PITCH, 1.f);
-        getALError();
-    }
 }
 
 void OpenALSoundRenderer::UpdateSounds()
