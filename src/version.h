@@ -83,12 +83,12 @@ const char *GetVersionString();
 #define SAVESIG "ZDOOMSAVE" SAVEVERSTRINGIFY(SAVEVER)
 
 // This is so that derivates can use the same savegame versions without worrying about engine compatibility
-#define GAMESIG "ZEDDOOM"
-#define BASEWAD "zeddoom.pk3"
+#define GAMESIG "RZDOOM"
+#define BASEWAD "rzdoom.pk3"
 
 // More stuff that needs to be different for derivatives.
-#define GAMENAME "ZedDoom"
-#define GAMENAMELOWERCASE "zeddoom"
+#define GAMENAME "RZDoom"
+#define GAMENAMELOWERCASE "rzdoom"
 #define FORUM_URL ""
 #define BUGS_FORUM_URL	""
 

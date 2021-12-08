@@ -67,15 +67,15 @@ BEGIN
     "    BEGIN\r\n"
     "        BLOCK ""040904b0""\r\n"
     "        BEGIN\r\n"
-    "            VALUE ""Comments"", ""Thanks to id Software for creating DOOM and then releasing the source code. Thanks also to TeamTNT for creating BOOM, which ZedDoom is partially based on. Includes code based on the Cajun Bot 0.97 by Martin Collberg.""\r\n"
+    "            VALUE ""Comments"", ""Thanks to id Software for creating DOOM and then releasing the source code. Thanks also to TeamTNT for creating BOOM, which RZDoom is partially based on. Includes code based on the Cajun Bot 0.97 by Martin Collberg.""\r\n"
     "            VALUE ""CompanyName"", "" ""\r\n"
-    "            VALUE ""FileDescription"", ""ZedDoom""\r\n"
+    "            VALUE ""FileDescription"", ""RZDoom""\r\n"
     "            VALUE ""FileVersion"", RC_FILEVERSION2\r\n"
-    "            VALUE ""InternalName"", ""ZedDoom""\r\n"
-    "            VALUE ""LegalCopyright"", ""Copyright \\u00A9 1993-1996 id Software, 1998-2010 Randy Heit, 2002-2010 Christoph Oelckers, 2021 - Gibbon""\r\n"
+    "            VALUE ""InternalName"", ""RZDoom""\r\n"
+    "            VALUE ""LegalCopyright"", ""Copyright (C) 1993-1996 id Software, 1998-2010 Randy Heit, 2002-2010 Christoph Oelckers, 2021 - Gibbon""\r\n"
     "            VALUE ""LegalTrademarks"", ""DoomR is a Registered Trademark of id Software, Inc.""\r\n"
-    "            VALUE ""OriginalFilename"", ""zeddoom.exe""\r\n"
-    "            VALUE ""ProductName"", ""ZedDoom""\r\n"
+    "            VALUE ""OriginalFilename"", ""rzdoom.exe""\r\n"
+    "            VALUE ""ProductName"", ""RZDoom""\r\n"
     "            VALUE ""ProductVersion"", RC_PRODUCTVERSION2\r\n"
     "        END\r\n"
     "    END\r\n"
@@ -96,7 +96,7 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_ICON1               ICON                    "zeddoom.ico"
+IDI_ICON1               ICON                    "rzdoom.ico"
 IDI_BOING1              ICON                    "boing1.ico"
 IDI_BOING2              ICON                    "boing2.ico"
 IDI_BOING3              ICON                    "boing3.ico"
@@ -227,7 +227,7 @@ BEGIN
     CONTROL         "Don't ask me this again",IDC_DONTASKIWAD,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,61,153,89,10
     DEFPUSHBUTTON   "OK",IDOK,5,165,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,155,165,50,14
-    LTEXT           "ZDoom found more than one IWAD present.",IDC_STATIC,5,5,140,8
+    LTEXT           "RZDoom found more than one IWAD present.",IDC_STATIC,5,5,140,8
     LTEXT           "Select from the list below to determine which one to use:",IDC_STATIC,5,15,200,8
 END
 
@@ -378,7 +378,7 @@ END
 IDD_CRASHDIALOG DIALOGEX 0, 0, 415, 308
 STYLE DS_SETFONT | DS_MODALFRAME | DS_SETFOREGROUND | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_CONTROLPARENT | WS_EX_APPWINDOW
-CAPTION "ZDoom Very Fatal Error"
+CAPTION "RZDoom Very Fatal Error"
 FONT 8, "MS Shell Dlg", 400, 0, 0x0
 BEGIN
     CONTROL         "",IDC_CRASHTAB,"SysTabControl32",WS_TABSTOP,4,4,404,280
@@ -485,15 +485,15 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "Comments", "Thanks to id Software for creating DOOM and then releasing the source code. Thanks also to TeamTNT for creating BOOM, which ZedDoom is partially based on. Includes code based on the Cajun Bot 0.97 by Martin Collberg."
+            VALUE "Comments", "Thanks to id Software for creating DOOM and then releasing the source code. Thanks also to TeamTNT for creating BOOM, which RZDoom is partially based on. Includes code based on the Cajun Bot 0.97 by Martin Collberg."
             VALUE "CompanyName", " "
-            VALUE "FileDescription", "ZedDoom"
+            VALUE "FileDescription", "RZDoom"
             VALUE "FileVersion", RC_FILEVERSION2
-            VALUE "InternalName", "ZedDoom"
-            VALUE "LegalCopyright", "Copyright \u00A9 1993-1996 id Software, 1998-2010 Randy Heit, 2002-2010 Christoph Oelckers, 2021 - Gibbon."
+            VALUE "InternalName", "RZDoom"
+            VALUE "LegalCopyright", "Copyright (C) 1993-1996 id Software, 1998-2010 Randy Heit, 2002-2010 Christoph Oelckers, 2021 - Gibbon."
             VALUE "LegalTrademarks", "DoomR is a Registered Trademark of id Software, Inc."
-            VALUE "OriginalFilename", "zeddoom.exe"
-            VALUE "ProductName", "ZedDoom"
+            VALUE "OriginalFilename", "rzdoom.exe"
+            VALUE "ProductName", "RZDoom"
             VALUE "ProductVersion", RC_PRODUCTVERSION2
         END
     END

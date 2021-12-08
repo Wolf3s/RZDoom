@@ -359,7 +359,7 @@ set( PLAT_SDL_SOURCES
 	posix/sdl/st_start.cpp )
 set( PLAT_OSX_SOURCES
 	posix/osx/iwadpicker_cocoa.mm
-	posix/osx/zeddoom.icns )
+	posix/osx/rzdoom.icns )
 set( PLAT_COCOA_SOURCES
 	posix/cocoa/critsec.cpp
 	posix/cocoa/i_input.mm
@@ -378,12 +378,12 @@ if( WIN32 )
 	
 	if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 		# CMake is not set up to compile and link rc files with GCC. :(
-		add_custom_command( OUTPUT zeddoom-rc.o
-			COMMAND windres -o zeddoom-rc.o -i ${CMAKE_CURRENT_SOURCE_DIR}/win32/zdoom.rc
-			DEPENDS win32/zeddoom.rc )
-		set( SYSTEM_SOURCES ${SYSTEM_SOURCES} zeddoom-rc.o )
+		add_custom_command( OUTPUT rzdoom-rc.o
+			COMMAND windres -o rzdoom-rc.o -i ${CMAKE_CURRENT_SOURCE_DIR}/win32/zdoom.rc
+			DEPENDS win32/rzdoom.rc )
+		set( SYSTEM_SOURCES ${SYSTEM_SOURCES} rzdoom-rc.o )
 	else( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
-		set( SYSTEM_SOURCES ${SYSTEM_SOURCES} win32/zeddoom.rc )
+		set( SYSTEM_SOURCES ${SYSTEM_SOURCES} win32/rzdoom.rc )
 	endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 elseif( APPLE )
 	if( OSX_COCOA_BACKEND )
@@ -399,7 +399,7 @@ elseif( APPLE )
 
 	set( SYSTEM_SOURCES ${SYSTEM_SOURCES} ${PLAT_POSIX_SOURCES} ${PLAT_OSX_SOURCES} )
 
-	set_source_files_properties( posix/osx/zeddoom.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources )
+	set_source_files_properties( posix/osx/rzdoom.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources )
 	set_source_files_properties( PROPERTIES MACOSX_PACKAGE_LOCATION Frameworks )
 else( WIN32 )
 	set( SYSTEM_SOURCES_DIR posix posix/sdl )
@@ -567,7 +567,7 @@ set( NOT_COMPILED_SOURCE_FILES
 	xlat_parser.h
 )
 
-add_executable( zeddoom WIN32 MACOSX_BUNDLE
+add_executable( rzdoom WIN32 MACOSX_BUNDLE
 	${HEADER_FILES}
 	${NOT_COMPILED_SOURCE_FILES}
 	__autostart.cpp
@@ -898,7 +898,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
 	set( ZDOOM_LIBS ${ZDOOM_LIBS} nsl socket)
 endif(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
 
-target_link_libraries( zeddoom ${ZDOOM_LIBS} gdtoa lzma )
+target_link_libraries( rzdoom ${ZDOOM_LIBS} gdtoa lzma )
 include_directories( .
 	g_doom
 	g_heretic
@@ -920,10 +920,10 @@ include_directories( .
 if( NOT ZDOOM_OUTPUT_OLDSTYLE OR NO_GENERATOR_EXPRESSIONS )
 	# RUNTIME_OUTPUT_DIRECTORY does not exist in CMake 2.4.
 	# Linux distributions are slow to adopt 2.6. :(
-	set_target_properties( zeddoom PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${ZDOOM_OUTPUT_DIR} )
-	set_target_properties( zeddoom PROPERTIES OUTPUT_NAME ${ZDOOM_EXE_NAME} )
+	set_target_properties( rzdoom PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${ZDOOM_OUTPUT_DIR} )
+	set_target_properties( rzdoom PROPERTIES OUTPUT_NAME ${ZDOOM_EXE_NAME} )
 else( NOT ZDOOM_OUTPUT_OLDSTYLE OR NO_GENERATOR_EXPRESSIONS )
-	set_target_properties( zeddoom PROPERTIES
+	set_target_properties( rzdoom PROPERTIES
 		RUNTIME_OUTPUT_NAME ${ZDOOM_EXE_NAME}
 		RUNTIME_OUTPUT_DIRECTORY_RELEASE ${ZDOOM_OUTPUT_DIR}
 		RUNTIME_OUTPUT_NAME_DEBUG ${ZDOOM_EXE_NAME}d
@@ -938,29 +938,29 @@ endif( NOT ZDOOM_OUTPUT_OLDSTYLE OR NO_GENERATOR_EXPRESSIONS )
 if( MSVC )
 	option( ZDOOM_GENERATE_MAPFILE "Generate .map file for debugging." OFF )
 	if( ZDOOM_GENERATE_MAPFILE )
-		set_target_properties(zeddoom PROPERTIES LINK_FLAGS "/MANIFEST:NO /DELAYLOAD:\"openal32.dll\" /DELAYLOAD:\"libmpg123-0.dll\" /DELAYLOAD:\"libsndfile-1.dll\" /MAP")
+		set_target_properties(rzdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO /DELAYLOAD:\"openal32.dll\" /DELAYLOAD:\"libmpg123-0.dll\" /DELAYLOAD:\"libsndfile-1.dll\" /MAP")
 	else( ZDOOM_GENERATE_MAPFILE )
-		set_target_properties(zeddoom PROPERTIES LINK_FLAGS "/MANIFEST:NO /DELAYLOAD:\"openal32.dll\" /DELAYLOAD:\"libmpg123-0.dll\" /DELAYLOAD:\"libsndfile-1.dll\"")
+		set_target_properties(rzdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO /DELAYLOAD:\"openal32.dll\" /DELAYLOAD:\"libmpg123-0.dll\" /DELAYLOAD:\"libsndfile-1.dll\"")
 	endif( ZDOOM_GENERATE_MAPFILE )
 
 	if( NO_GENERATOR_EXPRESSIONS )
-		add_custom_command(TARGET zeddoom POST_BUILD
-			COMMAND "mt.exe" -manifest \"${CMAKE_CURRENT_SOURCE_DIR}\\win32\\zeddoom.exe.manifest\" -outputresource:\"$(TargetDir)$(TargetFileName)\"\;\#1
+		add_custom_command(TARGET rzdoom POST_BUILD
+			COMMAND "mt.exe" -manifest \"${CMAKE_CURRENT_SOURCE_DIR}\\win32\\rzdoom.exe.manifest\" -outputresource:\"$(TargetDir)$(TargetFileName)\"\;\#1
 			COMMENT "Adding manifest..."
 		)
 	else( NO_GENERATOR_EXPRESSIONS )
-		add_custom_command(TARGET zeddoom POST_BUILD
-			COMMAND "mt.exe" -manifest \"${CMAKE_CURRENT_SOURCE_DIR}\\win32\\zeddoom.exe.manifest\" -outputresource:\"$<TARGET_FILE:zeddoom>\"\;\#1
+		add_custom_command(TARGET rzdoom POST_BUILD
+			COMMAND "mt.exe" -manifest \"${CMAKE_CURRENT_SOURCE_DIR}\\win32\\rzdoom.exe.manifest\" -outputresource:\"$<TARGET_FILE:rzdoom>\"\;\#1
 			COMMENT "Adding manifest..."
 		)
 	endif( NO_GENERATOR_EXPRESSIONS )
 
-	create_default_target_launcher( zeddoom WORKING_DIRECTORY ${ZDOOM_OUTPUT_DIR} )
+	create_default_target_launcher( rzdoom WORKING_DIRECTORY ${ZDOOM_OUTPUT_DIR} )
 endif( MSVC )
 
 if( NOT WIN32 )
 	FILE( WRITE ${CMAKE_CURRENT_BINARY_DIR}/link-make "if [ ! -e ${ZDOOM_OUTPUT_DIR}/${ZDOOM_EXE_NAME} ]; then ln -sf ${CMAKE_CURRENT_BINARY_DIR}/${ZDOOM_EXE_NAME} ${ZDOOM_OUTPUT_DIR}/${ZDOOM_EXE_NAME}; fi" )
-	add_custom_command( TARGET zeddoom POST_BUILD
+	add_custom_command( TARGET rzdoom POST_BUILD
 		COMMAND chmod +x ${CMAKE_CURRENT_BINARY_DIR}/link-make
 		COMMAND /bin/sh -c ${CMAKE_CURRENT_BINARY_DIR}/link-make )
 endif( NOT WIN32 )
@@ -976,9 +976,9 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 
 if( APPLE )
-	set_target_properties(zeddoom PROPERTIES
+	set_target_properties(rzdoom PROPERTIES
 		LINK_FLAGS "-framework Carbon -framework Cocoa -framework IOKit -framework OpenGL"
-		MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/posix/osx/zeddoom-info.plist" )
+		MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/posix/osx/rzdoom-info.plist" )
 endif( APPLE )
 
 source_group("Audio Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/.+")
@@ -1010,7 +1010,7 @@ source_group("OS X Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/posix
 source_group("SDL Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/posix/sdl/.+")
 source_group("SFMT" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sfmt/.+")
 source_group("Shared Game" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_shared/.+")
-source_group("Versioning" FILES version.h win32/zeddoom.rc)
+source_group("Versioning" FILES version.h win32/rzdoom.rc)
 source_group("Win32 Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/win32/.+")
 source_group("Xlat" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/xlat/.+" FILES ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.h)
 source_group("Source Files" FILES ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h sc_man_scanner.re)
