@@ -8,6 +8,3 @@ So this will contain features I deem 'sensible' for a Doom source port. Plus fix
 
 # Notices
 Master branch is inherently unstable, expect bugs if you compile from there. Feel free to report anything you wish, I'll be happy to work with you on them. Of course, I do debug it myself often.
-
-# ZDoom is a pretty large and complicated codebase, can you actually do it?
-Well, I've been programming now for 21 years and I'm an expert in C/C++/Java/Python/Cobol/Kotlin and ARM Assembler and (my favourite) 6502 ASM (Commodore 64!). I'm also well versed in the Windows API, Direct3D 8-11 and of course, all things Unix. So don't worry, it is in 'extremely' capable hands.
