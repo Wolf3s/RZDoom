@@ -64,10 +64,6 @@ if (NOT DEFINED USE_GME_SAP)
     SET(USE_GME_SAP 1 CACHE BOOL "Enable Atari SAP music emulation")
 endif()
 
-if (NOT DEFINED USE_GME_SPC)
-    SET(USE_GME_SPC 1 CACHE BOOL "Enable SNES SPC music emulation")
-endif()
-
 if (NOT DEFINED USE_GME_VGM)
     SET(USE_GME_VGM 1 CACHE BOOL "Enable Sega VGM/VGZ music emulation")
 endif()
@@ -76,30 +72,6 @@ if (USE_GME_NSFE AND NOT USE_GME_NSF)
     MESSAGE(" -- NSFE support requires NSF, enabling NSF support. --")
     SET(USE_GME_NSF 1 CACHE BOOL "Enable NES NSF music emulation" FORCE)
 endif()
-
-# Check for GCC "visibility" support.
-if (CMAKE_COMPILER_IS_GNUCXX)
-   check_cxx_compiler_flag (-fvisibility=hidden __LIBGME_TEST_VISIBILITY)
-   set (ENABLE_VISIBILITY OFF)
-   if (__LIBGME_TEST_VISIBILITY)
-      # get the gcc version
-      exec_program(${CMAKE_CXX_COMPILER} ARGS --version OUTPUT_VARIABLE _gcc_version_info)
-      string (REGEX MATCH "[3-9]\\.[0-9]\\.[0-9]" _gcc_version "${_gcc_version_info}")
-
-      # gcc <4.1 had poor support for symbol visibility
-      if ((${_gcc_version} VERSION_GREATER "4.1") OR (${_gcc_version} VERSION_EQUAL "4.1"))
-         set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
-         set (ENABLE_VISIBILITY ON)
-         add_definitions (-DLIBGME_VISIBILITY)
-
-         # GCC >= 4.2 also correctly supports making inline members have hidden
-         # visibility by default.
-         if ((${_gcc_version} VERSION_GREATER "4.2") OR (${_gcc_version} VERSION_EQUAL "4.2"))
-            set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility-inlines-hidden")
-         endif()
-      endif()
-   endif() # test visibility
-endif (CMAKE_COMPILER_IS_GNUCXX)
 
 # Cache this result
 set( LIBGME_HAVE_GCC_VISIBILITY ${ENABLE_VISIBILITY} CACHE BOOL "GCC support for hidden visibility")

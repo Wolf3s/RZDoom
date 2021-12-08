@@ -1,12 +1,11 @@
-// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
-
-#define _CRT_SECURE_NO_WARNINGS
+// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
 
 #include "Nsfe_Emu.h"
 
 #include "blargg_endian.h"
 #include <string.h>
 #include <ctype.h>
+#include <algorithm>
 
 /* Copyright (C) 2005-2006 Shay Green. This module is free software; you
 can redistribute it and/or modify it under the terms of the GNU Lesser
@@ -20,6 +19,9 @@ License along with this module; if not, write to the Free Software Foundation,
 Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 
 #include "blargg_source.h"
+
+using std::min;
+using std::max;
 
 Nsfe_Info::Nsfe_Info() { playlist_disabled = false; }
 
@@ -37,7 +39,7 @@ inline void Nsfe_Info::unload()
 void Nsfe_Info::disable_playlist( bool b )
 {
 	playlist_disabled = b;
-	info.track_count = (byte)playlist.size();
+	info.track_count = playlist.size();
 	if ( !info.track_count || playlist_disabled )
 		info.track_count = actual_track_count_;
 }
@@ -136,6 +138,9 @@ blargg_err_t Nsfe_Info::load( Data_Reader& in, Nsf_Emu* nsf_emu )
 		RETURN_ERR( in.read( block_header, sizeof block_header ) );
 		blargg_long size = get_le32( block_header [0] );
 		blargg_long tag  = get_le32( block_header [1] );
+
+		if ( size < 0 )
+			return "Corrupt file";
 		
 		//debug_printf( "tag: %c%c%c%c\n", char(tag), char(tag>>8), char(tag>>16), char(tag>>24) );
 		
@@ -173,7 +178,7 @@ blargg_err_t Nsfe_Info::load( Data_Reader& in, Nsf_Emu* nsf_emu )
 				blargg_vector<char> chars;
 				blargg_vector<const char*> strs;
 				RETURN_ERR( read_strs( in, size, chars, strs ) );
-				int n = (int)strs.size();
+				int n = strs.size();
 				
 				if ( n > 3 )
 					copy_str( strs [3], info.dumper, sizeof info.dumper );
@@ -192,7 +197,7 @@ blargg_err_t Nsfe_Info::load( Data_Reader& in, Nsf_Emu* nsf_emu )
 			
 			case BLARGG_4CHAR('e','m','i','t'):
 				RETURN_ERR( track_times.resize( size / 4 ) );
-				RETURN_ERR( in.read( track_times.begin(), (long)track_times.size() * 4 ) );
+				RETURN_ERR( in.read( track_times.begin(), track_times.size() * 4 ) );
 				break;
 			
 			case BLARGG_4CHAR('l','b','l','t'):
@@ -242,7 +247,7 @@ blargg_err_t Nsfe_Info::track_info_( track_info_t* out, int track ) const
 	int remapped = remap_track( track );
 	if ( (unsigned) remapped < track_times.size() )
 	{
-		long length = (BOOST::int32_t) get_le32( track_times [remapped] );
+		long length = (int32_t) get_le32( track_times [remapped] );
 		if ( length > 0 )
 			out->length = length;
 	}
@@ -300,7 +305,7 @@ static Music_Emu* new_nsfe_emu () { return BLARGG_NEW Nsfe_Emu ; }
 static Music_Emu* new_nsfe_file() { return BLARGG_NEW Nsfe_File; }
 
 static gme_type_t_ const gme_nsfe_type_ = { "Nintendo NES", 0, &new_nsfe_emu, &new_nsfe_file, "NSFE", 1 };
-gme_type_t const gme_nsfe_type = &gme_nsfe_type_;
+extern gme_type_t const gme_nsfe_type = &gme_nsfe_type_;
 
 
 blargg_err_t Nsfe_Emu::load_( Data_Reader& in )
