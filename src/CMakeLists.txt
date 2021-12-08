@@ -1083,7 +1083,6 @@ add_executable( zeddoom WIN32 MACOSX_BUNDLE
 	sound/i_sound.cpp
 	sound/mpg123_decoder.cpp
 	sound/music_cd.cpp
-	sound/music_dumb.cpp
 	sound/music_gme.cpp
 	sound/music_mus_midiout.cpp
 	sound/music_smf_midiout.cpp
@@ -1175,7 +1174,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
 	set( ZDOOM_LIBS ${ZDOOM_LIBS} nsl socket)
 endif(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
 
-target_link_libraries( zeddoom ${ZDOOM_LIBS} gdtoa dumb lzma )
+target_link_libraries( zeddoom ${ZDOOM_LIBS} gdtoa lzma )
 include_directories( .
 	g_doom
 	g_heretic
@@ -1190,7 +1189,6 @@ include_directories( .
 	timidity
 	xlat
 	../gdtoa
-	../dumb/include
 	${CMAKE_BINARY_DIR}/gdtoa
 	${SYSTEM_SOURCES_DIR} )
 
