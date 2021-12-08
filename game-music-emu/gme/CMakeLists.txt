@@ -77,14 +77,6 @@ if (USE_GME_GBS)
         )
 endif()
 
-if (USE_GME_GYM)
-    set(libgme_SRCS ${libgme_SRCS}
-              # Sms_Apu.cpp included earlier
-              # Ym2612_Emu.cpp included earlier
-                Gym_Emu.cpp
-        )
-endif()
-
 if (USE_GME_HES)
     set(libgme_SRCS ${libgme_SRCS}
                 Hes_Apu.cpp
@@ -126,16 +118,6 @@ if (USE_GME_SAP)
                 Sap_Apu.cpp
                 Sap_Cpu.cpp
                 Sap_Emu.cpp
-        )
-endif()
-
-if (USE_GME_VGM)
-    set(libgme_SRCS ${libgme_SRCS}
-              # Sms_Apu.cpp included earlier
-              # Ym2612_Emu.cpp included earlier
-                Vgm_Emu.cpp
-                Vgm_Emu_Impl.cpp
-                Ym2413_Emu.cpp
         )
 endif()
 
