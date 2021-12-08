@@ -2,7 +2,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.1.31911.260
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "zdoom", "zdoom.vcxproj", "{8049475B-5C87-46F9-9358-635218A4EF18}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "zeddoom", "zdoom.vcxproj", "{8049475B-5C87-46F9-9358-635218A4EF18}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "zlib", "zlib\zlib.vcxproj", "{F9D9E7D4-E1A2-4866-9E85-B1B14137EE63}"
 EndProject
@@ -17,8 +17,6 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "jpeg-6b", "jpeg-6b\jpeg-6b.vcxproj", "{AC3F5340-40CB-4C3A-8AA7-CB7158DB4466}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fixrtext", "tools\fixrtext\fixrtext.vcxproj", "{DA47396F-60C1-4BDE-A977-7F7DE461CF77}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dumb_static", "dumb\vc6\dumb_static\dumb_static.vcxproj", "{8997289F-10BF-4678-8BAA-3BB509C84953}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdtoa", "gdtoa\gdtoa.vcxproj", "{B68E0ABF-B627-48A3-A92F-D8F827A75054}"
 EndProject
@@ -102,14 +100,6 @@ Global
 		{DA47396F-60C1-4BDE-A977-7F7DE461CF77}.Release|Win32.Build.0 = Release|Win32
 		{DA47396F-60C1-4BDE-A977-7F7DE461CF77}.Release|x64.ActiveCfg = Release|Win32
 		{DA47396F-60C1-4BDE-A977-7F7DE461CF77}.Release|x64.Build.0 = Release|Win32
-		{8997289F-10BF-4678-8BAA-3BB509C84953}.Debug|Win32.ActiveCfg = Debug|Win32
-		{8997289F-10BF-4678-8BAA-3BB509C84953}.Debug|Win32.Build.0 = Debug|Win32
-		{8997289F-10BF-4678-8BAA-3BB509C84953}.Debug|x64.ActiveCfg = Debug|x64
-		{8997289F-10BF-4678-8BAA-3BB509C84953}.Debug|x64.Build.0 = Debug|x64
-		{8997289F-10BF-4678-8BAA-3BB509C84953}.Release|Win32.ActiveCfg = Release|Win32
-		{8997289F-10BF-4678-8BAA-3BB509C84953}.Release|Win32.Build.0 = Release|Win32
-		{8997289F-10BF-4678-8BAA-3BB509C84953}.Release|x64.ActiveCfg = Release|x64
-		{8997289F-10BF-4678-8BAA-3BB509C84953}.Release|x64.Build.0 = Release|x64
 		{B68E0ABF-B627-48A3-A92F-D8F827A75054}.Debug|Win32.ActiveCfg = Debug|Win32
 		{B68E0ABF-B627-48A3-A92F-D8F827A75054}.Debug|Win32.Build.0 = Debug|Win32
 		{B68E0ABF-B627-48A3-A92F-D8F827A75054}.Debug|x64.ActiveCfg = Debug|x64

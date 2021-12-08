@@ -35,9 +35,6 @@ gme_type_t const* gme_type_list()
 	#ifdef USE_GME_GBS
 	            gme_gbs_type,
 	#endif
-	#ifdef USE_GME_GYM
-	            gme_gym_type,
-	#endif
 	#ifdef USE_GME_HES
 	            gme_hes_type,
 	#endif
@@ -52,10 +49,6 @@ gme_type_t const* gme_type_list()
 	#endif
 	#ifdef USE_GME_SAP
 	            gme_sap_type,
-	#endif
-	#ifdef USE_GME_VGM
-	            gme_vgm_type,
-	            gme_vgz_type,
 	#endif
 #endif
         0

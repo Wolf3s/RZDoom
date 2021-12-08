@@ -56,12 +56,6 @@
     <ClCompile Include="gme\gme.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="gme\Gme_File.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="gme\Gym_Emu.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="gme\Hes_Apu.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -125,31 +119,7 @@
     <ClCompile Include="gme\Sms_Apu.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="gme\Snes_Spc.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="gme\Spc_Cpu.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="gme\Spc_Dsp.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="gme\Spc_Emu.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="gme\Spc_Filter.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="gme\Vgm_Emu.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="gme\Vgm_Emu_Impl.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="gme\Ym2413_Emu.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="gme\Ym2612_Emu.cpp">
+    <ClCompile Include="gme\Gme_File.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -215,9 +185,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="gme\gme_types.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="gme\Gym_Emu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="gme\Hes_Apu.h">
@@ -293,33 +260,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="gme\Sms_Oscs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="gme\Snes_Spc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="gme\Spc_Cpu.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="gme\Spc_Dsp.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="gme\Spc_Emu.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="gme\Spc_Filter.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="gme\Vgm_Emu.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="gme\Vgm_Emu_Impl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="gme\Ym2413_Emu.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="gme\Ym2612_Emu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

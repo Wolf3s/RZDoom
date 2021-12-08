@@ -105,8 +105,8 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <WholeProgramOptimization>false</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>src\win32;src\sound;src;zlib;src\g_shared;src\g_doom;src\g_raven;src\g_heretic;src\g_hexen;src\g_strife;jpeg-6b;game-music-emu;gdtoa;bzip2;lzma\C;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>NDEBUG;WIN32;_WIN32;_WINDOWS;HAVE_STRUPR;HAVE_FILELENGTH;NO_VA_COPY;BACKPATCH;HAVE_FLUIDSYNTH;DYN_FLUIDSYNTH;NO_OPENAL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\sdl2_32bit;src\win32;src\sound;src;zlib;src\g_shared;src\g_doom;src\g_raven;src\g_heretic;src\g_hexen;src\g_strife;jpeg-6b;game-music-emu;gdtoa;bzip2;lzma\C;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NDEBUG;WIN32;_WIN32;_WINDOWS;HAVE_STRUPR;HAVE_FILELENGTH;NO_VA_COPY;BACKPATCH;HAVE_FLUIDSYNTH;DYN_FLUIDSYNTH;HAVE_OPENAL;NO_FMOD;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <ExceptionHandling>Sync</ExceptionHandling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -132,11 +132,11 @@
     </ResourceCompile>
     <Link>
       <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>shfolder.lib;gdi32.lib;user32.lib;comctl32.lib;shell32.lib;advapi32.lib;comdlg32.lib;ole32.lib;dxguid.lib;dsound.lib;dinput8.lib;strmiids.lib;wsock32.lib;winmm.lib;fmodex_vc.lib;setupapi.lib;ws2_32.lib;oleaut32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>shfolder.lib;gdi32.lib;user32.lib;comctl32.lib;shell32.lib;advapi32.lib;comdlg32.lib;ole32.lib;dxguid.lib;dsound.lib;dinput8.lib;strmiids.lib;wsock32.lib;winmm.lib;OpenAL32.lib;setupapi.lib;ws2_32.lib;oleaut32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
       <OutputFile>../zdoom.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <DelayLoadDLLs>fmodex.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
+      <DelayLoadDLLs>%(DelayLoadDLLs)</DelayLoadDLLs>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>..\zdoom.pdb</ProgramDatabaseFile>
       <StripPrivateSymbols />
@@ -151,6 +151,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <LinkTimeCodeGeneration />
       <SetChecksum>true</SetChecksum>
+      <AdditionalLibraryDirectories>C:\sdl2_32bit;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -190,14 +191,14 @@
     <Link>
       <AdditionalDependencies>ddraw.lib;dxguid.lib;dinput8.lib;comctl32.lib;strmiids.lib;wsock32.lib;ws2_32.lib;winmm.lib;OpenAL32.lib;setupapi.lib;oleaut32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
-      <OutputFile>../zdoom64.exe</OutputFile>
+      <OutputFile>../zeddoom.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DelayLoadDLLs>%(DelayLoadDLLs)</DelayLoadDLLs>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ProgramDatabaseFile>..\zdoom64.pdb</ProgramDatabaseFile>
+      <ProgramDatabaseFile>..\zeddoom.pdb</ProgramDatabaseFile>
       <StripPrivateSymbols />
       <GenerateMapFile>true</GenerateMapFile>
-      <MapFileName>$(OutDir)zdoom.map</MapFileName>
+      <MapFileName>$(OutDir)zeddoom.map</MapFileName>
       <MapExports>true</MapExports>
       <SubSystem>Windows</SubSystem>
       <StackReserveSize>0</StackReserveSize>
@@ -1086,7 +1087,6 @@
     <ClCompile Include="src\sound\i_music.cpp" />
     <ClCompile Include="src\sound\i_sound.cpp" />
     <ClCompile Include="src\sound\music_cd.cpp" />
-    <ClCompile Include="src\sound\music_dumb.cpp" />
     <ClCompile Include="src\sound\music_fluidsynth_mididevice.cpp" />
     <ClCompile Include="src\sound\music_gme.cpp" />
     <ClCompile Include="src\sound\music_hmi_midiout.cpp" />
@@ -1553,10 +1553,6 @@
   <ItemGroup>
     <ProjectReference Include="bzip2\bzip2.vcxproj">
       <Project>{a7de5c73-d623-4118-a48a-bdfd1fae97d4}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="dumb\vc6\dumb_static\dumb_static.vcxproj">
-      <Project>{8997289f-10bf-4678-8baa-3bb509c84953}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
     <ProjectReference Include="game-music-emu\game-music-emu.vcxproj">

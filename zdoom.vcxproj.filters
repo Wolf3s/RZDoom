@@ -771,9 +771,6 @@
     <ClCompile Include="src\sound\music_cd.cpp">
       <Filter>Audio Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\sound\music_dumb.cpp">
-      <Filter>Audio Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\sound\music_fluidsynth_mididevice.cpp">
       <Filter>Audio Files</Filter>
     </ClCompile>
