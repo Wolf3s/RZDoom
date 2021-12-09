@@ -1269,7 +1269,7 @@ void P_InitSectorSpecial(sector_t *sector, int special, bool nothinkers)
 		if (sector->special >= Scroll_North_Slow &&
 			sector->special <= Scroll_SouthWest_Fast)
 		{ // Hexen scroll special
-			static const char hexenScrollies[24][2] =
+			static const SBYTE hexenScrollies[24][2] =
 			{
 				{  0,  1 }, {  0,  2 }, {  0,  4 },
 				{ -1,  0 }, { -2,  0 }, { -4,  0 },
@@ -1280,11 +1280,10 @@ void P_InitSectorSpecial(sector_t *sector, int special, bool nothinkers)
 				{ -1, -1 }, { -2, -2 }, { -4, -4 },
 				{  1, -1 }, {  2, -2 }, {  4, -4 }
 			};
-
 			
 			int i = sector->special - Scroll_North_Slow;
-			fixed_t dx = hexenScrollies[i][0] * (FRACUNIT/2);
-			fixed_t dy = hexenScrollies[i][1] * (FRACUNIT/2);
+			double dx = hexenScrollies[i][0] / 2.;
+			double dy = hexenScrollies[i][1] / 2.;
 			if (!nothinkers) new DScroller (DScroller::sc_floor, dx, dy, -1, int(sector-sectors), 0);
 		}
 		else if (sector->special >= Carry_East5 &&
