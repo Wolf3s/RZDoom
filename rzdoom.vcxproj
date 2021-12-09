@@ -191,14 +191,14 @@
     <Link>
       <AdditionalDependencies>ddraw.lib;dxguid.lib;dinput8.lib;comctl32.lib;strmiids.lib;wsock32.lib;ws2_32.lib;winmm.lib;OpenAL32.lib;setupapi.lib;oleaut32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
-      <OutputFile>../zeddoom.exe</OutputFile>
+      <OutputFile>../rzdoom.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DelayLoadDLLs>%(DelayLoadDLLs)</DelayLoadDLLs>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ProgramDatabaseFile>..\zeddoom.pdb</ProgramDatabaseFile>
+      <ProgramDatabaseFile>..\rzdoom.pdb</ProgramDatabaseFile>
       <StripPrivateSymbols />
       <GenerateMapFile>true</GenerateMapFile>
-      <MapFileName>$(OutDir)zeddoom.map</MapFileName>
+      <MapFileName>$(OutDir)rzdoom.map</MapFileName>
       <MapExports>true</MapExports>
       <SubSystem>Windows</SubSystem>
       <StackReserveSize>0</StackReserveSize>
@@ -247,7 +247,7 @@
       <OutputFile>../rzdoomd.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <IgnoreSpecificDefaultLibraries>libcmt;msvcrtd;msvcrt;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <DelayLoadDLLs>fmodex.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
+      <DelayLoadDLLs>%(DelayLoadDLLs)</DelayLoadDLLs>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>.\Debug/rzdoomd.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
@@ -295,7 +295,7 @@
       <OutputFile>../rzdoomd64.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <IgnoreSpecificDefaultLibraries>msvcrtd;libcmt;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <DelayLoadDLLs>fmodex64.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
+      <DelayLoadDLLs>%(DelayLoadDLLs)</DelayLoadDLLs>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>.\Debug/rzdoomd.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>

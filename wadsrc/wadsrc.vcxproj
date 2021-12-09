@@ -82,31 +82,31 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <PostBuildEvent>
-      <Message>Checking zdoom.pk3...</Message>
-      <Command>"$(SolutionDir)tools\zipdir\zipdir.exe" -ud "$(ProjectDir)zdoom.pk3" "$(ProjectDir)static" 
-copy "$(ProjectDir)zdoom.pk3" "$(SolutionDir)..\zdoom.pk3"</Command>
+      <Message>Checking rzdoom.pk3...</Message>
+      <Command>"$(SolutionDir)tools\zipdir\zipdir.exe" -ud "$(ProjectDir)rzdoom.pk3" "$(ProjectDir)static" 
+copy "$(ProjectDir)rzdoom.pk3" "$(SolutionDir)..\rzdoom.pk3"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <PostBuildEvent>
-      <Message>Checking zdoom.pk3...</Message>
-      <Command>"$(SolutionDir)tools\zipdir\zipdir.exe" -ud "$(ProjectDir)zdoom.pk3" "$(ProjectDir)static" 
-copy "$(ProjectDir)zdoom.pk3" "$(SolutionDir)..\zdoom.pk3"</Command>
+      <Message>Checking rzdoom.pk3...</Message>
+      <Command>"$(SolutionDir)tools\zipdir\zipdir.exe" -ud "$(ProjectDir)rzdoom.pk3" "$(ProjectDir)static" 
+copy "$(ProjectDir)rzdoom.pk3" "$(SolutionDir)..\rzdoom.pk3"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <PostBuildEvent>
-      <Message>Checking zeddoom.pk3...</Message>
-      <Command>"$(SolutionDir)tools\zipdir\zipdir.exe" -ud "$(ProjectDir)zeddoom.pk3" "$(ProjectDir)static" 
-copy "$(ProjectDir)zeddoom.pk3" "$(SolutionDir)..\zeddoom.pk3"
+      <Message>Checking rzdoom.pk3...</Message>
+      <Command>"$(SolutionDir)tools\zipdir\zipdir.exe" -ud "$(ProjectDir)rzdoom.pk3" "$(ProjectDir)static" 
+copy "$(ProjectDir)rzdoom.pk3" "$(SolutionDir)..\rzdoom.pk3"
 </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <PostBuildEvent>
-      <Message>Checking zdoom.pk3...</Message>
-      <Command>"$(SolutionDir)tools\zipdir\zipdir.exe" -ud "$(ProjectDir)zdoom.pk3" "$(ProjectDir)static" 
-copy "$(ProjectDir)zdoom.pk3" "$(SolutionDir)..\zdoom.pk3"
+      <Message>Checking rzdoom.pk3...</Message>
+      <Command>"$(SolutionDir)tools\zipdir\zipdir.exe" -ud "$(ProjectDir)rzdoom.pk3" "$(ProjectDir)static" 
+copy "$(ProjectDir)rzdoom.pk3" "$(SolutionDir)..\rzdoom.pk3"
 </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
