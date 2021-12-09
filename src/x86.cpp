@@ -310,7 +310,7 @@ void DoBlending_SSE2(const PalEntry *from, PalEntry *to, int count, int r, int g
 	}
 #endif
 
-#if defined(__amd64__) || defined(_M_X64) || && defined(__aarch64__)
+#if defined(__amd64__) || defined(_M_X64) || defined(__aarch64__)
 	long long color;
 
 	blending256 = _mm_set_epi64x(0x10001000100ll, 0x10001000100ll);
