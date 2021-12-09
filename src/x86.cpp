@@ -1,3 +1,14 @@
+/* Gibbon - Ok, so let me clarify what this file is for
+ * This essentially is just to get the CPU info so it can display and dump that information
+ * which can be useful for debugging.  This code will 'only ever' be run on a 32bit system
+ * and uses a lot of ancient Visual Studio macro's (M_IX86).
+ * I've added some macro's to check for 32bit ARM CPU's too but otherwise (as some 64bit arm machines will ignore some macros)
+ * as it will ignore the x86 part and try to run the code.  So these arm macros will be used to make them 'ignore' it.
+ * I will leave it here as this stuff (inc the ASM inlined code) are totally fine.
+ *
+ * I am however, very wary of what licence this falls under since much of this code
+ * was taken from AMD handbooks..  it may not be GPL compatible.
+*/ 
 #include "doomtype.h"
 #include "doomdef.h"
 #include "x86.h"
@@ -7,7 +18,7 @@ extern "C"
 	CPUInfo CPU;
 }
 
-#if !defined(__amd64__) && !defined(__i386__) && !defined(_M_IX86) && !defined(_M_X64)
+#if !defined(__amd64__) && !defined(__aarch64__) && !defined(__i386__) && !defined(_M_IX86) && !defined(_M_X64)
 void CheckCPUID(CPUInfo *cpu)
 {
 	memset(cpu, 0, sizeof(*cpu));
@@ -27,7 +38,7 @@ void DumpCPUInfo(const CPUInfo *cpu)
 
 
 #ifdef __GNUC__
-#if defined(__i386__) && defined(__PIC__)
+#if defined(__i386__) && defined(__arm__) && defined(__PIC__)
 // %ebx may by the PIC register. */
 #define __cpuid(output, func) \
 	__asm__ __volatile__("xchgl\t%%ebx, %1\n\t" \
@@ -43,14 +54,14 @@ void DumpCPUInfo(const CPUInfo *cpu)
 
 void CheckCPUID(CPUInfo *cpu)
 {
-	int foo[4];
+	int cpu_id[4];
 	unsigned int maxext;
 
 	memset(cpu, 0, sizeof(*cpu));
 
 	cpu->DataL1LineSize = 32;	// Assume a 32-byte cache line
 
-#if !defined(_M_IX86) && !defined(__i386__) && !defined(_M_X64) && !defined(__amd64__)
+#if !defined(_M_IX86) && !defined(__i386__) && !defined(_M_X64) && !defined(__amd64__) && !defined(__aarch64__)
 	return;
 #else
 
@@ -95,46 +106,46 @@ haveid:
 #endif
 
 	// Get vendor ID
-	__cpuid(foo, 0);
-	cpu->dwVendorID[0] = foo[1];
-	cpu->dwVendorID[1] = foo[3];
-	cpu->dwVendorID[2] = foo[2];
-	if (foo[1] == MAKE_ID('A','u','t','h') &&
-		foo[3] == MAKE_ID('e','n','t','i') &&
-		foo[2] == MAKE_ID('c','A','M','D'))
+	__cpuid(cpu_id, 0);
+	cpu->dwVendorID[0] = cpu_id[1];
+	cpu->dwVendorID[1] = cpu_id[3];
+	cpu->dwVendorID[2] = cpu_id[2];
+	if (cpu_id[1] == MAKE_ID('A','u','t','h') &&
+		cpu_id[3] == MAKE_ID('e','n','t','i') &&
+		cpu_id[2] == MAKE_ID('c','A','M','D'))
 	{
 		cpu->bIsAMD = true;
 	}
 
 	// Get features flags and other info
-	__cpuid(foo, 1);
-	cpu->FeatureFlags[0] = foo[1];	// Store brand index and other stuff
-	cpu->FeatureFlags[1] = foo[2];	// Store extended feature flags
-	cpu->FeatureFlags[2] = foo[3];	// Store feature flags
+	__cpuid(cpu_id, 1);
+	cpu->FeatureFlags[0] = cpu_id[1];	// Store brand index and other stuff
+	cpu->FeatureFlags[1] = cpu_id[2];	// Store extended feature flags
+	cpu->FeatureFlags[2] = cpu_id[3];	// Store feature flags
 
 	// If CLFLUSH instruction is supported, get the real cache line size.
-	if (foo[3] & (1 << 19))
+	if (cpu_id[3] & (1 << 19))
 	{
-		cpu->DataL1LineSize = (foo[1] & 0xFF00) >> (8 - 3);
+		cpu->DataL1LineSize = (cpu_id[1] & 0xFF00) >> (8 - 3);
 	}
 
-	cpu->Stepping = foo[0] & 0x0F;
-	cpu->Type = (foo[0] & 0x3000) >> 12;	// valid on Intel only
-	cpu->Model = (foo[0] & 0xF0) >> 4;
-	cpu->Family = (foo[0] & 0xF00) >> 8;
+	cpu->Stepping = cpu_id[0] & 0x0F;
+	cpu->Type = (cpu_id[0] & 0x3000) >> 12;	// valid on Intel only
+	cpu->Model = (cpu_id[0] & 0xF0) >> 4;
+	cpu->Family = (cpu_id[0] & 0xF00) >> 8;
 
 	if (cpu->Family == 15)
 	{ // Add extended family.
-		cpu->Family += (foo[0] >> 20) & 0xFF;
+		cpu->Family += (cpu_id[0] >> 20) & 0xFF;
 	}
 	if (cpu->Family == 6 || cpu->Family == 15)
 	{ // Add extended model ID.
-		cpu->Model |= (foo[0] >> 12) & 0xF0;
+		cpu->Model |= (cpu_id[0] >> 12) & 0xF0;
 	}
 
 	// Check for extended functions.
-	__cpuid(foo, 0x80000000);
-	maxext = (unsigned int)foo[0];
+	__cpuid(cpu_id, 0x80000000);
+	maxext = (unsigned int)cpu_id[0];
 
 	if (maxext >= 0x80000004)
 	{ // Get processor brand string.
@@ -147,22 +158,22 @@ haveid:
 	{
 		if (maxext >= 0x80000005)
 		{ // Get data L1 cache info.
-			__cpuid(foo, 0x80000005);
-			cpu->AMD_DataL1Info = foo[2];
+			__cpuid(cpu_id, 0x80000005);
+			cpu->AMD_DataL1Info = cpu_id[2];
 		}
 		if (maxext >= 0x80000001)
 		{ // Get AMD-specific feature flags.
-			__cpuid(foo, 0x80000001);
-			cpu->AMDStepping = foo[0] & 0x0F;
-			cpu->AMDModel = (foo[0] & 0xF0) >> 4;
-			cpu->AMDFamily = (foo[0] & 0xF00) >> 8;
+			__cpuid(cpu_id, 0x80000001);
+			cpu->AMDStepping = cpu_id[0] & 0x0F;
+			cpu->AMDModel = (cpu_id[0] & 0xF0) >> 4;
+			cpu->AMDFamily = (cpu_id[0] & 0xF00) >> 8;
 
 			if (cpu->AMDFamily == 15)
 			{ // Add extended model and family.
-				cpu->AMDFamily += (foo[0] >> 20) & 0xFF;
-				cpu->AMDModel |= (foo[0] >> 12) & 0xF0;
+				cpu->AMDFamily += (cpu_id[0] >> 20) & 0xFF;
+				cpu->AMDModel |= (cpu_id[0] >> 12) & 0xF0;
 			}
-			cpu->FeatureFlags[3] = foo[3];	// AMD feature flags
+			cpu->FeatureFlags[3] = cpu_id[3];	// AMD feature flags
 		}
 	}
 #endif
@@ -299,7 +310,7 @@ void DoBlending_SSE2(const PalEntry *from, PalEntry *to, int count, int r, int g
 	}
 #endif
 
-#if defined(__amd64__) || defined(_M_X64)
+#if defined(__amd64__) || defined(_M_X64) || && defined(__aarch64__)
 	long long color;
 
 	blending256 = _mm_set_epi64x(0x10001000100ll, 0x10001000100ll);
@@ -366,3 +377,4 @@ void DoBlending_SSE2(const PalEntry *from, PalEntry *to, int count, int r, int g
 	}
 }
 #endif
+
