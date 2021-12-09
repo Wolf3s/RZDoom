@@ -155,44 +155,6 @@ endif( NO_OPENAL )
 
 find_package( FluidSynth )
 
-# Decide on SSE setup
-
-set( SSE_MATTERS NO )
-
-# with global use of SSE 2 we do not need special handling for selected files
-if (NOT ZDOOM_USE_SSE2)
-	# SSE only matters on 32-bit targets. We check compiler flags to know if we can do it.
-	if( CMAKE_SIZEOF_VOID_P MATCHES "4" AND NOT CMAKE_OSX_ARCHITECTURES MATCHES ppc )
-		CHECK_CXX_COMPILER_FLAG( "-msse2 -mfpmath=sse" CAN_DO_MFPMATH )
-		CHECK_CXX_COMPILER_FLAG( -arch:SSE2 CAN_DO_ARCHSSE2 )
-		if( CAN_DO_MFPMATH )
-			set( SSE1_ENABLE "-msse -mfpmath=sse" )
-			set( SSE2_ENABLE "-msse2 -mfpmath=sse" )
-			set( SSE_MATTERS YES )
-		elseif( CAN_DO_ARCHSSE2 )
-			set( SSE1_ENABLE -arch:SSE )
-			set( SSE2_ENABLE -arch:SSE2 )
-			set( SSE_MATTERS YES )
-		endif( CAN_DO_MFPMATH )
-	endif( CMAKE_SIZEOF_VOID_P MATCHES "4" AND NOT CMAKE_OSX_ARCHITECTURES MATCHES ppc )
-endif (NOT ZDOOM_USE_SSE2)
-
-if( SSE_MATTERS )
-	if( WIN32 )
-		set( BACKPATCH 1 CACHE BOOL "Enable backpatching." )
-	else( WIN32 )
-		CHECK_FUNCTION_EXISTS(mprotect HAVE_MPROTECT)
-		if( HAVE_MPROTECT )
-			set( BACKPATCH 1 CACHE BOOL "Enable backpatching." )
-		else( HAVE_MPROTECT )
-			set( BACKPATCH 0 )
-		endif( HAVE_MPROTECT )
-	endif( WIN32 )
-	set( SSE 1 CACHE BOOL "Build SSE and SSE2 versions of key code." )
-else( SSE_MATTERS )
-	set( BACKPATCH 0 )
-endif( SSE_MATTERS )
-
 # Set up flags for GCC
 
 if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
@@ -418,18 +380,6 @@ add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h
 	DEPENDS re2c ${CMAKE_CURRENT_SOURCE_DIR}/sc_man_scanner.re )
 
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
-
-if( SSE_MATTERS )
-	if( SSE )
-		set( X86_SOURCES nodebuild_classify_sse2.cpp )
-		set_source_files_properties( nodebuild_classify_sse2.cpp PROPERTIES COMPILE_FLAGS "${SSE2_ENABLE}" )
-	else( SSE )
-		add_definitions( -DDISABLE_SSE )
-	endif( SSE )
-else( SSE_MATTERS )
-	add_definitions( -DDISABLE_SSE )
-	set( X86_SOURCES )
-endif( SSE_MATTERS )
 
 if( SNDFILE_FOUND )
     add_definitions( -DHAVE_SNDFILE )
@@ -968,12 +918,6 @@ if( CMAKE_COMPILER_IS_GNUCXX )
 	# GCC misoptimizes this file
 	set_source_files_properties( oplsynth/fmopl.cpp PROPERTIES COMPILE_FLAGS "-fno-tree-dominator-opts -fno-tree-fre" )
 endif( CMAKE_COMPILER_IS_GNUCXX )
-if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
-	# Need to enable intrinsics for this file.
-	if( SSE_MATTERS )
-		set_source_files_properties( x86.cpp PROPERTIES COMPILE_FLAGS "-msse2 -mmmx" )
-	endif( SSE_MATTERS )
-endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 
 if( APPLE )
 	set_target_properties(rzdoom PROPERTIES

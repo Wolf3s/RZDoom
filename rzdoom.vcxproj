@@ -106,7 +106,7 @@
       <OmitFramePointers>true</OmitFramePointers>
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <AdditionalIncludeDirectories>C:\sdl2_32bit;src\win32;src\sound;src;zlib;src\g_shared;src\g_doom;src\g_raven;src\g_heretic;src\g_hexen;src\g_strife;jpeg-6b;game-music-emu;gdtoa;bzip2;lzma\C;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>NDEBUG;WIN32;_WIN32;_WINDOWS;HAVE_STRUPR;HAVE_FILELENGTH;NO_VA_COPY;BACKPATCH;HAVE_FLUIDSYNTH;DYN_FLUIDSYNTH;HAVE_OPENAL;NO_FMOD;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;WIN32;_WIN32;_WINDOWS;HAVE_STRUPR;HAVE_FILELENGTH;NO_VA_COPY;BACKPATCH;HAVE_FLUIDSYNTH;DYN_FLUIDSYNTH;HAVE_OPENAL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <ExceptionHandling>Sync</ExceptionHandling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -901,10 +901,6 @@
     <ClCompile Include="src\name.cpp" />
     <ClCompile Include="src\nodebuild.cpp" />
     <ClCompile Include="src\nodebuild_classify_nosse2.cpp" />
-    <ClCompile Include="src\nodebuild_classify_sse2.cpp">
-      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
-      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
-    </ClCompile>
     <ClCompile Include="src\nodebuild_events.cpp" />
     <ClCompile Include="src\nodebuild_extract.cpp" />
     <ClCompile Include="src\nodebuild_gl.cpp" />

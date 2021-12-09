@@ -321,9 +321,6 @@
     <ClCompile Include="src\nodebuild_classify_nosse2.cpp">
       <Filter>!Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\nodebuild_classify_sse2.cpp">
-      <Filter>!Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\nodebuild_events.cpp">
       <Filter>!Source Files</Filter>
     </ClCompile>
