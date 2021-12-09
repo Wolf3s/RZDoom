@@ -73,7 +73,6 @@ extern HINSTANCE g_hInst;
 extern HWND Window;
 extern bool ForceWindowed;
 EXTERN_CVAR (Bool, fullscreen)
-extern ReverbContainer *ForcedEnvironment;
 
 HWND EAXEditWindow;
 HWND hPropList;
@@ -97,14 +96,6 @@ CUSTOM_CVAR (Bool, eaxedit_test, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINI
 	if (EAXEditWindow != 0)
 	{
 		CheckDlgButton (EAXEditWindow, IDC_TESTEAX, self ? BST_CHECKED : BST_UNCHECKED);
-		if (self)
-		{
-			ForcedEnvironment = CurrentEnv;
-		}
-		else
-		{
-			ForcedEnvironment = NULL;
-		}
 	}
 }
 
@@ -554,11 +545,6 @@ void UpdateControls (ReverbContainer *env, HWND hDlg)
 
 	SavedProperties = env->Properties;
 	CurrentEnv = env;
-
-	if (SendMessage (GetDlgItem (hDlg, IDC_TESTEAX), BM_GETCHECK, 0,0) == BST_CHECKED)
-	{
-		ForcedEnvironment = env;
-	}
 }
 
 INT_PTR CALLBACK EAXProp (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -1257,7 +1243,6 @@ INT_PTR CALLBACK EAXProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{
 			setmodeneeded = true;
 		}
-		ForcedEnvironment = NULL;
 		break;
 
 	case WM_COMMAND:

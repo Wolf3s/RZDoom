@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <ProjectGuid>{8049475B-5C87-46F9-9358-635218A4EF18}</ProjectGuid>
-    <RootNamespace> zdoom</RootNamespace>
-    <ProjectName>zeddoom</ProjectName>
+    <RootNamespace> rzdoom</RootNamespace>
+    <ProjectName>rzdoom</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -96,7 +96,7 @@
       <MkTypLibCompatible>true</MkTypLibCompatible>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <TargetEnvironment>Win32</TargetEnvironment>
-      <TypeLibraryName>.\Release/zdoom.tlb</TypeLibraryName>
+      <TypeLibraryName>.\Release/rzdoom.tlb</TypeLibraryName>
     </Midl>
     <ClCompile>
       <Optimization>Full</Optimization>
@@ -134,14 +134,14 @@
       <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
       <AdditionalDependencies>shfolder.lib;gdi32.lib;user32.lib;comctl32.lib;shell32.lib;advapi32.lib;comdlg32.lib;ole32.lib;dxguid.lib;dsound.lib;dinput8.lib;strmiids.lib;wsock32.lib;winmm.lib;OpenAL32.lib;setupapi.lib;ws2_32.lib;oleaut32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
-      <OutputFile>../zdoom.exe</OutputFile>
+      <OutputFile>../rzdoom.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DelayLoadDLLs>%(DelayLoadDLLs)</DelayLoadDLLs>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ProgramDatabaseFile>..\zdoom.pdb</ProgramDatabaseFile>
+      <ProgramDatabaseFile>..\rzdoom.pdb</ProgramDatabaseFile>
       <StripPrivateSymbols />
       <GenerateMapFile>true</GenerateMapFile>
-      <MapFileName>.\Release/zdoom.map</MapFileName>
+      <MapFileName>.\Release/rzdoom.map</MapFileName>
       <MapExports>true</MapExports>
       <SubSystem>Windows</SubSystem>
       <StackReserveSize>0</StackReserveSize>
@@ -160,7 +160,7 @@
       <MkTypLibCompatible>true</MkTypLibCompatible>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <TargetEnvironment>X64</TargetEnvironment>
-      <TypeLibraryName>.\Release/zdoom.tlb</TypeLibraryName>
+      <TypeLibraryName>.\Release/rzdoom.tlb</TypeLibraryName>
     </Midl>
     <ClCompile>
       <Optimization>Full</Optimization>
@@ -217,7 +217,7 @@
       <MkTypLibCompatible>true</MkTypLibCompatible>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <TargetEnvironment>Win32</TargetEnvironment>
-      <TypeLibraryName>.\Debug/zdoom.tlb</TypeLibraryName>
+      <TypeLibraryName>.\Debug/rzdoom.tlb</TypeLibraryName>
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
@@ -244,12 +244,12 @@
     <Link>
       <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
       <AdditionalDependencies>shfolder.lib;gdi32.lib;user32.lib;comctl32.lib;shell32.lib;advapi32.lib;comdlg32.lib;ole32.lib;dxguid.lib;dsound.lib;dinput8.lib;strmiids.lib;wsock32.lib;winmm.lib;setupapi.lib;ws2_32.lib;oleaut32.lib;fmodex_vc.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>../zdoomd.exe</OutputFile>
+      <OutputFile>../rzdoomd.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <IgnoreSpecificDefaultLibraries>libcmt;msvcrtd;msvcrt;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <DelayLoadDLLs>fmodex.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ProgramDatabaseFile>.\Debug/zdoomd.pdb</ProgramDatabaseFile>
+      <ProgramDatabaseFile>.\Debug/rzdoomd.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
       <StackReserveSize>0</StackReserveSize>
       <LargeAddressAware>true</LargeAddressAware>
@@ -264,7 +264,7 @@
       <MkTypLibCompatible>true</MkTypLibCompatible>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <TargetEnvironment>X64</TargetEnvironment>
-      <TypeLibraryName>.\Debug/zdoom.tlb</TypeLibraryName>
+      <TypeLibraryName>.\Debug/rzdoom.tlb</TypeLibraryName>
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
@@ -292,12 +292,12 @@
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>dxguid.lib;ddraw.lib;dinput8.lib;comctl32.lib;strmiids.lib;wsock32.lib;winmm.lib;fmodex64_vc.lib;setupapi.lib;ws2_32.lib;oleaut32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>../zdoomd64.exe</OutputFile>
+      <OutputFile>../rzdoomd64.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <IgnoreSpecificDefaultLibraries>msvcrtd;libcmt;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <DelayLoadDLLs>fmodex64.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ProgramDatabaseFile>.\Debug/zdoomd.pdb</ProgramDatabaseFile>
+      <ProgramDatabaseFile>.\Debug/rzdoomd.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
       <StackReserveSize>0</StackReserveSize>
       <LargeAddressAware>true</LargeAddressAware>
@@ -1083,7 +1083,6 @@
     <ClCompile Include="src\sfmt\SFMT.cpp" />
     <ClCompile Include="src\skins.cpp" />
     <ClCompile Include="src\SkylineBinPack.cpp" />
-    <ClCompile Include="src\sound\fmodsound.cpp" />
     <ClCompile Include="src\sound\i_music.cpp" />
     <ClCompile Include="src\sound\i_sound.cpp" />
     <ClCompile Include="src\sound\music_cd.cpp" />
@@ -1407,8 +1406,6 @@
     <ClInclude Include="src\skins.h" />
     <ClInclude Include="src\SkylineBinPack.h" />
     <ClInclude Include="src\sound\efx.h" />
-    <ClInclude Include="src\sound\fmodsound.h" />
-    <ClInclude Include="src\sound\fmod_wrap.h" />
     <ClInclude Include="src\sound\i_music.h" />
     <ClInclude Include="src\sound\i_musicinterns.h" />
     <ClInclude Include="src\sound\i_sound.h" />
@@ -1541,7 +1538,7 @@
     <Text Include="src\CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="src\win32\zdoom.rc">
+    <ResourceCompile Include="src\win32\rzdoom.rc">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">_DEBUG;NO_MANIFEST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">src\win32</AdditionalIncludeDirectories>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_DEBUG;NO_MANIFEST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
