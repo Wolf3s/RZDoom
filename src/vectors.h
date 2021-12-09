@@ -40,6 +40,7 @@
 #ifndef VECTORS_H
 #define VECTORS_H
 
+#include <cmath>
 #include <math.h>
 #include <string.h>
 
@@ -226,7 +227,7 @@ struct TVector2
 	// Vector length
 	double Length() const
 	{
-		return sqrt (X*X + Y*Y);
+		return std::sqrt (X*X + Y*Y);
 	}
 
 	double LengthSquared() const
@@ -489,7 +490,7 @@ struct TVector3
 	// Vector length
 	double Length() const
 	{
-		return sqrt (X*X + Y*Y + Z*Z);
+		return std::sqrt (X*X + Y*Y + Z*Z);
 	}
 
 	double LengthSquared() const
