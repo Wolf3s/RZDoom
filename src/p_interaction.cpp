@@ -70,6 +70,7 @@ static FRandom pr_kickbackdir ("KickbackDir");
 
 CVAR (Bool, cl_showsprees, true, CVAR_ARCHIVE)
 CVAR (Bool, cl_showmultikills, true, CVAR_ARCHIVE)
+CVAR (Bool, sv_insanegibs, false, CVAR_ARCHIVE)
 EXTERN_CVAR (Bool, show_obituaries)
 
 
@@ -682,6 +683,13 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 
 	if (DamageType != NAME_None)
 	{
+		/* Gibbon - Insane gibbing check */
+		if (sv_insanegibs == true)
+		{
+			extremelydead = true;
+			diestate = FindState(NAME_Death, NAME_Extreme, true);
+		}
+
 		if (extremelydead)
 		{
 			FName labels[] = { NAME_Death, NAME_Extreme, DamageType };

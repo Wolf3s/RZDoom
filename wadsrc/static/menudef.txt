@@ -1208,6 +1208,7 @@ OptionMenu GameplayOptions
 	Option "Items respawn",			"sv_itemrespawn", "YesNo"
 	Option "Big powerups respawn",	"sv_respawnsuper", "YesNo"
 	Option "Fast monsters",			"sv_fastmonsters", "YesNo"
+	Option "Insane Gibbing",		"sv_insanegibs", "YesNo"
 	Option "Degeneration",			"sv_degeneration", "YesNo"
 	Option "Allow Autoaim",			"sv_noautoaim", "NoYes"
 	Option "Allow Suicide",			"sv_disallowsuicide", "NoYes"
