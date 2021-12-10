@@ -33,9 +33,12 @@ void DumpCPUInfo(const CPUInfo *cpu)
 #ifdef _MSC_VER
 #include <intrin.h>
 #endif
+#if defined (__APPLE__) && !defined (__aarch64__)
 #include <mmintrin.h>
 #include <emmintrin.h>
-
+#else
+#include "sse2neon.h"
+#endif
 
 #ifdef __GNUC__
 #if defined(__i386__) && defined(__arm__) && defined(__PIC__)
@@ -46,7 +49,7 @@ void DumpCPUInfo(const CPUInfo *cpu)
 						 "xchgl\t%%ebx, %1\n\t" \
 		: "=a" ((output)[0]), "=r" ((output)[1]), "=c" ((output)[2]), "=d" ((output)[3]) \
 		: "a" (func));
-#else
+#elseif !defined (__APPLE__) && !defined (__aarch64__)
 #define __cpuid(output, func) __asm__ __volatile__("cpuid" : "=a" ((output)[0]),\
 	"=b" ((output)[1]), "=c" ((output)[2]), "=d" ((output)[3]) : "a" (func));
 #endif
@@ -106,7 +109,9 @@ haveid:
 #endif
 
 	// Get vendor ID
+#if !defined (__APPLE__) && !defined (__aarch64__)
 	__cpuid(cpu_id, 0);
+#endif
 	cpu->dwVendorID[0] = cpu_id[1];
 	cpu->dwVendorID[1] = cpu_id[3];
 	cpu->dwVendorID[2] = cpu_id[2];
@@ -118,7 +123,9 @@ haveid:
 	}
 
 	// Get features flags and other info
+#if !defined (__APPLE__) && !defined (__aarch64__)
 	__cpuid(cpu_id, 1);
+#endif
 	cpu->FeatureFlags[0] = cpu_id[1];	// Store brand index and other stuff
 	cpu->FeatureFlags[1] = cpu_id[2];	// Store extended feature flags
 	cpu->FeatureFlags[2] = cpu_id[3];	// Store feature flags
@@ -144,26 +151,34 @@ haveid:
 	}
 
 	// Check for extended functions.
+#if !defined (__APPLE__) && !defined (__aarch64__)
 	__cpuid(cpu_id, 0x80000000);
+#endif
 	maxext = (unsigned int)cpu_id[0];
 
 	if (maxext >= 0x80000004)
 	{ // Get processor brand string.
+#if !defined (__APPLE__) && !defined (__aarch64__)
 		__cpuid((int *)&cpu->dwCPUString[0], 0x80000002);
 		__cpuid((int *)&cpu->dwCPUString[4], 0x80000003);
 		__cpuid((int *)&cpu->dwCPUString[8], 0x80000004);
+#endif
 	}
 
 	if (cpu->bIsAMD)
 	{
 		if (maxext >= 0x80000005)
 		{ // Get data L1 cache info.
+#if !defined (__APPLE__) && !defined (__aarch64__)
 			__cpuid(cpu_id, 0x80000005);
+#endif
 			cpu->AMD_DataL1Info = cpu_id[2];
 		}
 		if (maxext >= 0x80000001)
 		{ // Get AMD-specific feature flags.
+#if !defined (__APPLE__) && !defined (__aarch64__)
 			__cpuid(cpu_id, 0x80000001);
+#endif
 			cpu->AMDStepping = cpu_id[0] & 0x0F;
 			cpu->AMDModel = (cpu_id[0] & 0xF0) >> 4;
 			cpu->AMDFamily = (cpu_id[0] & 0xF00) >> 8;
