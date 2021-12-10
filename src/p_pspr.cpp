@@ -75,6 +75,7 @@ enum EWRF_Options
 // [SO] 1=Weapons states are all 1 tick
 //		2=states with a function 1 tick, others 0 ticks.
 CVAR(Int, sv_fastweapons, false, CVAR_SERVERINFO);
+CVAR(Bool, sv_weaponhalfbob, false, CVAR_ARCHIVE);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -377,7 +378,13 @@ void P_BobWeapon (player_t *player, pspdef_t *psp, fixed_t *x, fixed_t *y)
 
 	// [XA] Get the current weapon's bob properties.
 	int bobstyle = weapon->BobStyle;
-	int bobspeed = (weapon->BobSpeed * 128) >> 16;
+    int bobspeed = 0;
+    if (sv_weaponhalfbob == true)
+    {
+        bobspeed = (weapon->BobSpeed * 64) >> 16;
+    } else {
+        bobspeed = (weapon->BobSpeed * 128) >> 16;
+    }
 	fixed_t rangex = weapon->BobRangeX;
 	fixed_t rangey = weapon->BobRangeY;
 
