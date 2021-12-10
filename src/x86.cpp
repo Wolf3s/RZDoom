@@ -33,10 +33,10 @@ void DumpCPUInfo(const CPUInfo *cpu)
 #ifdef _MSC_VER
 #include <intrin.h>
 #endif
-#if defined (__APPLE__) && !defined (__aarch64__)
+#if !defined (__aarch64__)
 #include <mmintrin.h>
 #include <emmintrin.h>
-#else
+#elif define (__APPLE__) && defined (__aarch64__) || defined (WIN32) && defined (__aarch64__)
 #include "sse2neon.h"
 #endif
 
