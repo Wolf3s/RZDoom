@@ -1499,6 +1499,11 @@ sv_gravity
 default: 800
  This is the overall gravity of the entire level. 800 is normal gravity.
 
+sv_insanegibs
+(cvar: boolean)
+default: false
+ Enables or disables insane gibbing of mobs (true or false).
+
 team
 (cvar: string)
 default: ""
