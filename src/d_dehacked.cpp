@@ -2340,7 +2340,7 @@ static int DoInclude (int dummy)
 	return GetLine();
 }
 
-CVAR(Int, dehload, 0, CVAR_ARCHIVE)	// Autoloading of .DEH lumps is disabled by default.
+CVAR(Int, dehload, 1, CVAR_ARCHIVE)	// Autoloading of .DEH lumps is enabled by default.
 
 // checks if lump is a .deh or .bex file. Only lumps in the root directory are considered valid.
 static bool isDehFile(int lumpnum)
