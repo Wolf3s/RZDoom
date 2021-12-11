@@ -154,29 +154,25 @@ IndexType BinarySearchFlexible (IndexType max, const KeyType key, IndexType noIn
 #undef MIN
 #endif
 
-template<class T>
-inline
-const T MIN (const T a, const T b)
-{
-	return a < b ? a : b;
+template<typename T>
+inline T MIN(const T& x, const T& y) {
+    return x < y ? x : y;
 }
 
 //==========================================================================
 //
 // MAX
 //
-// Returns the maximum of a and b.
+// Returns the maximum of x and y.
 //==========================================================================
 
 #ifdef MAX
 #undef MAX
 #endif
 
-template<class T>
-inline
-const T MAX (const T a, const T b)
-{
-	return a > b ? a : b;
+template<typename T>
+inline T MAX(const T& x, const T& y) {
+    return x > y ? x : y;
 }
 
 //==========================================================================
