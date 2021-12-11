@@ -76,6 +76,7 @@ enum EWRF_Options
 //		2=states with a function 1 tick, others 0 ticks.
 CVAR(Int, sv_fastweapons, false, CVAR_SERVERINFO);
 CVAR(Bool, sv_weaponhalfbob, false, CVAR_ARCHIVE);
+CVAR(Bool, sv_weapondisablebob, false, CVAR_ARCHIVE);
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static FRandom pr_wpnreadysnd ("WpnReadySnd");
@@ -389,7 +390,9 @@ void P_BobWeapon (player_t *player, pspdef_t *psp, fixed_t *x, fixed_t *y)
 
     // Bob the weapon based on movement speed.
     int angle = (bobspeed*35/TICRATE*level.time)&FINEMASK;
-
+    
+    if (sv_weapondisablebob == false)
+    {
     // [RH] Smooth transitions between bobbing and not-bobbing frames.
     // This also fixes the bug where you can "stick" a weapon off-center by
     // shooting it when it's at the peak of its swing.
@@ -413,6 +416,7 @@ void P_BobWeapon (player_t *player, pspdef_t *psp, fixed_t *x, fixed_t *y)
             }
         }
     }
+    } //Weapon bob
 
     if (curbob != 0)
     {
