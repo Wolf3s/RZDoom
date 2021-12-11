@@ -1210,7 +1210,6 @@ OptionMenu GameplayOptions
 	Option "Fast monsters",			"sv_fastmonsters", "YesNo"
 	Option "Insane Gibbing",		"sv_insanegibs", "YesNo"
 	Option "Weapon Slow Bobbing",		"sv_weaponhalfbob", "YesNo"
-	Option "Disable Weapon Bobbing",		"sv_weapondisablebob", "YesNo"
 	Option "Degeneration",			"sv_degeneration", "YesNo"
 	Option "Allow Autoaim",			"sv_noautoaim", "NoYes"
 	Option "Allow Suicide",			"sv_disallowsuicide", "NoYes"

@@ -1509,11 +1509,6 @@ sv_weaponhalfbob
 default: false
  Enables or disables slow weapon bobbing (half speed).
 
-sv_weapondisablebob
-(cvar: boolean)
-default: false
- Enables or disables weapon bob.
-
 team
 (cvar: string)
 default: ""
