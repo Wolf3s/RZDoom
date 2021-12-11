@@ -747,6 +747,35 @@ OptionValue ZDoomStrife
 	1.0, "Strife"
 }
 
+OptionValue BorderTexturesDoom
+{
+	0.0, "FLOOR3_3"
+	1.0, "FLOOR7_1"
+	2.0, "FLOOR4_8"
+	3.0, "FLOOR6_2"
+	4.0, "FLAT5_5"
+	5.0, "CEIL5_2"
+	20.0, "Default"
+}
+
+OptionValue BorderTexturesHeretic
+{
+	7.0, "FLOOR03"
+	8.0, "FLOOR05"
+	9.0, "FLOOR26"
+	10.0, "FLOOR18"
+	20.0, "Default"
+}
+
+OptionValue BorderTexturesHexen
+{
+	12.0, "F_004"
+	13.0, "F_008"
+	14.0, "F_0012"
+	15.0, "F_065"
+	20.0, "Default"
+}
+
 OptionMenu "HUDOptions"
 {
 	Title "HUD Options"
@@ -770,8 +799,20 @@ OptionMenu "HUDOptions"
 	Option "Poison damage flashes",		"pf_poison",		"ZDoomHexen"
 	Option "Ice death flashes",			"pf_ice",			"ZDoomHexen"
 	Option "Poison Buildup flashes",	"pf_hazard",		"ZDoomStrife"
+	IfGame(Doom)
+	{
+		Option "HUD Border Texture",	"r_bordertexture",		"BorderTexturesDoom"
+	}
+	IfGame(Heretic)
+	{
+		Option "HUD Border Texture",	"r_bordertexture",		"BorderTexturesHeretic"
+	}
+	IfGame(Hexen)
+	{
+		Option "HUD Border Texture",	"r_bordertexture",		"BorderTexturesHexen"
+	}
 }
-	
+
 //-------------------------------------------------------------------------------------------
 //
 // Alternative HUD

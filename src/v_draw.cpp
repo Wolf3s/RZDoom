@@ -1436,6 +1436,7 @@ void V_DrawFrame (int left, int top, int width, int height)
 	screen->DrawTexture (TexMan[border->br], left+width, top+height, TAG_DONE);
 }
 
+CVAR (Int, r_bordertexture, 20, CVAR_ARCHIVE);
 //==========================================================================
 //
 // V_DrawBorder
@@ -1452,7 +1453,43 @@ void V_DrawBorder (int x1, int y1, int x2, int y2)
 	}
 	else
 	{
-		picnum = TexMan.CheckForTexture (gameinfo.BorderFlat, FTexture::TEX_Flat);
+        /* Doom 1 Shareware, retail, Doom 2, TNT, Plutonia etc.. */
+        if (r_bordertexture == 0) {
+            picnum = TexMan.CheckForTexture ("FLOOR3_3", FTexture::TEX_Flat);
+        } else if (r_bordertexture == 1) {
+            picnum = TexMan.CheckForTexture ("FLOOR7_1", FTexture::TEX_Flat);
+        } else if (r_bordertexture == 2) {
+            picnum = TexMan.CheckForTexture ("FLOOR4_8", FTexture::TEX_Flat);
+        } else if (r_bordertexture == 3) {
+            picnum = TexMan.CheckForTexture ("FLOOR6_2", FTexture::TEX_Flat);
+        } else if (r_bordertexture == 4) {
+            picnum = TexMan.CheckForTexture ("FLAT5_5", FTexture::TEX_Flat);
+        } else if (r_bordertexture == 5) {
+            picnum = TexMan.CheckForTexture ("CEIL5_2", FTexture::TEX_Flat);
+        }
+        /* Heretic */
+        else if (r_bordertexture == 7) {
+            picnum = TexMan.CheckForTexture ("FLOOR03", FTexture::TEX_Flat);
+        } else if (r_bordertexture == 8) {
+            picnum = TexMan.CheckForTexture ("FLOOR05", FTexture::TEX_Flat);
+        } else if (r_bordertexture == 9) {
+            picnum = TexMan.CheckForTexture ("FLOOR26", FTexture::TEX_Flat);
+        } else if (r_bordertexture == 10) {
+            picnum = TexMan.CheckForTexture ("FLOOR18", FTexture::TEX_Flat);
+        }
+        /* Hexen */
+        else if (r_bordertexture == 12) {
+            picnum = TexMan.CheckForTexture ("F_004", FTexture::TEX_Flat);
+        } else if (r_bordertexture == 13) {
+            picnum = TexMan.CheckForTexture ("F_008", FTexture::TEX_Flat);
+        } else if (r_bordertexture == 14) {
+            picnum = TexMan.CheckForTexture ("F_012", FTexture::TEX_Flat);
+        } else if (r_bordertexture == 15) {
+            picnum = TexMan.CheckForTexture ("F_065", FTexture::TEX_Flat);
+        /* Default for all games */
+        } else if (r_bordertexture == 20) {
+            picnum = TexMan.CheckForTexture (gameinfo.BorderFlat, FTexture::TEX_Flat);
+        }
 	}
 
 	if (picnum.isValid())
