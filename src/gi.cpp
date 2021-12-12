@@ -50,6 +50,7 @@ const char *GameNames[17] =
 	NULL, "Doom", "Heretic", NULL, "Hexen", NULL, NULL, NULL, "Strife", NULL, NULL, NULL, NULL, NULL, NULL, NULL, "Chex"
 };
 
+CVAR(Bool, r_disableborderedge, false, CVAR_ARCHIVE);
 
 static staticgameborder_t DoomBorder =
 {
@@ -229,7 +230,7 @@ void FMapInfoParser::ParseGameInfo()
 			}
 			while (sc.CheckToken(','));
 		}
-		else if(nextKey.CompareNoCase("border") == 0)
+		else if(nextKey.CompareNoCase("border") == 0 && r_disableborderedge == false)
 		{
 			staticgameborder_t *b;
 			if (sc.CheckToken(TK_Identifier))
