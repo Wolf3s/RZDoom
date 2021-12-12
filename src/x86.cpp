@@ -41,7 +41,7 @@ void DumpCPUInfo(const CPUInfo *cpu)
 #endif
 
 #ifdef __GNUC__
-#if defined(__i386__) && defined(__arm__) && defined(__PIC__)
+#if defined(__i386__) || defined(__arm__) || defined(__PIC__)
 // %ebx may by the PIC register. */
 #define __cpuid(output, func) \
 	__asm__ __volatile__("xchgl\t%%ebx, %1\n\t" \
