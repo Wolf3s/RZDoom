@@ -1486,8 +1486,23 @@ void V_DrawBorder (int x1, int y1, int x2, int y2)
             picnum = TexMan.CheckForTexture ("F_012", FTexture::TEX_Flat);
         } else if (r_bordertexture == 15) {
             picnum = TexMan.CheckForTexture ("F_065", FTexture::TEX_Flat);
-        /* Default for all games */
+        }
+        /* Strife */
+        else if (r_bordertexture == 16) {
+            picnum = TexMan.CheckForTexture ("F_GDCONC", FTexture::TEX_Flat);
+        } else if (r_bordertexture == 17) {
+            picnum = TexMan.CheckForTexture ("F_BASHXL", FTexture::TEX_Flat);
+        } else if (r_bordertexture == 18) {
+            picnum = TexMan.CheckForTexture ("F_DECK", FTexture::TEX_Flat);
+        } else if (r_bordertexture == 19) {
+            picnum = TexMan.CheckForTexture ("F_TEKABS", FTexture::TEX_Flat);
         } else if (r_bordertexture == 20) {
+            picnum = TexMan.CheckForTexture ("F_FANTEK", FTexture::TEX_Flat);
+        } else if (r_bordertexture == 21) {
+            picnum = TexMan.CheckForTexture ("F_SIGWIN", FTexture::TEX_Flat);
+        }
+        /* Default for all games */
+        else if (r_bordertexture == 50) {
             picnum = TexMan.CheckForTexture (gameinfo.BorderFlat, FTexture::TEX_Flat);
         }
 	}

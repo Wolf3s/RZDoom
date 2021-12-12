@@ -755,7 +755,7 @@ OptionValue BorderTexturesDoom
 	3.0, "FLOOR6_2"
 	4.0, "FLAT5_5"
 	5.0, "CEIL5_2"
-	20.0, "Default"
+	50.0, "Default"
 }
 
 OptionValue BorderTexturesHeretic
@@ -764,7 +764,7 @@ OptionValue BorderTexturesHeretic
 	8.0, "FLOOR05"
 	9.0, "FLOOR26"
 	10.0, "FLOOR18"
-	20.0, "Default"
+	50.0, "Default"
 }
 
 OptionValue BorderTexturesHexen
@@ -773,7 +773,18 @@ OptionValue BorderTexturesHexen
 	13.0, "F_008"
 	14.0, "F_0012"
 	15.0, "F_065"
-	20.0, "Default"
+	50.0, "Default"
+}
+
+OptionValue BorderTexturesStrife
+{
+	16.0, "F_GDCONC"
+	17.0, "F_BASHXL"
+	18.0, "F_DECK"
+	19.0, "F_TEKABS"
+	20.0, "F_FANTEK"
+	21.0, "F_SIGWIN"
+	50.0, "Default"
 }
 
 OptionMenu "HUDOptions"
@@ -810,6 +821,10 @@ OptionMenu "HUDOptions"
 	IfGame(Hexen)
 	{
 		Option "HUD Border Texture",	"r_bordertexture",		"BorderTexturesHexen"
+	}
+	IfGame(Strife)
+	{
+		Option "HUD Border Texture",	"r_bordertexture",		"BorderTexturesStrife"
 	}
 }
 
