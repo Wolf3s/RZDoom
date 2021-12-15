@@ -301,6 +301,55 @@ mult
 	xb = b->x;
 	xbe = xb + wb;
 	xc0 = c->x;
+#ifdef ULLong
+	for(; xb < xbe; xc0++) {
+		if ( (y = *xb++) !=0) {
+			x = xa;
+			xc = xc0;
+			carry = 0;
+			do {
+				z = *x++ * (ULLong)y + *xc + carry;
+				carry = z >> 32;
+				*xc++ = (ULong)(z & 0xffffffffUL);
+				}
+				while(x < xae);
+			*xc = (ULong)carry;
+			}
+		}
+#else
+#ifdef Pack_32
+	for(; xb < xbe; xb++, xc0++) {
+		if ( (y = *xb & 0xffff) !=0) {
+			x = xa;
+			xc = xc0;
+			carry = 0;
+			do {
+				z = (*x & 0xffff) * y + (*xc & 0xffff) + carry;
+				carry = z >> 16;
+				z2 = (*x++ >> 16) * y + (*xc >> 16) + carry;
+				carry = z2 >> 16;
+				Storeinc(xc, z2, z);
+				}
+				while(x < xae);
+			*xc = carry;
+			}
+		if ( (y = *xb >> 16) !=0) {
+			x = xa;
+			xc = xc0;
+			carry = 0;
+			z2 = *xc;
+			do {
+				z = (*x & 0xffff) * y + (*xc >> 16) + carry;
+				carry = z >> 16;
+				Storeinc(xc, z, z2);
+				z2 = (*x++ >> 16) * y + (*xc & 0xffff) + carry;
+				carry = z2 >> 16;
+				}
+				while(x < xae);
+			*xc = z2;
+			}
+		}
+#else
 	for(; xb < xbe; xc0++) {
 		if ( (y = *xb++) !=0) {
 			x = xa;
@@ -315,6 +364,8 @@ mult
 			*xc = carry;
 			}
 		}
+#endif
+#endif
 	for(xc0 = c->x, xc = xc0 + wc; wc > 0 && !*--xc; --wc) ;
 	c->wds = wc;
 	return c;
