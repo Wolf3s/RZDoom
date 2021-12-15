@@ -1519,11 +1519,6 @@ r_bordertexture
 default: 50
  Allows switching of pre-defined textures for the screen border.
 
-r_disableborderedge
-(cvar: Bool)
-default: false
- Disables the tint on the edge of the border.
-
 team
 (cvar: string)
 default: ""

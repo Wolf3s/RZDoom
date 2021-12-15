@@ -830,7 +830,6 @@ OptionMenu "HUDOptions"
 	{
 		Option "HUD Border Texture",	"r_bordertexture",		"BorderTexturesStrife"
 	}
-	Option "Disable screen border edge tint (requires restart)",	"r_disableborderedge", "YesNo"
 }
 
 //-------------------------------------------------------------------------------------------

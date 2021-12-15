@@ -41,7 +41,7 @@ void DumpCPUInfo(const CPUInfo *cpu)
 #endif
 
 #ifdef __GNUC__
-#if defined(__i386__) && defined(__arm__) && defined(__PIC__)
+#if defined(__i386__) || defined(__PIC__)
 // %ebx may by the PIC register. */
 #define __cpuid(output, func) \
 	__asm__ __volatile__("xchgl\t%%ebx, %1\n\t" \
@@ -49,7 +49,7 @@ void DumpCPUInfo(const CPUInfo *cpu)
 						 "xchgl\t%%ebx, %1\n\t" \
 		: "=a" ((output)[0]), "=r" ((output)[1]), "=c" ((output)[2]), "=d" ((output)[3]) \
 		: "a" (func));
-#elseif !defined (__APPLE__) && !defined (__aarch64__)
+#else !defined (__APPLE__) && !defined (__aarch64__)
 #define __cpuid(output, func) __asm__ __volatile__("cpuid" : "=a" ((output)[0]),\
 	"=b" ((output)[1]), "=c" ((output)[2]), "=d" ((output)[3]) : "a" (func));
 #endif
