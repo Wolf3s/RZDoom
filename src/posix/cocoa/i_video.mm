@@ -33,7 +33,6 @@
 
 #include "i_common.h"
 
-#import <Carbon/Carbon.h>
 #import <OpenGL/gl.h>
 
 // Avoid collision between DObject class and Objective-C
@@ -649,12 +648,7 @@ void CocoaVideo::SetFullscreenMode(const int width, const int height)
 		}
 		else
 		{
-			// Old Carbon-based way to make fullscreen window above dock and menu
-			// It's supported on 64-bit, but on 10.6 and later the following is preferred:
-			// [NSWindow setLevel:NSMainMenuWindowLevel + 1]
-
-			SetSystemUIMode(kUIModeAllHidden, 0);
-			SetStyleMask(STYLE_MASK_FULLSCREEN);
+            [NSWindow setLevel:NSMainMenuWindowLevel + 1];
 		}
 
 		[m_window setHidesOnDeactivate:YES];
@@ -688,8 +682,7 @@ void CocoaVideo::SetWindowedMode(const int width, const int height)
 		}
 		else
 		{
-			SetSystemUIMode(kUIModeNormal, 0);
-			SetStyleMask(STYLE_MASK_WINDOWED);
+            [NSWindow setLevel:NSMainMenuWindowLevel + 1];
 		}
 
 		[m_window setHidesOnDeactivate:NO];
@@ -954,12 +947,7 @@ bool CocoaFrameBuffer::IsFullscreen()
 
 void CocoaFrameBuffer::SetVSync(bool vsync)
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1050
-	const long value = vsync ? 1 : 0;
-#else // 10.5 or newer
-	const GLint value = vsync ? 1 : 0;
-#endif // prior to 10.5
-
+    const GLint value = vsync ? 1 : 0;
 	[[NSOpenGLContext currentContext] setValues:&value
 								   forParameter:NSOpenGLCPSwapInterval];
 }
