@@ -1,4 +1,4 @@
-# So what is ZedDoom?
+# So what is RZDoom?
 It will be a minimal, stripped-down version of ZDoom 2.8.1 with bug fixes, my additions and my optimisations for many systems.
 
 # Why is it needed?
