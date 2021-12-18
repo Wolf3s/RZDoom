@@ -122,8 +122,8 @@ namespace
 	const NSInteger LEVEL_FULLSCREEN = NSMainMenuWindowLevel + 1;
 	const NSInteger LEVEL_WINDOWED   = NSNormalWindowLevel;
 
-	const NSUInteger STYLE_MASK_FULLSCREEN = NSBorderlessWindowMask;
-	const NSUInteger STYLE_MASK_WINDOWED   = NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask;
+const NSUInteger STYLE_MASK_FULLSCREEN = NSWindowStyleMaskBorderless;
+const NSUInteger STYLE_MASK_WINDOWED   = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable;
 }
 
 
@@ -461,7 +461,7 @@ CocoaVideo::CocoaVideo(const int multisample)
 	NSOpenGLPixelFormat *pixelFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
 
 	const NSRect contentRect = [m_window contentRectForFrameRect:[m_window frame]];
-	NSOpenGLView* glView = [[CocoaView alloc] initWithFrame:contentRect
+    NSOpenGLView* glView = [[CocoaView alloc] initWithFrame:contentRect
 												pixelFormat:pixelFormat];
 	[[glView openGLContext] makeCurrentContext];
 
@@ -1231,7 +1231,7 @@ bool I_SetCursor(FTexture* cursorpic)
 
 		// Create image from representation and set it as cursor
 
-		NSData* imageData = [bitmapImageRep representationUsingType:NSPNGFileType
+        NSData* imageData = [bitmapImageRep representationUsingType:NSBitmapImageFileTypePNG
 														 properties:[NSDictionary dictionary]];
 		NSImage* cursorImage = [[NSImage alloc] initWithData:imageData];
 

@@ -104,7 +104,7 @@ FConsoleWindow::FConsoleWindow()
 	NSString* const title = [NSString stringWithFormat:@"%s %s - Console", GAMESIG, GetVersionString()];
 
 	[m_window initWithContentRect:initialRect
-						styleMask:NSTitledWindowMask | NSClosableWindowMask | NSResizableWindowMask
+                        styleMask:NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskResizable
 						  backing:NSBackingStoreBuffered
 							defer:NO];
 	[m_window setMinSize:[m_window frame].size];
@@ -165,7 +165,7 @@ void FConsoleWindow::ShowFatalError(const char* const message)
 
 	NSButton* quitButton = [[NSButton alloc] initWithFrame:NSMakeRect(textViewWidth - 76.0f, 0.0f, 72.0f, 30.0f)];
 	[quitButton setAutoresizingMask:NSViewMinXMargin];
-	[quitButton setBezelStyle:NSRoundedBezelStyle];
+    [quitButton setBezelStyle:NSBezelStyleRounded];
 	[quitButton setTitle:@"Quit"];
 	[quitButton setKeyEquivalent:@"\r"];
 	[quitButton setTarget:NSApp];
@@ -314,7 +314,7 @@ void FConsoleWindow::SetTitleText()
 
 	NSTextField* titleText = [[NSTextField alloc] initWithFrame:titleTextRect];
 	[titleText setStringValue:[NSString stringWithUTF8String:DoomStartupInfo.Name]];
-	[titleText setAlignment:NSCenterTextAlignment];
+    [titleText setAlignment:NSTextAlignmentCenter];
 	[titleText setTextColor:RGB(DoomStartupInfo.FgColor)];
 	[titleText setBackgroundColor:RGB(DoomStartupInfo.BkColor)];
 	[titleText setFont:[NSFont fontWithName:@"Trebuchet MS Bold" size:18.0f]];
@@ -402,7 +402,7 @@ void FConsoleWindow::NetInit(const char* const message, const int playerCount)
 		// Text with connected/total players count
 		m_netCountText = [[NSTextField alloc] initWithFrame:NSMakeRect(428.0f, 64.0f, 72.0f, 16.0f)];
 		[m_netCountText setAutoresizingMask:NSViewMinXMargin];
-		[m_netCountText setAlignment:NSRightTextAlignment];
+        [m_netCountText setAlignment:NSTextAlignmentRight];
 		[m_netCountText setDrawsBackground:NO];
 		[m_netCountText setSelectable:NO];
 		[m_netCountText setBordered:NO];
@@ -427,7 +427,7 @@ void FConsoleWindow::NetInit(const char* const message, const int playerCount)
 		// Cancel network game button
 		m_netAbortButton = [[NSButton alloc] initWithFrame:NSMakeRect(432.0f, 8.0f, 72.0f, 28.0f)];
 		[m_netAbortButton setAutoresizingMask:NSViewMinXMargin];
-		[m_netAbortButton setBezelStyle:NSRoundedBezelStyle];
+        [m_netAbortButton setBezelStyle:NSBezelStyleRounded];
 		[m_netAbortButton setTitle:@"Cancel"];
 		[m_netAbortButton setKeyEquivalent:@"\r"];
 		[m_netAbortButton setTarget:NSApp];

@@ -54,3 +54,4 @@ src/.DS_Store
 *.opendb
 *.ipch
 *.bin
+src/posix/.DS_Store

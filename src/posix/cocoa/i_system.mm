@@ -341,7 +341,7 @@ int I_FindAttr(findstate_t* const fileinfo)
 void I_PutInClipboard(const char* const string)
 {
 	NSPasteboard* const pasteBoard = [NSPasteboard generalPasteboard];
-	NSString* const stringType = NSStringPboardType;
+    NSString* const stringType = NSPasteboardTypeString;
 	NSArray* const types = [NSArray arrayWithObjects:stringType, nil];
 	NSString* const content = [NSString stringWithUTF8String:string];
 
@@ -359,7 +359,7 @@ FString I_GetFromClipboard(bool returnNothing)
 	}
 
 	NSPasteboard* const pasteBoard = [NSPasteboard generalPasteboard];
-	NSString* const value = [pasteBoard stringForType:NSStringPboardType];
+    NSString* const value = [pasteBoard stringForType:NSPasteboardTypeString];
 
 	return FString([value UTF8String]);
 }
