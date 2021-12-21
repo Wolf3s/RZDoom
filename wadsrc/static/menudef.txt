@@ -1582,7 +1582,7 @@ OptionMenu SoundOptions
 	Slider "Sound channels",	"snd_channels", 8, 256, 8, 0
 	StaticText " "
 
-	ifoption(fmodex)
+	ifoption(fmod)
 	{
 		ifoption(openal)
 		{
@@ -1601,7 +1601,7 @@ OptionMenu SoundOptions
 		}
 	}
 	
-	ifoption(fmodex)
+	ifoption(fmod)
 	{
 		Submenu "FMOD options",		"FMODSoundItems"
 	}

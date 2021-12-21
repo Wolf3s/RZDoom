@@ -48,7 +48,7 @@
 #include "mus2midi.h"
 #define FALSE 0
 #define TRUE 1
-extern void ChildSigHandler(int signum);
+extern void ChildSigHandler (int signum);
 #endif
 
 #include <ctype.h>
@@ -92,16 +92,16 @@ enum EMIDIType
 	MIDI_MUS
 };
 
-extern int MUSHeaderSearch(const BYTE* head, int len);
+extern int MUSHeaderSearch(const BYTE *head, int len);
 
-EXTERN_CVAR(Int, snd_samplerate)
-EXTERN_CVAR(Int, snd_mididevice)
+EXTERN_CVAR (Int, snd_samplerate)
+EXTERN_CVAR (Int, snd_mididevice)
 
 static bool MusicDown = true;
 
-static bool ungzip(BYTE* data, int size, TArray<BYTE>& newdata);
+static bool ungzip(BYTE *data, int size, TArray<BYTE> &newdata);
 
-MusInfo* currSong;
+MusInfo *currSong;
 int		nomusic = 0;
 float	relative_volume = 1.f;
 float	saved_relative_volume = 1.0f;	// this could be used to implement an ACS FadeMusic function
@@ -113,7 +113,7 @@ float	saved_relative_volume = 1.0f;	// this could be used to implement an ACS Fa
 // Maximum volume of MOD/stream music.
 //==========================================================================
 
-CUSTOM_CVAR(Float, snd_musicvolume, 0.5f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR (Float, snd_musicvolume, 0.5f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	if (self < 0.f)
 		self = 0.f;
@@ -124,7 +124,7 @@ CUSTOM_CVAR(Float, snd_musicvolume, 0.5f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 		// Set general music volume.
 		if (GSnd != NULL)
 		{
-			GSnd->SetMusicVolume(clamp<float>(self * relative_volume, 0, 1));
+			GSnd->SetMusicVolume(clamp<float>(self * relative_volume * snd_mastervolume, 0, 1));
 		}
 		// For music not implemented through the digital sound system,
 		// let them know about the change.
@@ -145,27 +145,27 @@ CUSTOM_CVAR(Float, snd_musicvolume, 0.5f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 //
 //==========================================================================
 
-void I_InitMusic(void)
+void I_InitMusic (void)
 {
 	static bool setatterm = false;
 
 	Timidity::LoadConfig();
 
-	snd_musicvolume.Callback();
+	snd_musicvolume.Callback ();
 
 	nomusic = !!Args->CheckParm("-nomusic") || !!Args->CheckParm("-nosound");
 
 #ifdef _WIN32
-	I_InitMusicWin32();
+	I_InitMusicWin32 ();
 #endif // _WIN32
-
+	
 	if (!setatterm)
 	{
 		setatterm = true;
-		atterm(I_ShutdownMusicExit);
-
+		atterm (I_ShutdownMusicExit);
+	
 #ifndef _WIN32
-		signal(SIGCHLD, ChildSigHandler);
+		signal (SIGCHLD, ChildSigHandler);
 #endif
 	}
 	MusicDown = false;
@@ -185,8 +185,8 @@ void I_ShutdownMusic(bool onexit)
 	MusicDown = true;
 	if (currSong)
 	{
-		S_StopMusic(true);
-		assert(currSong == NULL);
+		S_StopMusic (true);
+		assert (currSong == NULL);
 	}
 	Timidity::FreeAll();
 	if (onexit) WildMidi_Shutdown();
@@ -208,11 +208,11 @@ void I_ShutdownMusicExit()
 //==========================================================================
 
 MusInfo::MusInfo()
-	: m_Status(STATE_Stopped), m_Looping(false), m_NotStartedYet(true)
+: m_Status(STATE_Stopped), m_Looping(false), m_NotStartedYet(true)
 {
 }
 
-MusInfo::~MusInfo()
+MusInfo::~MusInfo ()
 {
 	if (currSong == this) currSong = NULL;
 }
@@ -227,16 +227,21 @@ void MusInfo::Start(bool loop, float rel_vol, int subsong)
 {
 	if (nomusic) return;
 
-	if (rel_vol > 0.f) saved_relative_volume = relative_volume = rel_vol;
-	Stop();
-	Play(loop, subsong);
+	if (rel_vol > 0.f)
+	{
+		float factor = relative_volume / saved_relative_volume;
+		saved_relative_volume = rel_vol;
+		relative_volume = saved_relative_volume * factor;
+	}
+	Stop ();
+	Play (loop, subsong);
 	m_NotStartedYet = false;
-
+	
 	if (m_Status == MusInfo::STATE_Playing)
 		currSong = this;
 	else
 		currSong = NULL;
-
+		
 	// Notify the sound system of the changed relative volume
 	snd_musicvolume.Callback();
 }
@@ -247,7 +252,7 @@ void MusInfo::Start(bool loop, float rel_vol, int subsong)
 //
 //==========================================================================
 
-bool MusInfo::SetPosition(unsigned int ms)
+bool MusInfo::SetPosition (unsigned int ms)
 {
 	return false;
 }
@@ -257,12 +262,12 @@ bool MusInfo::IsMIDI() const
 	return false;
 }
 
-bool MusInfo::SetSubsong(int subsong)
+bool MusInfo::SetSubsong (int subsong)
 {
 	return false;
 }
 
-void MusInfo::Update()
+void MusInfo::Update ()
 {
 }
 
@@ -274,15 +279,19 @@ void MusInfo::TimidityVolumeChanged()
 {
 }
 
-void MusInfo::FluidSettingInt(const char*, int)
+void MusInfo::GMEDepthChanged(float val)
 {
 }
 
-void MusInfo::FluidSettingNum(const char*, double)
+void MusInfo::FluidSettingInt(const char *, int)
 {
 }
 
-void MusInfo::FluidSettingStr(const char*, const char*)
+void MusInfo::FluidSettingNum(const char *, double)
+{
+}
+
+void MusInfo::FluidSettingStr(const char *, const char *)
 {
 }
 
@@ -295,12 +304,12 @@ FString MusInfo::GetStats()
 	return "No stats available for this song";
 }
 
-MusInfo* MusInfo::GetOPLDumper(const char* filename)
+MusInfo *MusInfo::GetOPLDumper(const char *filename)
 {
 	return NULL;
 }
 
-MusInfo* MusInfo::GetWaveDumper(const char* filename, int rate)
+MusInfo *MusInfo::GetWaveDumper(const char *filename, int rate)
 {
 	return NULL;
 }
@@ -311,7 +320,7 @@ MusInfo* MusInfo::GetWaveDumper(const char* filename, int rate)
 //
 //==========================================================================
 
-static MIDIStreamer* CreateMIDIStreamer(FileReader& reader, EMidiDevice devtype, EMIDIType miditype, const char* args)
+static MIDIStreamer *CreateMIDIStreamer(FileReader &reader, EMidiDevice devtype, EMIDIType miditype, const char *args)
 {
 	switch (miditype)
 	{
@@ -338,7 +347,7 @@ static MIDIStreamer* CreateMIDIStreamer(FileReader& reader, EMidiDevice devtype,
 //
 //==========================================================================
 
-static EMIDIType IdentifyMIDIType(DWORD* id, int size)
+static EMIDIType IdentifyMIDIType(DWORD *id, int size)
 {
 	// Check for MUS format
 	// Tolerate sloppy wads by searching up to 32 bytes for the header
@@ -347,38 +356,38 @@ static EMIDIType IdentifyMIDIType(DWORD* id, int size)
 		return MIDI_MUS;
 	}
 	// Check for HMI format
-	else
-		if (id[0] == MAKE_ID('H', 'M', 'I', '-') &&
-			id[1] == MAKE_ID('M', 'I', 'D', 'I') &&
-			id[2] == MAKE_ID('S', 'O', 'N', 'G'))
-		{
-			return MIDI_HMI;
-		}
+	else 
+	if (id[0] == MAKE_ID('H','M','I','-') &&
+		id[1] == MAKE_ID('M','I','D','I') &&
+		id[2] == MAKE_ID('S','O','N','G'))
+	{
+		return MIDI_HMI;
+	}
 	// Check for HMP format
-		else
-			if (id[0] == MAKE_ID('H', 'M', 'I', 'M') &&
-				id[1] == MAKE_ID('I', 'D', 'I', 'P'))
-			{
-				return MIDI_HMI;
-			}
+	else
+	if (id[0] == MAKE_ID('H','M','I','M') &&
+		id[1] == MAKE_ID('I','D','I','P'))
+	{
+		return MIDI_HMI;
+	}
 	// Check for XMI format
-			else
-				if ((id[0] == MAKE_ID('F', 'O', 'R', 'M') &&
-					id[2] == MAKE_ID('X', 'D', 'I', 'R')) ||
-					((id[0] == MAKE_ID('C', 'A', 'T', ' ') || id[0] == MAKE_ID('F', 'O', 'R', 'M')) &&
-						id[2] == MAKE_ID('X', 'M', 'I', 'D')))
-				{
-					return MIDI_XMI;
-				}
+	else
+	if ((id[0] == MAKE_ID('F','O','R','M') &&
+		 id[2] == MAKE_ID('X','D','I','R')) ||
+		((id[0] == MAKE_ID('C','A','T',' ') || id[0] == MAKE_ID('F','O','R','M')) &&
+		 id[2] == MAKE_ID('X','M','I','D')))
+	{
+		return MIDI_XMI;
+	}
 	// Check for MIDI format
-				else if (id[0] == MAKE_ID('M', 'T', 'h', 'd'))
-				{
-					return MIDI_MIDI;
-				}
-				else
-				{
-					return MIDI_NOTMIDI;
-				}
+	else if (id[0] == MAKE_ID('M','T','h','d'))
+	{
+		return MIDI_MIDI;
+	}
+	else
+	{
+		return MIDI_NOTMIDI;
+	}
 }
 
 //==========================================================================
@@ -387,11 +396,11 @@ static EMIDIType IdentifyMIDIType(DWORD* id, int size)
 //
 //==========================================================================
 
-MusInfo* I_RegisterSong(FileReader* reader, MidiDeviceSetting* device)
+MusInfo *I_RegisterSong (FileReader *reader, MidiDeviceSetting *device)
 {
-	MusInfo* info = NULL;
-	const char* fmt;
-	DWORD id[32 / 4];
+	MusInfo *info = NULL;
+	const char *fmt;
+	DWORD id[32/4];
 
 	if (nomusic)
 	{
@@ -399,19 +408,19 @@ MusInfo* I_RegisterSong(FileReader* reader, MidiDeviceSetting* device)
 		return 0;
 	}
 
-	if (reader->Read(id, 32) != 32 || reader->Seek(-32, SEEK_CUR) != 0)
+	if(reader->Read(id, 32) != 32 || reader->Seek(-32, SEEK_CUR) != 0)
 	{
 		delete reader;
 		return 0;
 	}
 
-	// Check for gzip compression. Some formats are expected to have players
-	// that can handle it, so it simplifies things if we make all songs
-	// gzippable.
+    // Check for gzip compression. Some formats are expected to have players
+    // that can handle it, so it simplifies things if we make all songs
+    // gzippable.
 	if ((id[0] & MAKE_ID(255, 255, 255, 0)) == GZIP_ID)
 	{
 		int len = reader->GetLength();
-		BYTE* gzipped = new BYTE[len];
+		BYTE *gzipped = new BYTE[len];
 		if (reader->Read(gzipped, len) != len)
 		{
 			delete[] gzipped;
@@ -420,7 +429,7 @@ MusInfo* I_RegisterSong(FileReader* reader, MidiDeviceSetting* device)
 		}
 		delete reader;
 
-		MemoryArrayReader* memreader = new MemoryArrayReader(NULL, 0);
+		MemoryArrayReader *memreader = new MemoryArrayReader(NULL, 0);
 		if (!ungzip(gzipped, len, memreader->GetArray()))
 		{
 			delete[] gzipped;
@@ -441,15 +450,15 @@ MusInfo* I_RegisterSong(FileReader* reader, MidiDeviceSetting* device)
 	EMIDIType miditype = IdentifyMIDIType(id, sizeof(id));
 	if (miditype != MIDI_NOTMIDI)
 	{
-		EMidiDevice devtype = device == NULL ? MDEV_DEFAULT : (EMidiDevice)device->device;
+		EMidiDevice devtype = device == NULL? MDEV_DEFAULT : (EMidiDevice)device->device;
 #ifndef _WIN32
 		// non-Windows platforms don't support MDEV_MMAPI so map to MDEV_SNDSYS
 		if (devtype == MDEV_MMAPI)
 			devtype = MDEV_SNDSYS;
 #endif
 
-	retry_as_sndsys:
-		info = CreateMIDIStreamer(*reader, devtype, miditype, device != NULL ? device->args.GetChars() : "");
+retry_as_sndsys:
+		info = CreateMIDIStreamer(*reader, devtype, miditype, device != NULL? device->args.GetChars() : "");
 		if (info != NULL && !info->IsValid())
 		{
 			delete info;
@@ -470,11 +479,11 @@ MusInfo* I_RegisterSong(FileReader* reader, MidiDeviceSetting* device)
 
 	// Check for various raw OPL formats
 	else if (
-		(id[0] == MAKE_ID('R', 'A', 'W', 'A') && id[1] == MAKE_ID('D', 'A', 'T', 'A')) ||		// Rdos Raw OPL
-		(id[0] == MAKE_ID('D', 'B', 'R', 'A') && id[1] == MAKE_ID('W', 'O', 'P', 'L')) ||		// DosBox Raw OPL
-		(id[0] == MAKE_ID('A', 'D', 'L', 'I') && *((BYTE*)id + 4) == 'B'))		// Martin Fernandez's modified IMF
+		(id[0] == MAKE_ID('R','A','W','A') && id[1] == MAKE_ID('D','A','T','A')) ||		// Rdos Raw OPL
+		(id[0] == MAKE_ID('D','B','R','A') && id[1] == MAKE_ID('W','O','P','L')) ||		// DosBox Raw OPL
+		(id[0] == MAKE_ID('A','D','L','I') && *((BYTE *)id + 4) == 'B'))		// Martin Fernandez's modified IMF
 	{
-		info = new OPLMUSSong(*reader, device != NULL ? device->args.GetChars() : "");
+		info = new OPLMUSSong (*reader, device != NULL? device->args.GetChars() : "");
 	}
 	// Check for game music
 	else if ((fmt = GME_CheckFormat(id[0])) != NULL && fmt[0] != '\0')
@@ -487,45 +496,45 @@ MusInfo* I_RegisterSong(FileReader* reader, MidiDeviceSetting* device)
 		info = MOD_OpenSong(*reader);
 	}
 
-	if (info == NULL)
-	{
-		// Check for CDDA "format"
-		if (id[0] == (('R') | (('I') << 8) | (('F') << 16) | (('F') << 24)))
-		{
-			DWORD subid;
+    if (info == NULL)
+    {
+        // Check for CDDA "format"
+        if (id[0] == (('R')|(('I')<<8)|(('F')<<16)|(('F')<<24)))
+        {
+            DWORD subid;
 
-			reader->Seek(8, SEEK_CUR);
-			if (reader->Read(&subid, 4) != 4)
-			{
-				delete reader;
-				return 0;
-			}
-			reader->Seek(-12, SEEK_CUR);
+            reader->Seek(8, SEEK_CUR);
+            if (reader->Read (&subid, 4) != 4)
+            {
+                delete reader;
+                return 0;
+            }
+            reader->Seek(-12, SEEK_CUR);
 
-			if (subid == (('C') | (('D') << 8) | (('D') << 16) | (('A') << 24)))
-			{
-				// This is a CDDA file
-				info = new CDDAFile(*reader);
-			}
-		}
+            if (subid == (('C')|(('D')<<8)|(('D')<<16)|(('A')<<24)))
+            {
+                // This is a CDDA file
+                info = new CDDAFile (*reader);
+            }
+        }
 
-		// no support in sound system => no modules/streams
-		// 1024 bytes is an arbitrary restriction. It's assumed that anything
-		// smaller than this can't possibly be a valid music file if it hasn't
-		// been identified already, so don't even bother trying to load it.
-		// Of course MIDIs shorter than 1024 bytes should pass.
-		if (info == NULL && (reader->GetLength() >= 1024 || id[0] == MAKE_ID('M', 'T', 'h', 'd')))
-		{
-			// Let the sound system figure out what it is.
-			info = new StreamSong(reader);
+        // no support in sound system => no modules/streams
+        // 1024 bytes is an arbitrary restriction. It's assumed that anything
+        // smaller than this can't possibly be a valid music file if it hasn't
+        // been identified already, so don't even bother trying to load it.
+        // Of course MIDIs shorter than 1024 bytes should pass.
+        if (info == NULL && (reader->GetLength() >= 1024 || id[0] == MAKE_ID('M','T','h','d')))
+        {
+            // Let the sound system figure out what it is.
+            info = new StreamSong (reader);
 			// Assumed ownership
 			reader = NULL;
-		}
-	}
+        }
+    }
 
 	if (reader != NULL) delete reader;
 
-	if (info && !info->IsValid())
+	if (info && !info->IsValid ())
 	{
 		delete info;
 		info = NULL;
@@ -540,11 +549,11 @@ MusInfo* I_RegisterSong(FileReader* reader, MidiDeviceSetting* device)
 //
 //==========================================================================
 
-MusInfo* I_RegisterCDSong(int track, int id)
+MusInfo *I_RegisterCDSong (int track, int id)
 {
-	MusInfo* info = new CDSong(track, id);
+	MusInfo *info = new CDSong (track, id);
 
-	if (info && !info->IsValid())
+	if (info && !info->IsValid ())
 	{
 		delete info;
 		info = NULL;
@@ -559,9 +568,9 @@ MusInfo* I_RegisterCDSong(int track, int id)
 //
 //==========================================================================
 
-MusInfo* I_RegisterURLSong(const char* url)
+MusInfo *I_RegisterURLSong (const char *url)
 {
-	StreamSong* song;
+	StreamSong *song;
 
 	song = new StreamSong(url);
 	if (song->IsValid())
@@ -581,10 +590,10 @@ MusInfo* I_RegisterURLSong(const char* url)
 //
 //==========================================================================
 
-static bool ungzip(BYTE* data, int complen, TArray<BYTE>& newdata)
+static bool ungzip(BYTE *data, int complen, TArray<BYTE> &newdata)
 {
-	const BYTE* max = data + complen - 8;
-	const BYTE* compstart = data + 10;
+	const BYTE *max = data + complen - 8;
+	const BYTE *compstart = data + 10;
 	BYTE flags = data[3];
 	unsigned isize;
 	z_stream stream;
@@ -593,7 +602,7 @@ static bool ungzip(BYTE* data, int complen, TArray<BYTE>& newdata)
 	// Find start of compressed data stream
 	if (flags & GZIP_FEXTRA)
 	{
-		compstart += 2 + LittleShort(*(WORD*)(data + 10));
+		compstart += 2 + LittleShort(*(WORD *)(data + 10));
 	}
 	if (flags & GZIP_FNAME)
 	{
@@ -619,10 +628,10 @@ static bool ungzip(BYTE* data, int complen, TArray<BYTE>& newdata)
 	}
 
 	// Decompress
-	isize = LittleLong(*(DWORD*)(data + complen - 4));
-	newdata.Resize(isize);
+	isize = LittleLong(*(DWORD *)(data + complen - 4));
+    newdata.Resize(isize);
 
-	stream.next_in = (Bytef*)compstart;
+	stream.next_in = (Bytef *)compstart;
 	stream.avail_in = (uInt)(max - compstart);
 	stream.next_out = &newdata[0];
 	stream.avail_out = isize;
@@ -668,7 +677,7 @@ void I_UpdateMusic()
 //
 //==========================================================================
 
-void I_SetMusicVolume(float factor)
+void I_SetMusicVolume (float factor)
 {
 	factor = clamp<float>(factor, 0, 2.0f);
 	relative_volume = saved_relative_volume * factor;
@@ -683,7 +692,7 @@ void I_SetMusicVolume(float factor)
 
 CCMD(testmusicvol)
 {
-	if (argv.argc() > 1)
+	if (argv.argc() > 1) 
 	{
 		relative_volume = (float)strtod(argv[1], NULL);
 		snd_musicvolume.Callback();
@@ -716,20 +725,20 @@ ADD_STAT(music)
 //
 //==========================================================================
 
-CCMD(writeopl)
+CCMD (writeopl)
 {
 	if (argv.argc() == 2)
 	{
 		if (currSong == NULL)
 		{
-			Printf("No song is currently playing.\n");
+			Printf ("No song is currently playing.\n");
 		}
 		else
 		{
-			MusInfo* dumper = currSong->GetOPLDumper(argv[1]);
+			MusInfo *dumper = currSong->GetOPLDumper(argv[1]);
 			if (dumper == NULL)
 			{
-				Printf("Current song cannot be saved as OPL data.\n");
+				Printf ("Current song cannot be saved as OPL data.\n");
 			}
 			else
 			{
@@ -740,7 +749,7 @@ CCMD(writeopl)
 	}
 	else
 	{
-		Printf("Usage: writeopl <filename>\n");
+		Printf ("Usage: writeopl <filename>\n");
 	}
 }
 
@@ -754,20 +763,20 @@ CCMD(writeopl)
 //
 //==========================================================================
 
-CCMD(writewave)
+CCMD (writewave)
 {
 	if (argv.argc() >= 2 && argv.argc() <= 3)
 	{
 		if (currSong == NULL)
 		{
-			Printf("No song is currently playing.\n");
+			Printf ("No song is currently playing.\n");
 		}
 		else
 		{
-			MusInfo* dumper = currSong->GetWaveDumper(argv[1], argv.argc() == 3 ? atoi(argv[2]) : 0);
+			MusInfo *dumper = currSong->GetWaveDumper(argv[1], argv.argc() == 3 ? atoi(argv[2]) : 0);
 			if (dumper == NULL)
 			{
-				Printf("Current song cannot be saved as wave data.\n");
+				Printf ("Current song cannot be saved as wave data.\n");
 			}
 			else
 			{
@@ -778,7 +787,7 @@ CCMD(writewave)
 	}
 	else
 	{
-		Printf("Usage: writewave <filename> [sample rate]");
+		Printf ("Usage: writewave <filename> [sample rate]");
 	}
 }
 
@@ -792,7 +801,7 @@ CCMD(writewave)
 //
 //==========================================================================
 
-CCMD(writemidi)
+CCMD (writemidi)
 {
 	if (argv.argc() != 2)
 	{
@@ -811,10 +820,10 @@ CCMD(writemidi)
 	}
 
 	TArray<BYTE> midi;
-	FILE* f;
+	FILE *f;
 	bool success;
 
-	static_cast<MIDIStreamer*>(currSong)->CreateSMF(midi, 1);
+	static_cast<MIDIStreamer *>(currSong)->CreateSMF(midi, 1);
 	f = fopen(argv[1], "wb");
 	if (f == NULL)
 	{
@@ -822,7 +831,7 @@ CCMD(writemidi)
 		return;
 	}
 	success = (fwrite(&midi[0], 1, midi.Size(), f) == (size_t)midi.Size());
-	fclose(f);
+	fclose (f);
 
 	if (!success)
 	{

@@ -1383,6 +1383,9 @@
     <ClCompile Include="src\sound\music_dumb.cpp">
       <Filter>Audio Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\sound\fmodsound.cpp">
+      <Filter>Audio Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\sc_man_scanner.h">
@@ -2053,6 +2056,12 @@
     </ClInclude>
     <ClInclude Include="src\r_utility.h">
       <Filter>Render Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="src\sound\fmod_wrap.h">
+      <Filter>Audio Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\sound\fmodsound.h">
+      <Filter>Audio Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

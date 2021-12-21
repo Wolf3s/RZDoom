@@ -187,6 +187,10 @@ static bool CheckSkipOptionBlock(FScanner &sc)
 		{
 			filter |= IsOpenALPresent();
 		}
+		else if (sc.Compare("FMod"))
+		{
+			filter |= IsFModExPresent();
+		}
 	}
 	while (sc.CheckString(","));
 	sc.MustGetStringName(")");

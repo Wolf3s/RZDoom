@@ -53,6 +53,7 @@ extern HINSTANCE g_hInst;
 #include <math.h>
 
 #include "except.h"
+#include "fmodsound.h"
 #include "oalsound.h"
 
 #include "mpg123_decoder.h"
@@ -77,11 +78,14 @@ extern HINSTANCE g_hInst;
 #include "doomdef.h"
 
 EXTERN_CVAR (Float, snd_sfxvolume)
+EXTERN_CVAR (Float, snd_musicvolume)
 CVAR (Int, snd_samplerate, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Int, snd_buffersize, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, snd_output, "default", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
-#ifndef NO_OPENAL
+#ifndef NO_FMOD
+#define DEF_BACKEND "fmod"
+#elif !defined(NO_OPENAL)
 #define DEF_BACKEND "openal"
 #else
 #define DEF_BACKEND "null"
@@ -105,6 +109,23 @@ void I_CloseSound ();
 
 //==========================================================================
 //
+// CVAR snd_mastervolume
+//
+// Maximum volume of all audio
+//==========================================================================
+
+CUSTOM_CVAR(Float, snd_mastervolume, 0.5f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	if (self < 0.f)
+		self = 0.f;
+	else if (self > 1.f)
+		self = 1.f;
+	snd_sfxvolume.Callback();
+	snd_musicvolume.Callback();
+}
+
+//==========================================================================
+//
 // CVAR snd_sfxvolume
 //
 // Maximum volume of a sound effect.
@@ -118,7 +139,7 @@ CUSTOM_CVAR (Float, snd_sfxvolume, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOIN
 		self = 1.f;
 	else if (GSnd != NULL)
 	{
-		GSnd->SetSfxVolume (self);
+		GSnd->SetSfxVolume (self * snd_mastervolume);
 	}
 }
 
@@ -126,23 +147,23 @@ class NullSoundRenderer : public SoundRenderer
 {
 public:
 	virtual bool IsNull() { return true; }
-	void SetSfxVolume (float volume)
+	void SetSfxVolume(float volume)
 	{
 	}
-	void SetMusicVolume (float volume)
+	void SetMusicVolume(float volume)
 	{
 	}
-	SoundHandle LoadSound(BYTE *sfxdata, int length)
-	{
-		SoundHandle retval = { NULL };
-		return retval;
-	}
-	SoundHandle LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend)
+	SoundHandle LoadSound(BYTE* sfxdata, int length)
 	{
 		SoundHandle retval = { NULL };
 		return retval;
 	}
-	void UnloadSound (SoundHandle sfx)
+	SoundHandle LoadSoundRaw(BYTE* sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend)
+	{
+		SoundHandle retval = { NULL };
+		return retval;
+	}
+	void UnloadSound(SoundHandle sfx)
 	{
 	}
 	unsigned int GetMSLength(SoundHandle sfx)
@@ -159,58 +180,58 @@ public:
 	{
 		return 11025;	// Lies!
 	}
-	void StopChannel(FISoundChannel *chan)
+	void StopChannel(FISoundChannel* chan)
 	{
 	}
-	void ChannelVolume(FISoundChannel *, float)
+	void ChannelVolume(FISoundChannel*, float)
 	{
 	}
 
 	// Streaming sounds.
-	SoundStream *CreateStream (SoundStreamCallback callback, int buffbytes, int flags, int samplerate, void *userdata)
+	SoundStream* CreateStream(SoundStreamCallback callback, int buffbytes, int flags, int samplerate, void* userdata)
 	{
 		return NULL;
 	}
-	SoundStream *OpenStream (FileReader *reader, int flags)
+	SoundStream* OpenStream(FileReader* reader, int flags)
 	{
 		delete reader;
 		return NULL;
 	}
 
 	// Starts a sound.
-	FISoundChannel *StartSound (SoundHandle sfx, float vol, int pitch, int chanflags, FISoundChannel *reuse_chan)
+	FISoundChannel* StartSound(SoundHandle sfx, float vol, int pitch, int chanflags, FISoundChannel* reuse_chan)
 	{
 		return NULL;
 	}
-	FISoundChannel *StartSound3D (SoundHandle sfx, SoundListener *listener, float vol, FRolloffInfo *rolloff, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, int channum, int chanflags, FISoundChannel *reuse_chan)
+	FISoundChannel* StartSound3D(SoundHandle sfx, SoundListener* listener, float vol, FRolloffInfo* rolloff, float distscale, int pitch, int priority, const FVector3& pos, const FVector3& vel, int channum, int chanflags, FISoundChannel* reuse_chan)
 	{
 		return NULL;
 	}
 
 	// Marks a channel's start time without actually playing it.
-	void MarkStartTime (FISoundChannel *chan)
+	void MarkStartTime(FISoundChannel* chan)
 	{
 	}
 
 	// Returns position of sound on this channel, in samples.
-	unsigned int GetPosition(FISoundChannel *chan)
+	unsigned int GetPosition(FISoundChannel* chan)
 	{
 		return 0;
 	}
 
 	// Gets a channel's audibility (real volume).
-	float GetAudibility(FISoundChannel *chan)
+	float GetAudibility(FISoundChannel* chan)
 	{
 		return 0;
 	}
 
 	// Synchronizes following sound startups.
-	void Sync (bool sync)
+	void Sync(bool sync)
 	{
 	}
 
 	// Pauses or resumes all sound effect channels.
-	void SetSfxPaused (bool paused, int slot)
+	void SetSfxPaused(bool paused, int slot)
 	{
 	}
 
@@ -220,30 +241,30 @@ public:
 	}
 
 	// Updates the volume, separation, and pitch of a sound channel.
-	void UpdateSoundParams3D (SoundListener *listener, FISoundChannel *chan, bool areasound, const FVector3 &pos, const FVector3 &vel)
+	void UpdateSoundParams3D(SoundListener* listener, FISoundChannel* chan, bool areasound, const FVector3& pos, const FVector3& vel)
 	{
 	}
 
-	void UpdateListener (SoundListener *)
+	void UpdateListener(SoundListener*)
 	{
 	}
-	void UpdateSounds ()
+	void UpdateSounds()
 	{
 	}
 
-	bool IsValid ()
+	bool IsValid()
 	{
 		return true;
 	}
-	void PrintStatus ()
+	void PrintStatus()
 	{
 		Printf("Null sound module active.\n");
 	}
-	void PrintDriversList ()
+	void PrintDriversList()
 	{
 		Printf("Null sound module uses no drivers.\n");
 	}
-	FString GatherStats ()
+	FString GatherStats()
 	{
 		return "Null sound module has no stats.";
 	}
@@ -263,10 +284,26 @@ void I_InitSound ()
 		return;
 	}
 
-	// This has been extended to allow falling back from OpenAL to null and vice versa if the currently active sound system cannot be found.
+	// This has been extended to allow falling back from FMod to OpenAL and vice versa if the currently active sound system cannot be found.
 	if (stricmp(snd_backend, "null") == 0)
 	{
 		GSnd = new NullSoundRenderer;
+	}
+	else if(stricmp(snd_backend, "fmod") == 0)
+	{
+			if (IsFModExPresent())
+			{
+				GSnd = new FMODSoundRenderer;
+			}
+		#ifndef NO_OPENAL
+			if ((!GSnd || !GSnd->IsValid()) && IsOpenALPresent())
+			{
+				Printf (TEXTCOLOR_RED"FMod Ex Sound init failed. Trying OpenAL.\n");
+				I_CloseSound();
+				GSnd = new OpenALSoundRenderer;
+				snd_backend = "openal";
+			}
+		#endif
 	}
 	else if(stricmp(snd_backend, "openal") == 0)
 	{
@@ -276,6 +313,13 @@ void I_InitSound ()
 				GSnd = new OpenALSoundRenderer;
 			}
 		#endif
+			if ((!GSnd || !GSnd->IsValid()) && IsFModExPresent())
+			{
+				Printf (TEXTCOLOR_RED"OpenAL Sound init failed. Trying FMod Ex.\n");
+				I_CloseSound();
+				GSnd = new FMODSoundRenderer;
+				snd_backend = "fmod";
+			}
 	}
 	else
 	{
@@ -426,7 +470,7 @@ FString SoundStream::GetStats()
 //
 //==========================================================================
 
-SoundHandle SoundRenderer::LoadSoundVoc(BYTE *sfxdata, int length)
+SoundHandle SoundRenderer::LoadSoundVoc(BYTE* sfxdata, int length)
 {
 	BYTE * data = NULL;
 	int len, frequency, channels, bits, loopstart, loopend;

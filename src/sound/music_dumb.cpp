@@ -12,7 +12,7 @@
 ** those points. I mention this because the debug version of DUMB
 ** is *MUCH, MUCH, MUCH* slower than the release version. If your
 ** processor only has a single core, you probably shouldn't even
-** use the debug version of DUMB. Unfortunately, when I tried
+** use the debug version of DUMB. Unfortunately, when I tried 
 ** linking the debug build of ZDoom against a release build of DUMB,
 ** there were some files that would not load, even though they
 ** loaded fine when the DUMB build type matched the ZDoom build type.
@@ -43,7 +43,7 @@
 class input_mod : public StreamSong
 {
 public:
-	input_mod(DUH* myduh);
+	input_mod(DUH *myduh);
 	~input_mod();
 	//bool SetPosition(int ms);
 	bool SetSubsong(int subsong);
@@ -64,14 +64,14 @@ protected:
 	double length;
 	bool eof;
 	size_t written;
-	DUH* duh;
-	DUH_SIGRENDERER* sr;
+	DUH *duh;
+	DUH_SIGRENDERER *sr;
 	FCriticalSection crit_sec;
 
 	bool open2(long pos);
-	long render(double volume, double delta, long samples, sample_t** buffer);
-	int decode_run(void* buffer, unsigned int size);
-	static bool read(SoundStream* stream, void* buff, int len, void* userdata);
+	long render(double volume, double delta, long samples, sample_t **buffer);
+	int decode_run(void *buffer, unsigned int size);
+	static bool read(SoundStream *stream, void *buff, int len, void *userdata);
 };
 
 #pragma pack(1)
@@ -100,14 +100,14 @@ typedef struct tagITFILEHEADER
 	DWORD reserved2;
 	BYTE chnpan[64];
 	BYTE chnvol[64];
-} ITFILEHEADER, * PITFILEHEADER;
+} ITFILEHEADER, *PITFILEHEADER;
 
 typedef struct MODMIDICFG
 {
-	char szMidiGlb[9 * 32];      // changed from CHAR
-	char szMidiSFXExt[16 * 32];  // changed from CHAR
-	char szMidiZXXExt[128 * 32]; // changed from CHAR
-} MODMIDICFG, * LPMODMIDICFG;
+	char szMidiGlb[9*32];      // changed from CHAR
+	char szMidiSFXExt[16*32];  // changed from CHAR
+	char szMidiZXXExt[128*32]; // changed from CHAR
+} MODMIDICFG, *LPMODMIDICFG;
 
 #pragma pack()
 
@@ -121,14 +121,14 @@ typedef struct MODMIDICFG
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-CVAR(Bool, mod_dumb, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
-CVAR(Int, mod_samplerate, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
-CVAR(Int, mod_volramp, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
-CVAR(Int, mod_interp, DUMB_LQ_CUBIC, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
-CVAR(Bool, mod_autochip, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
-CVAR(Int, mod_autochip_size_force, 100, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
-CVAR(Int, mod_autochip_size_scan, 500, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
-CVAR(Int, mod_autochip_scan_threshold, 12, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+CVAR(Bool, mod_dumb,					true,  CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+CVAR(Int,  mod_samplerate,				0,	   CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+CVAR(Int,  mod_volramp,					2,	   CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+CVAR(Int,  mod_interp,					DUMB_LQ_CUBIC,	CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+CVAR(Bool, mod_autochip,				false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+CVAR(Int,  mod_autochip_size_force,		100,   CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+CVAR(Int,  mod_autochip_size_scan,		500,   CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+CVAR(Int,  mod_autochip_scan_threshold, 12,	   CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CUSTOM_CVAR(Float, mod_dumb_mastervolume, 1.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (self < 0.5f) self = 0.5f;
@@ -145,7 +145,7 @@ CUSTOM_CVAR(Float, mod_dumb_mastervolume, 1.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 //
 //==========================================================================
 
-static inline QWORD time_to_samples(double p_time, int p_sample_rate)
+static inline QWORD time_to_samples(double p_time,int p_sample_rate)
 {
 	return (QWORD)floor((double)p_sample_rate * p_time + 0.5);
 }
@@ -158,11 +158,11 @@ static inline QWORD time_to_samples(double p_time, int p_sample_rate)
 //
 //==========================================================================
 
-static void ReadDUH(DUH* duh, input_mod* info, bool meta, bool dos)
+static void ReadDUH(DUH * duh, input_mod *info, bool meta, bool dos)
 {
 	if (!duh) return;
 
-	DUMB_IT_SIGDATA* itsd = duh_get_it_sigdata(duh);
+	DUMB_IT_SIGDATA * itsd = duh_get_it_sigdata(duh);
 
 	if (!itsd) return;
 
@@ -242,18 +242,18 @@ static void ReadDUH(DUH* duh, input_mod* info, bool meta, bool dos)
 //
 //==========================================================================
 
-static bool ReadIT(const BYTE* ptr, unsigned size, input_mod* info, bool meta)
+static bool ReadIT(const BYTE * ptr, unsigned size, input_mod *info, bool meta)
 {
-	PITFILEHEADER pifh = (PITFILEHEADER)ptr;
+	PITFILEHEADER pifh = (PITFILEHEADER) ptr;
 	if ((!ptr) || (size < 0x100)) return false;
 	if ((LittleLong(pifh->id) != 0x4D504D49) ||
 		(LittleShort(pifh->insnum) >= 256) ||
 		(!pifh->smpnum) || (LittleShort(pifh->smpnum) > 4000) || // XXX
 		(!pifh->ordnum)) return false;
 	if (sizeof(ITFILEHEADER) + LittleShort(pifh->ordnum) +
-		LittleShort(pifh->insnum) * 4 +
-		LittleShort(pifh->smpnum) * 4 +
-		LittleShort(pifh->patnum) * 4 > size) return false;
+		LittleShort(pifh->insnum)*4 +
+		LittleShort(pifh->smpnum)*4 +
+		LittleShort(pifh->patnum)*4 > size) return false;
 
 	FString ver;
 
@@ -274,17 +274,17 @@ static bool ReadIT(const BYTE* ptr, unsigned size, input_mod* info, bool meta)
 	unsigned msgoffset = LittleLong(pifh->msgoffset);
 	unsigned msgend = msgoffset + LittleShort(pifh->msglength);
 
-	DWORD* offset;
-	//	FString name;
-
+	DWORD * offset;
+//	FString name;
+	
 	if (meta)
 	{
-		offset = (DWORD*)(ptr + 0xC0 + LittleShort(pifh->ordnum) + LittleShort(pifh->insnum) * 4);
+		offset = (DWORD *)(ptr + 0xC0 + LittleShort(pifh->ordnum) + LittleShort(pifh->insnum) * 4);
 
 		for (n = 0, l = LittleShort(pifh->smpnum); n < l; n++, offset++)
 		{
-			DWORD offset_n = LittleLong(*offset);
-			if (offset_n >= msgoffset && offset_n < msgend) msgend = offset_n;
+			DWORD offset_n = LittleLong( *offset );
+			if ( offset_n >= msgoffset && offset_n < msgend ) msgend = offset_n;
 			if ((!offset_n) || (offset_n + 0x14 + 26 + 2 >= size)) continue;
 			// XXX
 			if (ptr[offset_n] == 0 && ptr[offset_n + 1] == 0 &&
@@ -304,12 +304,12 @@ static bool ReadIT(const BYTE* ptr, unsigned size, input_mod* info, bool meta)
 #endif
 		}
 
-		offset = (DWORD*)(ptr + 0xC0 + LittleShort(pifh->ordnum));
+		offset = (DWORD *)(ptr + 0xC0 + LittleShort(pifh->ordnum));
 
 		for (n = 0, l = LittleShort(pifh->insnum); n < l; n++, offset++)
 		{
-			DWORD offset_n = LittleLong(*offset);
-			if (offset_n >= msgoffset && offset_n < msgend) msgend = offset_n;
+			DWORD offset_n = LittleLong( *offset );
+			if ( offset_n >= msgoffset && offset_n < msgend ) msgend = offset_n;
 			if ((!offset_n) || (offset_n + 0x20 + 26 >= size)) continue;
 #if 0
 			if (*(ptr + offset_n + 0x20))
@@ -327,7 +327,7 @@ static bool ReadIT(const BYTE* ptr, unsigned size, input_mod* info, bool meta)
 
 	if (pos < size)
 	{
-		WORD val16 = LittleShort(*(WORD*)(ptr + pos));
+		WORD val16 = LittleShort( *(WORD *)(ptr + pos) );
 		pos += 2;
 		if (pos + val16 * 8 < size) pos += val16 * 8;
 	}
@@ -340,9 +340,9 @@ static bool ReadIT(const BYTE* ptr, unsigned size, input_mod* info, bool meta)
 		}
 	}
 
-	if ((pos + 8 < size) && (*(DWORD*)(ptr + pos) == MAKE_ID('P', 'N', 'A', 'M')))
+	if ((pos + 8 < size) && (*(DWORD *)(ptr + pos) == MAKE_ID('P','N','A','M')))
 	{
-		unsigned len = LittleLong(*(DWORD*)(ptr + pos + 4));
+		unsigned len = LittleLong(*(DWORD *)(ptr + pos + 4));
 		pos += 8;
 		if ((pos + len <= size) && (len <= 240 * 32) && (len >= 32))
 		{
@@ -366,9 +366,9 @@ static bool ReadIT(const BYTE* ptr, unsigned size, input_mod* info, bool meta)
 		}
 	}
 
-	if ((pos + 8 < size) && (*(DWORD*)(ptr + pos) == MAKE_ID('C', 'N', 'A', 'M')))
+	if ((pos + 8 < size) && (*(DWORD *)(ptr + pos) == MAKE_ID('C','N','A','M')))
 	{
-		unsigned len = LittleLong(*(DWORD*)(ptr + pos + 4));
+		unsigned len = LittleLong(*(DWORD *)(ptr + pos + 4));
 		pos += 8;
 		if ((pos + len <= size) && (len <= 64 * 20) && (len >= 20))
 		{
@@ -393,21 +393,21 @@ static bool ReadIT(const BYTE* ptr, unsigned size, input_mod* info, bool meta)
 		}
 	}
 
-	offset = (DWORD*)(ptr + 0xC0 + LittleShort(pifh->ordnum) + LittleShort(pifh->insnum) * 4 + LittleShort(pifh->smpnum) * 4);
+	offset = (DWORD *)(ptr + 0xC0 + LittleShort(pifh->ordnum) + LittleShort(pifh->insnum) * 4 + LittleShort(pifh->smpnum) * 4);
 
 	BYTE chnmask[64];
 
 	for (n = 0, l = LittleShort(pifh->patnum); n < l; n++)
 	{
 		memset(chnmask, 0, sizeof(chnmask));
-		DWORD offset_n = LittleLong(offset[n]);
+		DWORD offset_n = LittleLong( offset[n] );
 		if ((!offset_n) || (offset_n + 4 >= size)) continue;
-		unsigned len = LittleShort(*(WORD*)(ptr + offset_n));
-		unsigned rows = LittleShort(*(WORD*)(ptr + offset_n + 2));
+		unsigned len = LittleShort(*(WORD *)(ptr + offset_n));
+		unsigned rows = LittleShort(*(WORD *)(ptr + offset_n + 2));
 		if ((rows < 4) || (rows > 256)) continue;
 		if (offset_n + 8 + len > size) continue;
 		unsigned i = 0;
-		const BYTE* p = ptr + offset_n + 8;
+		const BYTE * p = ptr + offset_n + 8;
 		unsigned nrow = 0;
 		while (nrow < rows)
 		{
@@ -428,7 +428,7 @@ static bool ReadIT(const BYTE* ptr, unsigned size, input_mod* info, bool meta)
 			// Channel used
 			if (chnmask[ch] & 0x0F)
 			{
-				if ((ch >= m_nChannels) && (ch < 64)) m_nChannels = ch + 1;
+				if ((ch >= m_nChannels) && (ch < 64)) m_nChannels = ch+1;
 			}
 			// Note
 			if (chnmask[ch] & 1) i++;
@@ -442,9 +442,9 @@ static bool ReadIT(const BYTE* ptr, unsigned size, input_mod* info, bool meta)
 		}
 	}
 
-	if (meta && (LittleShort(pifh->special) & 1) && (msgend - msgoffset) && (msgend < size))
+	if ( meta && ( LittleShort(pifh->special) & 1 ) && ( msgend - msgoffset ) && ( msgend < size ) )
 	{
-		const char* str = (const char*)ptr + msgoffset;
+		const char * str = (const char *) ptr + msgoffset;
 		FString msg(str);
 		//info.meta_add( field_comment, string_utf8_from_it_multiline( msg ) );
 	}
@@ -464,13 +464,13 @@ static bool ReadIT(const BYTE* ptr, unsigned size, input_mod* info, bool meta)
 
 typedef struct tdumbfile_mem_status
 {
-	const BYTE* ptr;
+	const BYTE *ptr;
 	unsigned int offset, size;
 } dumbfile_mem_status;
 
-static int DUMBCALLBACK dumbfile_mem_skip(void* f, long n)
+static int DUMBCALLBACK dumbfile_mem_skip(void *f, long n)
 {
-	dumbfile_mem_status* s = (dumbfile_mem_status*)f;
+	dumbfile_mem_status * s = (dumbfile_mem_status *) f;
 	s->offset += n;
 	if (s->offset > s->size)
 	{
@@ -480,9 +480,9 @@ static int DUMBCALLBACK dumbfile_mem_skip(void* f, long n)
 	return 0;
 }
 
-static int DUMBCALLBACK dumbfile_mem_getc(void* f)
+static int DUMBCALLBACK dumbfile_mem_getc(void *f)
 {
-	dumbfile_mem_status* s = (dumbfile_mem_status*)f;
+	dumbfile_mem_status * s = (dumbfile_mem_status *) f;
 	if (s->offset < s->size)
 	{
 		return *(s->ptr + s->offset++);
@@ -490,9 +490,9 @@ static int DUMBCALLBACK dumbfile_mem_getc(void* f)
 	return -1;
 }
 
-static int32 DUMBCALLBACK dumbfile_mem_getnc(char* ptr, int32 n, void* f)
+static int32 DUMBCALLBACK dumbfile_mem_getnc(char *ptr, int32 n, void *f)
 {
-	dumbfile_mem_status* s = (dumbfile_mem_status*)f;
+	dumbfile_mem_status * s = (dumbfile_mem_status *) f;
 	long max = s->size - s->offset;
 	if (max > n) max = n;
 	if (max)
@@ -503,9 +503,9 @@ static int32 DUMBCALLBACK dumbfile_mem_getnc(char* ptr, int32 n, void* f)
 	return max;
 }
 
-static int DUMBCALLBACK dumbfile_mem_seek(void* f, long n)
+static int DUMBCALLBACK dumbfile_mem_seek(void *f, long n)
 {
-	dumbfile_mem_status* s = (dumbfile_mem_status*)f;
+	dumbfile_mem_status * s = (dumbfile_mem_status *) f;
 	s->offset = n;
 	if (s->offset > s->size)
 	{
@@ -515,9 +515,9 @@ static int DUMBCALLBACK dumbfile_mem_seek(void* f, long n)
 	return 0;
 }
 
-static long DUMBCALLBACK dumbfile_mem_get_size(void* f)
+static long DUMBCALLBACK dumbfile_mem_get_size(void *f)
 {
-	dumbfile_mem_status* s = (dumbfile_mem_status*)f;
+	dumbfile_mem_status * s = (dumbfile_mem_status *) f;
 	return s->size;
 }
 
@@ -537,24 +537,24 @@ static DUMBFILE_SYSTEM mem_dfs = {
 //
 //==========================================================================
 
-DUMBFILE* dumb_read_allfile(dumbfile_mem_status* filestate, BYTE* start, FileReader& reader, int lenhave, int lenfull)
+DUMBFILE *dumb_read_allfile(dumbfile_mem_status *filestate, BYTE *start, FileReader &reader, int lenhave, int lenfull)
 {
 	filestate->size = lenfull;
 	filestate->offset = 0;
 	if (lenhave >= lenfull)
-		filestate->ptr = (BYTE*)start;
-	else
-	{
-		BYTE* mem = new BYTE[lenfull];
-		memcpy(mem, start, lenhave);
-		if (reader.Read(mem + lenhave, lenfull - lenhave) != (lenfull - lenhave))
-		{
-			delete[] mem;
-			return NULL;
-		}
-		filestate->ptr = mem;
-	}
-	return dumbfile_open_ex(filestate, &mem_dfs);
+		filestate->ptr = (BYTE *)start;
+    else
+    {
+        BYTE *mem = new BYTE[lenfull];
+        memcpy(mem, start, lenhave);
+        if (reader.Read(mem + lenhave, lenfull - lenhave) != (lenfull - lenhave))
+        {
+            delete[] mem;
+            return NULL;
+        }
+        filestate->ptr = mem;
+    }
+    return dumbfile_open_ex(filestate, &mem_dfs);
 }
 
 //==========================================================================
@@ -566,34 +566,34 @@ DUMBFILE* dumb_read_allfile(dumbfile_mem_status* filestate, BYTE* start, FileRea
 //
 //==========================================================================
 
-static void MOD_SetAutoChip(DUH* duh)
+static void MOD_SetAutoChip(DUH *duh)
 {
 	int size_force = mod_autochip_size_force;
 	int size_scan = mod_autochip_size_scan;
 	int scan_threshold_8 = ((mod_autochip_scan_threshold * 0x100) + 50) / 100;
 	int scan_threshold_16 = ((mod_autochip_scan_threshold * 0x10000) + 50) / 100;
-	DUMB_IT_SIGDATA* itsd = duh_get_it_sigdata(duh);
+	DUMB_IT_SIGDATA * itsd = duh_get_it_sigdata(duh);
 
 	if (itsd)
 	{
 		for (int i = 0, j = itsd->n_samples; i < j; i++)
 		{
-			IT_SAMPLE* sample = &itsd->sample[i];
+			IT_SAMPLE * sample = &itsd->sample[i];
 			if (sample->flags & IT_SAMPLE_EXISTS)
 			{
 				int channels = sample->flags & IT_SAMPLE_STEREO ? 2 : 1;
 				if (sample->length < size_force) sample->max_resampling_quality = 0;
 				else if (sample->length < size_scan)
 				{
-					if ((sample->flags & (IT_SAMPLE_LOOP | IT_SAMPLE_PINGPONG_LOOP)) == IT_SAMPLE_LOOP)
+					if ((sample->flags & (IT_SAMPLE_LOOP|IT_SAMPLE_PINGPONG_LOOP)) == IT_SAMPLE_LOOP)
 					{
 						int loop_start = sample->loop_start * channels;
 						int loop_end = sample->loop_end * channels;
 						int s1, s2;
 						if (sample->flags & IT_SAMPLE_16BIT)
 						{
-							s1 = ((signed short*)sample->data)[loop_start];
-							s2 = ((signed short*)sample->data)[loop_end - channels];
+							s1 = ((signed short *)sample->data)[loop_start];
+							s2 = ((signed short *)sample->data)[loop_end - channels];
 							if (abs(s1 - s2) > scan_threshold_16)
 							{
 								sample->max_resampling_quality = 0;
@@ -601,8 +601,8 @@ static void MOD_SetAutoChip(DUH* duh)
 							}
 							if (channels == 2)
 							{
-								s1 = ((signed short*)sample->data)[loop_start + 1];
-								s2 = ((signed short*)sample->data)[loop_end - 1];
+								s1 = ((signed short *)sample->data)[loop_start + 1];
+								s2 = ((signed short *)sample->data)[loop_end - 1];
 								if (abs(s1 - s2) > scan_threshold_16)
 								{
 									sample->max_resampling_quality = 0;
@@ -612,8 +612,8 @@ static void MOD_SetAutoChip(DUH* duh)
 						}
 						else
 						{
-							s1 = ((signed char*)sample->data)[loop_start];
-							s2 = ((signed char*)sample->data)[loop_end - channels];
+							s1 = ((signed char *)sample->data)[loop_start];
+							s2 = ((signed char *)sample->data)[loop_end - channels];
 							if (abs(s1 - s2) > scan_threshold_8)
 							{
 								sample->max_resampling_quality = 0;
@@ -621,8 +621,8 @@ static void MOD_SetAutoChip(DUH* duh)
 							}
 							if (channels == 2)
 							{
-								s1 = ((signed char*)sample->data)[loop_start + 1];
-								s2 = ((signed char*)sample->data)[loop_end - 1];
+								s1 = ((signed char *)sample->data)[loop_start + 1];
+								s2 = ((signed char *)sample->data)[loop_end - 1];
 								if (abs(s1 - s2) > scan_threshold_8)
 								{
 									sample->max_resampling_quality = 0;
@@ -631,15 +631,15 @@ static void MOD_SetAutoChip(DUH* duh)
 							}
 						}
 					}
-					if ((sample->flags & (IT_SAMPLE_SUS_LOOP | IT_SAMPLE_PINGPONG_SUS_LOOP)) == IT_SAMPLE_SUS_LOOP)
+					if ((sample->flags & (IT_SAMPLE_SUS_LOOP|IT_SAMPLE_PINGPONG_SUS_LOOP)) == IT_SAMPLE_SUS_LOOP)
 					{
 						int sus_loop_start = sample->sus_loop_start * channels;
 						int sus_loop_end = sample->sus_loop_end * channels;
 						int s1, s2;
 						if (sample->flags & IT_SAMPLE_16BIT)
 						{
-							s1 = ((signed short*)sample->data)[sus_loop_start];
-							s2 = ((signed short*)sample->data)[sus_loop_end - channels];
+							s1 = ((signed short *)sample->data)[sus_loop_start];
+							s2 = ((signed short *)sample->data)[sus_loop_end - channels];
 							if (abs(s1 - s2) > scan_threshold_16)
 							{
 								sample->max_resampling_quality = 0;
@@ -647,8 +647,8 @@ static void MOD_SetAutoChip(DUH* duh)
 							}
 							if (channels == 2)
 							{
-								s1 = ((signed short*)sample->data)[sus_loop_start + 1];
-								s2 = ((signed short*)sample->data)[sus_loop_end - 1];
+								s1 = ((signed short *)sample->data)[sus_loop_start + 1];
+								s2 = ((signed short *)sample->data)[sus_loop_end - 1];
 								if (abs(s1 - s2) > scan_threshold_16)
 								{
 									sample->max_resampling_quality = 0;
@@ -658,8 +658,8 @@ static void MOD_SetAutoChip(DUH* duh)
 						}
 						else
 						{
-							s1 = ((signed char*)sample->data)[sus_loop_start];
-							s2 = ((signed char*)sample->data)[sus_loop_end - channels];
+							s1 = ((signed char *)sample->data)[sus_loop_start];
+							s2 = ((signed char *)sample->data)[sus_loop_end - channels];
 							if (abs(s1 - s2) > scan_threshold_8)
 							{
 								sample->max_resampling_quality = 0;
@@ -667,8 +667,8 @@ static void MOD_SetAutoChip(DUH* duh)
 							}
 							if (channels == 2)
 							{
-								s1 = ((signed char*)sample->data)[sus_loop_start + 1];
-								s2 = ((signed char*)sample->data)[sus_loop_end - 1];
+								s1 = ((signed char *)sample->data)[sus_loop_start + 1];
+								s2 = ((signed char *)sample->data)[sus_loop_end - 1];
 								if (abs(s1 - s2) > scan_threshold_8)
 								{
 									sample->max_resampling_quality = 0;
@@ -684,7 +684,7 @@ static void MOD_SetAutoChip(DUH* duh)
 					{
 						for (k = channels; k < l; k += channels)
 						{
-							if (abs(((signed short*)sample->data)[k - channels] - ((signed short*)sample->data)[k]) > scan_threshold_16)
+							if (abs(((signed short *)sample->data)[k - channels] - ((signed short *)sample->data)[k]) > scan_threshold_16)
 							{
 								break;
 							}
@@ -698,7 +698,7 @@ static void MOD_SetAutoChip(DUH* duh)
 						{
 							for (k = 2 + 1; k < l; k += 2)
 							{
-								if (abs(((signed short*)sample->data)[k - 2] - ((signed short*)sample->data)[k]) > scan_threshold_16)
+								if (abs(((signed short *)sample->data)[k - 2] - ((signed short *)sample->data)[k]) > scan_threshold_16)
 								{
 									break;
 								}
@@ -714,7 +714,7 @@ static void MOD_SetAutoChip(DUH* duh)
 					{
 						for (k = channels; k < l; k += channels)
 						{
-							if (abs(((signed char*)sample->data)[k - channels] - ((signed char*)sample->data)[k]) > scan_threshold_8)
+							if (abs(((signed char *)sample->data)[k - channels] - ((signed char *)sample->data)[k]) > scan_threshold_8)
 							{
 								break;
 							}
@@ -728,7 +728,7 @@ static void MOD_SetAutoChip(DUH* duh)
 						{
 							for (k = 2 + 1; k < l; k += 2)
 							{
-								if (abs(((signed char*)sample->data)[k - 2] - ((signed char*)sample->data)[k]) > scan_threshold_8)
+								if (abs(((signed char *)sample->data)[k - 2] - ((signed char *)sample->data)[k]) > scan_threshold_8)
 								{
 									break;
 								}
@@ -752,19 +752,19 @@ static void MOD_SetAutoChip(DUH* duh)
 //
 //==========================================================================
 
-MusInfo* MOD_OpenSong(FileReader& reader)
+MusInfo *MOD_OpenSong(FileReader &reader)
 {
-	DUH* duh = 0;
+	DUH *duh = 0;
 	int headsize;
 	union
 	{
 		BYTE start[64];
-		DWORD dstart[64 / 4];
+		DWORD dstart[64/4];
 	};
 	dumbfile_mem_status filestate;
-	DUMBFILE* f = NULL;
+	DUMBFILE *f = NULL;
 	long fpos = 0;
-	input_mod* state = NULL;
+	input_mod *state = NULL;
 
 	if (!mod_dumb)
 	{
@@ -776,19 +776,19 @@ MusInfo* MOD_OpenSong(FileReader& reader)
 
 	atterm(dumb_exit);
 
-	int size = reader.GetLength();
-	fpos = reader.Tell();
+    int size = reader.GetLength();
+    fpos = reader.Tell();
 
 	filestate.ptr = start;
 	filestate.offset = 0;
 	headsize = MIN((int)sizeof(start), size);
 
-	if (headsize != reader.Read(start, headsize))
-	{
-		return NULL;
-	}
+    if (headsize != reader.Read(start, headsize))
+    {
+        return NULL;
+    }
 
-	if (size >= 4 && dstart[0] == MAKE_ID('I', 'M', 'P', 'M'))
+	if (size >= 4 && dstart[0] == MAKE_ID('I','M','P','M'))
 	{
 		is_it = true;
 		if ((f = dumb_read_allfile(&filestate, start, reader, headsize, size)))
@@ -803,7 +803,7 @@ MusInfo* MOD_OpenSong(FileReader& reader)
 			duh = dumb_read_xm_quick(f);
 		}
 	}
-	else if (size >= 0x30 && dstart[11] == MAKE_ID('S', 'C', 'R', 'M'))
+	else if (size >= 0x30 && dstart[11] == MAKE_ID('S','C','R','M'))
 	{
 		if ((f = dumb_read_allfile(&filestate, start, reader, headsize, size)))
 		{
@@ -812,9 +812,9 @@ MusInfo* MOD_OpenSong(FileReader& reader)
 	}
 	else if (size >= 1168 &&
 		/*start[28] == 0x1A &&*/ start[29] == 2 &&
-		(!memcmp(&start[20], "!Scream!", 8) ||
-			!memcmp(&start[20], "BMOD2STM", 8) ||
-			!memcmp(&start[20], "WUZAMOD!", 8)))
+		( !memcmp( &start[20], "!Scream!", 8 ) ||
+		  !memcmp( &start[20], "BMOD2STM", 8 ) ||
+		  !memcmp( &start[20], "WUZAMOD!", 8 ) ) )
 	{
 		if ((f = dumb_read_allfile(&filestate, start, reader, headsize, size)))
 		{
@@ -823,21 +823,21 @@ MusInfo* MOD_OpenSong(FileReader& reader)
 	}
 	else if (size >= 2 &&
 		((start[0] == 0x69 && start[1] == 0x66) ||
-			(start[0] == 0x4A && start[1] == 0x4E)))
+		 (start[0] == 0x4A && start[1] == 0x4E)))
 	{
 		if ((f = dumb_read_allfile(&filestate, start, reader, headsize, size)))
 		{
 			duh = dumb_read_669_quick(f);
 		}
 	}
-	else if (size >= 0x30 && dstart[11] == MAKE_ID('P', 'T', 'M', 'F'))
+	else if (size >= 0x30 && dstart[11] == MAKE_ID('P','T','M','F'))
 	{
 		if ((f = dumb_read_allfile(&filestate, start, reader, headsize, size)))
 		{
 			duh = dumb_read_ptm_quick(f);
 		}
 	}
-	else if (size >= 4 && dstart[0] == MAKE_ID('P', 'S', 'M', ' '))
+	else if (size >= 4 && dstart[0] == MAKE_ID('P','S','M',' '))
 	{
 		if ((f = dumb_read_allfile(&filestate, start, reader, headsize, size)))
 		{
@@ -845,7 +845,7 @@ MusInfo* MOD_OpenSong(FileReader& reader)
 			/*start_order = 0;*/
 		}
 	}
-	else if (size >= 4 && dstart[0] == (DWORD)MAKE_ID('P', 'S', 'M', 254))
+	else if (size >= 4 && dstart[0] == (DWORD)MAKE_ID('P','S','M',254))
 	{
 		if ((f = dumb_read_allfile(&filestate, start, reader, headsize, size)))
 		{
@@ -859,10 +859,10 @@ MusInfo* MOD_OpenSong(FileReader& reader)
 			duh = dumb_read_mtm_quick(f);
 		}
 	}
-	else if (size >= 12 && dstart[0] == MAKE_ID('R', 'I', 'F', 'F') &&
-		(dstart[2] == MAKE_ID('D', 'S', 'M', 'F') ||
-			dstart[2] == MAKE_ID('A', 'M', ' ', ' ') ||
-			dstart[2] == MAKE_ID('A', 'M', 'F', 'F')))
+	else if (size >= 12 && dstart[0] == MAKE_ID('R','I','F','F') &&
+		(dstart[2] == MAKE_ID('D','S','M','F') ||
+		 dstart[2] == MAKE_ID('A','M',' ',' ') ||
+		 dstart[2] == MAKE_ID('A','M','F','F')))
 	{
 		if ((f = dumb_read_allfile(&filestate, start, reader, headsize, size)))
 		{
@@ -870,8 +870,8 @@ MusInfo* MOD_OpenSong(FileReader& reader)
 		}
 	}
 	else if (size >= 32 &&
-		!memcmp(start, "ASYLUM Music Format", 19) &&
-		!memcmp(start + 19, " V1.0", 5))
+		!memcmp( start, "ASYLUM Music Format", 19 ) &&
+		!memcmp( start + 19, " V1.0", 5 ) )
 	{
 		if ((f = dumb_read_allfile(&filestate, start, reader, headsize, size)))
 		{
@@ -879,8 +879,8 @@ MusInfo* MOD_OpenSong(FileReader& reader)
 		}
 	}
 	else if (size >= 8 &&
-		dstart[0] == MAKE_ID('O', 'K', 'T', 'A') &&
-		dstart[1] == MAKE_ID('S', 'O', 'N', 'G'))
+		dstart[0] == MAKE_ID('O','K','T','A') &&
+		dstart[1] == MAKE_ID('S','O','N','G'))
 	{
 		if ((f = dumb_read_allfile(&filestate, start, reader, headsize, size)))
 		{
@@ -888,14 +888,14 @@ MusInfo* MOD_OpenSong(FileReader& reader)
 		}
 	}
 
-	if (!duh)
+	if ( ! duh )
 	{
 		is_dos = false;
-		if (filestate.ptr == (BYTE*)start)
+		if (filestate.ptr == (BYTE *)start)
 		{
 			if (!(f = dumb_read_allfile(&filestate, start, reader, headsize, size)))
 			{
-				reader.Seek(fpos, SEEK_SET);
+                reader.Seek(fpos, SEEK_SET);
 				return NULL;
 			}
 		}
@@ -915,7 +915,7 @@ MusInfo* MOD_OpenSong(FileReader& reader)
 	{
 		dumbfile_close(f);
 	}
-	if (duh)
+	if ( duh )
 	{
 		if (mod_autochip)
 		{
@@ -936,11 +936,11 @@ MusInfo* MOD_OpenSong(FileReader& reader)
 	else
 	{
 		// Reposition file pointer for other codecs to do their checks.
-		reader.Seek(fpos, SEEK_SET);
+        reader.Seek(fpos, SEEK_SET);
 	}
-	if (filestate.ptr != (BYTE*)start)
+	if (filestate.ptr != (BYTE *)start)
 	{
-		delete[] const_cast<BYTE*>(filestate.ptr);
+		delete[] const_cast<BYTE *>(filestate.ptr);
 	}
 	return state;
 }
@@ -951,9 +951,9 @@ MusInfo* MOD_OpenSong(FileReader& reader)
 //
 //==========================================================================
 
-bool input_mod::read(SoundStream* stream, void* buffer, int sizebytes, void* userdata)
+bool input_mod::read(SoundStream *stream, void *buffer, int sizebytes, void *userdata)
 {
-	input_mod* state = (input_mod*)userdata;
+	input_mod *state = (input_mod *)userdata;
 	if (state->eof)
 	{
 		memset(buffer, 0, sizebytes);
@@ -979,10 +979,10 @@ bool input_mod::read(SoundStream* stream, void* buffer, int sizebytes, void* use
 			// Convert to float
 			for (int i = 0; i < written * 2; ++i)
 			{
-				((float*)buffer)[i] = (((int*)buffer)[i] / (float)(1 << 24)) * mod_dumb_mastervolume;
+				((float *)buffer)[i] = (((int *)buffer)[i] / (float)(1 << 24)) * mod_dumb_mastervolume;
 			}
 		}
-		buffer = (BYTE*)buffer + written * 8;
+		buffer = (BYTE *)buffer + written * 8;
 		sizebytes -= written * 8;
 	}
 	state->crit_sec.Leave();
@@ -995,7 +995,7 @@ bool input_mod::read(SoundStream* stream, void* buffer, int sizebytes, void* use
 //
 //==========================================================================
 
-input_mod::input_mod(DUH* myduh)
+input_mod::input_mod(DUH *myduh)
 {
 	duh = myduh;
 	sr = NULL;
@@ -1013,7 +1013,7 @@ input_mod::input_mod(DUH* myduh)
 	{
 		srate = (int)GSnd->GetOutputRate();
 	}
-	m_Stream = GSnd->CreateStream(read, 32 * 1024, SoundStream::Float, srate, this);
+	m_Stream = GSnd->CreateStream(read, 32*1024, SoundStream::Float, srate, this);
 	delta = 65536.0 / srate;
 }
 
@@ -1066,7 +1066,7 @@ bool input_mod::SetSubsong(int order)
 		return false;
 	}
 	crit_sec.Enter();
-	DUH_SIGRENDERER* oldsr = sr;
+	DUH_SIGRENDERER *oldsr = sr;
 	sr = NULL;
 	start_order = order;
 	if (!open2(0))
@@ -1102,7 +1102,7 @@ bool input_mod::open2(long pos)
 		return false;
 	}
 
-	DUMB_IT_SIGRENDERER* itsr = duh_get_it_sigrenderer(sr);
+	DUMB_IT_SIGRENDERER *itsr = duh_get_it_sigrenderer(sr);
 	dumb_it_set_resampling_quality(itsr, interp);
 	dumb_it_set_ramp_style(itsr, volramp);
 	if (!m_Looping)
@@ -1120,7 +1120,7 @@ bool input_mod::open2(long pos)
 //
 //==========================================================================
 
-long input_mod::render(double volume, double delta, long samples, sample_t** buffer)
+long input_mod::render(double volume, double delta, long samples, sample_t **buffer)
 {
 	long written = duh_sigrenderer_generate_samples(sr, volume, delta, samples, buffer);
 
@@ -1152,15 +1152,15 @@ long input_mod::render(double volume, double delta, long samples, sample_t** buf
 //
 //==========================================================================
 
-int input_mod::decode_run(void* buffer, unsigned int size)
+int input_mod::decode_run(void *buffer, unsigned int size)
 {
 	if (eof) return 0;
 
-	DUMB_IT_SIGRENDERER* itsr = duh_get_it_sigrenderer(sr);
+	DUMB_IT_SIGRENDERER *itsr = duh_get_it_sigrenderer(sr);
 	int dt = int(delta * 65536.0 + 0.5);
 	long samples = long((((LONG_LONG)itsr->time_left << 16) | itsr->sub_time_left) / dt);
 	if (samples == 0 || samples > (long)size) samples = size;
-	sample_t** buf = (sample_t**)&buffer;
+	sample_t **buf = (sample_t **)&buffer;
 	int written = 0;
 
 retry:
@@ -1183,14 +1183,14 @@ retry:
 FString input_mod::GetStats()
 {
 	//return StreamSong::GetStats();
-	DUMB_IT_SIGRENDERER* itsr = duh_get_it_sigrenderer(sr);
-	DUMB_IT_SIGDATA* itsd = duh_get_it_sigdata(duh);
+	DUMB_IT_SIGRENDERER *itsr = duh_get_it_sigrenderer(sr);
+	DUMB_IT_SIGDATA *itsd = duh_get_it_sigdata(duh);
 	FString out;
 
 	int channels = 0;
 	for (int i = 0; i < DUMB_IT_N_CHANNELS; i++)
 	{
-		IT_PLAYING* playing = itsr->channel[i].playing;
+		IT_PLAYING * playing = itsr->channel[i].playing;
 		if (playing && !(playing->flags & IT_PLAYING_DEAD)) channels++;
 	}
 	for (int i = 0; i < DUMB_IT_N_NNA_CHANNELS; i++)
@@ -1212,7 +1212,7 @@ FString input_mod::GetStats()
 			channels, NumChannels,
 			itsr->speed,
 			itsr->tempo
-		);
+			);
 	}
 	return out;
 }
@@ -1223,7 +1223,7 @@ FString input_mod::GetStats()
 //
 //==========================================================================
 
-extern "C" short* DUMBCALLBACK dumb_decode_vorbis(int outlen, const void* oggstream, int sizebytes)
+extern "C" short *DUMBCALLBACK dumb_decode_vorbis(int outlen, const void *oggstream, int sizebytes)
 {
 	return GSnd->DecodeSample(outlen, oggstream, sizebytes, CODEC_Vorbis);
 }
