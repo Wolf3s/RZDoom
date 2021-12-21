@@ -9,7 +9,7 @@ set(GME_VERSION 0.6.0 CACHE INTERNAL "libgme Version")
 # 2.6+ always assumes FATAL_ERROR, but 2.4 and below don't.
 # Of course, 2.4 might work, in which case you're welcome to drop
 # down the requirement, but I can't test that.
-cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
+cmake_minimum_required(VERSION 2.6 FATAL_ERROR)
 
 make_release_only()
 
@@ -62,6 +62,10 @@ endif()
 
 if (NOT DEFINED USE_GME_SAP)
     SET(USE_GME_SAP 1 CACHE BOOL "Enable Atari SAP music emulation")
+endif()
+
+if (NOT DEFINED USE_GME_SPC)
+    SET(USE_GME_SPC 1 CACHE BOOL "Enable SNES SPC music emulation")
 endif()
 
 if (NOT DEFINED USE_GME_VGM)

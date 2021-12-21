@@ -1082,6 +1082,7 @@
     <ClCompile Include="src\sound\i_music.cpp" />
     <ClCompile Include="src\sound\i_sound.cpp" />
     <ClCompile Include="src\sound\music_cd.cpp" />
+    <ClCompile Include="src\sound\music_dumb.cpp" />
     <ClCompile Include="src\sound\music_fluidsynth_mididevice.cpp" />
     <ClCompile Include="src\sound\music_gme.cpp" />
     <ClCompile Include="src\sound\music_hmi_midiout.cpp" />
@@ -1546,6 +1547,10 @@
   <ItemGroup>
     <ProjectReference Include="bzip2\bzip2.vcxproj">
       <Project>{a7de5c73-d623-4118-a48a-bdfd1fae97d4}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="dumb\vc6\dumb_static\dumb_static.vcxproj">
+      <Project>{8997289f-10bf-4678-8baa-3bb509c84953}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
     <ProjectReference Include="game-music-emu\game-music-emu.vcxproj">

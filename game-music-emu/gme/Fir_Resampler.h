@@ -1,6 +1,6 @@
 // Finite impulse response (FIR) resampler with adjustable FIR size
 
-// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
+// Game_Music_Emu 0.6.0
 #ifndef FIR_RESAMPLER_H
 #define FIR_RESAMPLER_H
 
@@ -31,7 +31,7 @@ public:
 	void clear();
 	
 	// Number of input samples that can be written
-	int max_write() const { return buf.end() - write_pos; }
+	int max_write() const { return int(buf.end() - write_pos); }
 	
 	// Pointer to place to write input samples
 	sample_t* buffer() { return write_pos; }
@@ -40,7 +40,7 @@ public:
 	void write( long count );
 	
 	// Number of input samples in buffer
-	int written() const { return write_pos - &buf [write_offset]; }
+	int written() const { return int(write_pos - &buf [write_offset]); }
 	
 	// Skip 'count' input samples. Returns number of samples actually skipped.
 	int skip_input( long count );
@@ -51,7 +51,7 @@ public:
 	int input_needed( blargg_long count ) const;
 	
 	// Number of output samples available
-	int avail() const { return avail_( write_pos - &buf [width_ * stereo] ); }
+	int avail() const { return avail_( blargg_long(write_pos - &buf [width_ * stereo] )); }
 	
 public:
 	~Fir_Resampler_();
@@ -109,66 +109,51 @@ int Fir_Resampler<width>::read( sample_t* out_begin, blargg_long count )
 	
 	count >>= 1;
 	
-	// Resampling can add noise so don't actually do it if we've matched sample
-	// rate
-	const double ratio1 = ratio() - 1.0;
-	const bool should_resample =
-		( ratio1 >= 0 ? ratio1 : -ratio1 ) >= 0.00001;
-	
 	if ( end_pos - in >= width * stereo )
 	{
 		end_pos -= width * stereo;
 		do
 		{
 			count--;
+			
+			// accumulate in extended precision
+			blargg_long l = 0;
+			blargg_long r = 0;
+			
+			const sample_t* i = in;
 			if ( count < 0 )
 				break;
 			
-			if( !should_resample )
+			for ( int n = width / 2; n; --n )
 			{
-				out [0] = static_cast<sample_t>( in [0] );
-				out [1] = static_cast<sample_t>( in [1] );
-			}
-			else
-			{
-				// accumulate in extended precision
-				blargg_long l = 0;
-				blargg_long r = 0;
-				
-				const sample_t* i = in;
-				
-				for ( int n = width / 2; n; --n )
-				{
-					int pt0 = imp [0];
-					l += pt0 * i [0];
-					r += pt0 * i [1];
-					int pt1 = imp [1];
-					imp += 2;
-					l += pt1 * i [2];
-					r += pt1 * i [3];
-					i += 4;
-				}
-				
-				remain--;
-				
-				l >>= 15;
-				r >>= 15;
-				
-				in += (skip * stereo) & stereo;
-				skip >>= 1;
-				
-				if ( !remain )
-				{
-					imp = impulses [0];
-					skip = skip_bits;
-					remain = res;
-				}
-				
-				out [0] = (sample_t) l;
-				out [1] = (sample_t) r;
+				int pt0 = imp [0];
+				l += pt0 * i [0];
+				r += pt0 * i [1];
+				int pt1 = imp [1];
+				imp += 2;
+				l += pt1 * i [2];
+				r += pt1 * i [3];
+				i += 4;
 			}
 			
+			remain--;
+			
+			l >>= 15;
+			r >>= 15;
+			
+			in += (skip * stereo) & stereo;
+			skip >>= 1;
 			in += step;
+			
+			if ( !remain )
+			{
+				imp = impulses [0];
+				skip = skip_bits;
+				remain = res;
+			}
+			
+			out [0] = (sample_t) l;
+			out [1] = (sample_t) r;
 			out += 2;
 		}
 		while ( in <= end_pos );
@@ -176,11 +161,11 @@ int Fir_Resampler<width>::read( sample_t* out_begin, blargg_long count )
 	
 	imp_phase = res - remain;
 	
-	int left = write_pos - in;
+	int left = int(write_pos - in);
 	write_pos = &buf [left];
 	memmove( buf.begin(), in, left * sizeof *in );
 	
-	return out - out_begin;
+	return int(out - out_begin);
 }
 
 #endif

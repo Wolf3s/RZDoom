@@ -1,6 +1,6 @@
 // Atari POKEY sound chip emulator
 
-// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
+// Game_Music_Emu 0.6.0
 #ifndef SAP_APU_H
 #define SAP_APU_H
 

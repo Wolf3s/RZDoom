@@ -247,6 +247,7 @@ endif( NOT CMAKE_CROSSCOMPILING )
 
 add_subdirectory( lzma )
 add_subdirectory( tools )
+add_subdirectory( dumb )
 add_subdirectory( gdtoa )
 add_subdirectory( wadsrc )
 add_subdirectory( src )

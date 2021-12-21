@@ -54,24 +54,24 @@ private:
 	int addr_reg;
 	
 	enum { reg_count = 0x80 };
-	uint8_t reg [reg_count];
+	BOOST::uint8_t reg [reg_count];
 	Blip_Synth<blip_good_quality,15> synth;
 	
-	uint8_t& access();
+	BOOST::uint8_t& access();
 	void run_until( blip_time_t );
 };
 /*
 struct namco_state_t
 {
-	uint8_t regs [0x80];
-	uint8_t addr;
-	uint8_t unused;
-	uint8_t positions [8];
-	uint32_t delays [8];
+	BOOST::uint8_t regs [0x80];
+	BOOST::uint8_t addr;
+	BOOST::uint8_t unused;
+	BOOST::uint8_t positions [8];
+	BOOST::uint32_t delays [8];
 };
 */
 
-inline uint8_t& Nes_Namco_Apu::access()
+inline BOOST::uint8_t& Nes_Namco_Apu::access()
 {
 	int addr = addr_reg & 0x7F;
 	if ( addr_reg & 0x80 )

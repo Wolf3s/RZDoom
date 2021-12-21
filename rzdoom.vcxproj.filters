@@ -1380,6 +1380,9 @@
     <ClCompile Include="src\r_utility.cpp">
       <Filter>Render Interface</Filter>
     </ClCompile>
+    <ClCompile Include="src\sound\music_dumb.cpp">
+      <Filter>Audio Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\sc_man_scanner.h">

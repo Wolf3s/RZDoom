@@ -1,4 +1,4 @@
-Game_Music_Emu 0.6.3: Game Music Emulators
+Game_Music_Emu 0.6.0: Game Music Emulators
 ------------------------------------------
 Game_Music_Emu is a collection of video game music file emulators that
 support the following formats and systems:
@@ -34,47 +34,29 @@ several architectures, Mac OS, MorphOS, Xbox, PlayStation Portable,
 GP2X, and Nintendo DS.
 
 Author : Shay Green <gblargg@gmail.com>
-Website: https://bitbucket.org/mpyne/game-music-emu/wiki/Home
+Website: http://www.slack.net/~ant/
+Forum  : http://groups.google.com/group/blargg-sound-libs
 License: GNU Lesser General Public License (LGPL)
 
-Note: When you will use MAME YM2612 emulator, the license of library
-will be GNU General Public License (GPL) v2.0+!
-
-Current Maintainer: Michael Pyne <mpyne@purinchu.net>
 
 Getting Started
 ---------------
 Build a program consisting of demo/basics.c, demo/Wave_Writer.cpp, and
-all source files in gme/.
+all source files in gme/. If you have CMake 2.6 or later, execute
 
-Or, if you have CMake 2.6 or later, execute at a command prompt (from the
-extracted source directory):
+	run cmake
+	cd demo
+	run make
 
-    mkdir build
-    cd build
-    cmake ../         # <-- Pass any needed CMake flags here
-    make              # To build the library
-    cd demo
-    make              # To build the demo itself
-
-Be sure "test.nsf" is in the same directory as the demo program. Running it
+Be sure "test.nsf" is in the same directory as the program. Running it
 should generate the recording "out.wav".
-
-You can use "make install" to install the library. To choose where to install
-the library to, use the CMake argument "-DCMAKE_INSTALL_PREFIX=/usr/local"
-(and replace /usr/local with the base path you wish to use). Alternately, you
-can specify the base path to install to when you run "make install" by passing
-'DESTDIR=/usr/local' on the make install command line (again, replace
-/usr/local as appropriate).
-
-To build a static library instead of shared (the default), pass
--DBUILD_SHARED_LIBS=OFF to the cmake command when running cmake.
 
 A slightly more extensive demo application is available in the player/
 directory.  It requires SDL to build.
 
 Read gme.txt for more information. Post to the discussion forum for
 assistance.
+
 
 Files
 -----
@@ -193,13 +175,8 @@ gme/
   Sms_Apu.cpp         Common Sega emulator files
   Sms_Apu.h
   Sms_Oscs.h
+  Ym2612_Emu.cpp
   Ym2612_Emu.h
-  Ym2612_GENS.cpp     GENS 2.10 YM2612 emulator (LGPLv2.1+ license)
-  Ym2612_GENS.h
-  Ym2612_MAME.cpp     MAME YM2612 emulator (GPLv2.0+ license)
-  Ym2612_MAME.h
-  Ym2612_Nuked.cpp    Nuked OPN2 emulator (LGPLv2.1+ license)
-  Ym2612_Nuked.h
   Dual_Resampler.cpp
   Dual_Resampler.h
   Fir_Resampler.cpp
@@ -226,7 +203,7 @@ gme/
   Multi_Buffer.cpp
   Data_Reader.h
   Data_Reader.cpp
-
+  
   CMakeLists.txt      CMake build rules
 
 
@@ -234,8 +211,6 @@ Legal
 -----
 Game_Music_Emu library copyright (C) 2003-2009 Shay Green.
 Sega Genesis YM2612 emulator copyright (C) 2002 Stephane Dallongeville.
-MAME YM2612 emulator copyright (C) 2003 Jarek Burczynski, Tatsuyuki Satoh
-Nuked OPN2 emulator copyright (C) 2017 Alexey Khokholov (Nuke.YKT)
 
 --
 Shay Green <gblargg@gmail.com>

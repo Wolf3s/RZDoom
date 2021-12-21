@@ -1,10 +1,9 @@
-// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
+// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
 
 #include "Hes_Emu.h"
 
 #include "blargg_endian.h"
 #include <string.h>
-#include <algorithm>
 
 /* Copyright (C) 2006 Shay Green. This module is free software; you
 can redistribute it and/or modify it under the terms of the GNU Lesser
@@ -25,9 +24,6 @@ int const i_flag_mask = 0x04;
 int const unmapped    = 0xFF;
 
 long const period_60hz = 262 * 455L; // scanlines * clocks per scanline
-
-using std::min;
-using std::max;
 
 Hes_Emu::Hes_Emu()
 {
@@ -137,7 +133,7 @@ static Music_Emu* new_hes_emu () { return BLARGG_NEW Hes_Emu ; }
 static Music_Emu* new_hes_file() { return BLARGG_NEW Hes_File; }
 
 static gme_type_t_ const gme_hes_type_ = { "PC Engine", 256, &new_hes_emu, &new_hes_file, "HES", 1 };
-extern gme_type_t const gme_hes_type = &gme_hes_type_;
+gme_type_t const gme_hes_type = &gme_hes_type_;
 
 
 // Setup

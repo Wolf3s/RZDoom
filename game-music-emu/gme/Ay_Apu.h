@@ -1,6 +1,6 @@
 // AY-3-8910 sound chip emulator
 
-// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
+// Game_Music_Emu 0.6.0
 #ifndef AY_APU_H
 #define AY_APU_H
 

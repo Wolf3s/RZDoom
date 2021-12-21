@@ -1,10 +1,9 @@
-// Game_Music_Emu https://bitbucket.org/mpyne/game-music-emu/
+// Game_Music_Emu 0.6.0. http://www.slack.net/~ant/
 
 #include "Sap_Emu.h"
 
 #include "blargg_endian.h"
 #include <string.h>
-#include <algorithm>
 
 /* Copyright (C) 2006 Shay Green. This module is free software; you
 can redistribute it and/or modify it under the terms of the GNU Lesser
@@ -20,9 +19,6 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 #include "blargg_source.h"
 
 long const base_scanline_period = 114;
-
-using std::min;
-using std::max;
 
 Sap_Emu::Sap_Emu()
 {
@@ -123,7 +119,7 @@ static blargg_err_t parse_info( byte const* in, long size, Sap_Emu::info_t* out 
 		char const* tag = (char const*) in;
 		while ( in < line_end && *in > ' ' )
 			in++;
-		int tag_len = (char const*) in - tag;
+		int tag_len = int((char const*) in - tag);
 		
 		while ( in < line_end && *in <= ' ' ) in++;
 		
@@ -240,7 +236,8 @@ static Music_Emu* new_sap_emu () { return BLARGG_NEW Sap_Emu ; }
 static Music_Emu* new_sap_file() { return BLARGG_NEW Sap_File; }
 
 static gme_type_t_ const gme_sap_type_ = { "Atari XL", 0, &new_sap_emu, &new_sap_file, "SAP", 1 };
-extern gme_type_t const gme_sap_type = &gme_sap_type_;
+gme_type_t const gme_sap_type = &gme_sap_type_;
+
 
 // Setup
 
@@ -259,7 +256,7 @@ blargg_err_t Sap_Emu::load_mem_( byte const* in, long size )
 	
 	set_warning( info.warning );
 	set_track_count( info.track_count );
-	set_voice_count( Sap_Apu::osc_count << info.stereo );
+	set_voice_count( Sap_Apu::osc_count << (int)info.stereo );
 	apu_impl.volume( gain() );
 	
 	return setup_buffer( 1773447 );
@@ -318,8 +315,8 @@ inline void Sap_Emu::call_init( int track )
 	
 	case 'C':
 		r.a = 0x70;
-		r.x = info.music_addr&0xFF;
-		r.y = info.music_addr >> 8;
+		r.x = (BOOST::uint8_t)(info.music_addr&0xFF);
+		r.y = (BOOST::uint8_t)(info.music_addr >> 8);
 		run_routine( info.play_addr + 3 );
 		r.a = 0;
 		r.x = track;
