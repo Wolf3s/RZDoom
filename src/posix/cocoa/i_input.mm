@@ -31,9 +31,9 @@
  **
  */
 
-#include "i_common.h"
+#include <Carbon/Carbon.h>
 
-#import <Carbon/Carbon.h>
+#include "i_common.h"
 
 // Avoid collision between DObject class and Objective-C
 #define Class ObjectClass
@@ -297,11 +297,11 @@ uint8_t ModifierToDIK(const uint32_t modifier)
 {
 	switch (modifier)
 	{
-		case NSAlphaShiftKeyMask: return DIK_CAPITAL;
-		case NSShiftKeyMask:      return DIK_LSHIFT;
-		case NSControlKeyMask:    return DIK_LCONTROL;
-		case NSAlternateKeyMask:  return DIK_LMENU;
-		case NSCommandKeyMask:    return DIK_LWIN;
+        case NSEventModifierFlagCapsLock: return DIK_CAPITAL;
+        case NSEventModifierFlagShift:      return DIK_LSHIFT;
+        case NSEventModifierFlagControl:    return DIK_LCONTROL;
+        case NSEventModifierFlagOption:  return DIK_LMENU;
+        case NSEventModifierFlagCommand:    return DIK_LWIN;
 	}
 
 	return 0;
@@ -309,20 +309,20 @@ uint8_t ModifierToDIK(const uint32_t modifier)
 
 SWORD ModifierFlagsToGUIKeyModifiers(NSEvent* theEvent)
 {
-	const NSUInteger modifiers([theEvent modifierFlags] & NSDeviceIndependentModifierFlagsMask);
-	return ((modifiers & NSShiftKeyMask    ) ? GKM_SHIFT : 0)
-		 | ((modifiers & NSControlKeyMask  ) ? GKM_CTRL  : 0)
-		 | ((modifiers & NSAlternateKeyMask) ? GKM_ALT   : 0)
-		 | ((modifiers & NSCommandKeyMask  ) ? GKM_META  : 0);
+    const NSUInteger modifiers([theEvent modifierFlags] & NSEventModifierFlagDeviceIndependentFlagsMask);
+    return ((modifiers & NSEventModifierFlagShift    ) ? GKM_SHIFT : 0)
+    | ((modifiers & NSEventModifierFlagControl  ) ? GKM_CTRL  : 0)
+    | ((modifiers & NSEventModifierFlagOption) ? GKM_ALT   : 0)
+    | ((modifiers & NSEventModifierFlagCommand  ) ? GKM_META  : 0);
 }
 
 bool ShouldGenerateGUICharEvent(NSEvent* theEvent)
 {
-	const NSUInteger modifiers([theEvent modifierFlags] & NSDeviceIndependentModifierFlagsMask);
-	return !(modifiers & NSControlKeyMask)
-		&& !(modifiers & NSAlternateKeyMask)
-		&& !(modifiers & NSCommandKeyMask)
-		&& !(modifiers & NSFunctionKeyMask);
+    const NSUInteger modifiers([theEvent modifierFlags] & NSEventModifierFlagDeviceIndependentFlagsMask);
+    return !(modifiers & NSEventModifierFlagControl)
+    && !(modifiers & NSEventModifierFlagOption)
+    && !(modifiers & NSEventModifierFlagCommand)
+    && !(modifiers & NSEventModifierFlagFunction);
 }
 
 
@@ -384,7 +384,7 @@ void ProcessKeyboardEventInMenu(NSEvent* theEvent)
 	event_t event = {};
 
 	event.type    = EV_GUI_Event;
-	event.subtype = NSKeyDown == [theEvent type] ? EV_GUI_KeyDown : EV_GUI_KeyUp;
+    event.subtype = NSEventTypeKeyDown == [theEvent type] ? EV_GUI_KeyDown : EV_GUI_KeyUp;
 	event.data2   = GetCharacterFromNSEvent(theEvent);
 	event.data3   = ModifierFlagsToGUIKeyModifiers(theEvent);
 

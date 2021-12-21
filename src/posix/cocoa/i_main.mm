@@ -355,7 +355,7 @@ ApplicationController* appCtrl;
 
     while (true)
     {
-        NSEvent* event = [NSApp nextEventMatchingMask:NSAnyEventMask
+        NSEvent* event = [NSApp nextEventMatchingMask:NSEventMaskAny
 											untilDate:[NSDate dateWithTimeIntervalSinceNow:0]
 											   inMode:NSDefaultRunLoopMode
 											  dequeue:YES];
@@ -397,7 +397,7 @@ NSMenuItem* CreateApplicationMenu()
 	[[menu addItemWithTitle:@"Hide Others"
 						action:@selector(hideOtherApplications:)
 				 keyEquivalent:@"h"]
-	 setKeyEquivalentModifierMask:NSAlternateKeyMask | NSCommandKeyMask];
+     setKeyEquivalentModifierMask:NSEventModifierFlagOption | NSEventModifierFlagCommand];
 	[menu addItemWithTitle:@"Show All"
 					   action:@selector(unhideAllApplications:)
 				keyEquivalent:@""];
