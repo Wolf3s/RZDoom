@@ -107,7 +107,6 @@ endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")
 
 option( NO_FMOD "Disable FMOD sound support" OFF )
-option( NO_OPENAL "Disable OpenAL sound support" OFF )
 
 find_package( BZip2 )
 find_package( JPEG )

@@ -1450,29 +1450,23 @@ OptionValue BufferCounts
 OptionString SoundOutputsWindows
 {
 	"Default",		"Default"
-	"DirectSound",	"DirectSound"
 	"WASAPI",		"Vista WASAPI"
 	"ASIO",			"ASIO"
-	"WaveOut",		"WaveOut"
 	"No sound",		"No sound"
 }
-
 
 OptionString SoundOutputsUnix
 {
 	"Default",		"Default"
-	"OSS",			"OSS"
 	"ALSA",			"ALSA"
-	"SDL",			"SDL"
-	"ESD",			"ESD"
-	"PulseAudio",	"PulseAudio"
+	"PulseAudio",		"PulseAudio"
 	"No sound",		"No sound"
 }
 
 OptionString SoundOutputsMac
 {
 	"Core Audio",		"Core Audio"
-	"No sound",			"No sound"
+	"No sound",		"No sound"
 }
 
 OptionString ALDevices
@@ -1514,20 +1508,7 @@ OptionString Resamplers
 
 OptionString SoundBackends
 {
-	"fmod",		"FMOD Ex"
-	"openal",	"OpenAL"
-	"null",		"No Sound"
-}
-
-OptionString SoundBackendsFModOnly
-{
-	"fmod",		"FMOD Ex"
-	"null",		"No Sound"
-}
-
-OptionString SoundBackendsOpenALOnly
-{
-	"openal",	"OpenAL"
+	"fmod",		"FMOD Studio"
 	"null",		"No Sound"
 }
 
@@ -1552,16 +1533,8 @@ OptionMenu FMODSoundItems
 	Option "Resampler",          "snd_resampler", "Resamplers"
 	Option "HRTF filter",        "snd_hrtf", "OnOff"
 	StaticText " "
-	Option "Buffer size",			"snd_buffersize", "BufferSizes"
-	Option "Buffer count",			"snd_buffercount", "BufferCounts"
-}
-
-
-OptionMenu OpenALSoundItems
-{
-	Title "OPENAL OPTIONS"
-	Option "Playback device",	"snd_aldevice",	"ALDevices"
-	Option "Enable EFX",		"snd_efx",		"OnOff"
+	Option "Buffer size",	    "snd_buffersize", "BufferSizes"
+	Option "Buffer count",	    "snd_buffercount", "BufferCounts"
 }
 
 
@@ -1581,39 +1554,12 @@ OptionMenu SoundOptions
 	Option "Randomize pitches",	"snd_pitched", "OnOff"
 	Slider "Sound channels",	"snd_channels", 8, 256, 8, 0
 	StaticText " "
-
-	ifoption(fmod)
-	{
-		ifoption(openal)
-		{
-			Option "Sound backend",		"snd_backend", "SoundBackends"
-		}
-		else
-		{
-			Option "Sound backend",		"snd_backend", "SoundBackendsFModOnly"
-		}
-	}
-	else
-	{
-		ifoption(openal)
-		{
-			Option "Sound backend",		"snd_backend", "SoundBackendsOpenALOnly"
-		}
-	}
-	
-	ifoption(fmod)
-	{
-		Submenu "FMOD options",		"FMODSoundItems"
-	}
-	ifoption(openal)
-	{
-		Submenu "OpenAL options",	"OpenALSoundItems"
-	}
+	Option "Sound backend",		"snd_backend", "SoundBackends"
+	Submenu "FMOD options",		"FMODSoundItems"
 	StaticText " "
-	Command "Restart sound",	"snd_reset"
-
+	Command "Restart sound",		"snd_reset"
 	StaticText " "
-	Submenu "Advanced options",			"AdvSoundOptions"
+	Submenu "Advanced options",		"AdvSoundOptions"
 	Submenu "Module replayer options",	"ModReplayerOptions"
 }
 

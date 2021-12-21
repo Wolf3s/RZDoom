@@ -223,7 +223,13 @@ void DumpCPUInfo(const CPUInfo *cpu)
 
 	if (cpu->VendorID[0])
 	{
-		Printf("CPU Vendor ID: %s\n", cpu->VendorID);
+#if defined (__APPLE__) && defined (__x86_64__)
+		Printf("CPU Vendor ID: Intel\n", cpu->VendorID);
+#elif defined (__APPLE__) && defined (__arm64__)
+        Printf("CPU Vendor ID: Apple Silicon\n", cpu->VendorID);
+#else
+        Printf("CPU Vendor ID: %s\n", cpu->VendorID);
+#endif
 		if (cpustring[0])
 		{
 			Printf("  Name: %s\n", cpustring);

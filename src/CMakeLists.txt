@@ -57,8 +57,8 @@ endif( NOT FMOD_LOCAL_LIB_DIRS )
 set( FMOD_DIR_VERSIONS ${FMOD_DIR_VERSIONS} "../fmod" )
 foreach( majver ${MAJOR_VERSIONS} )
 	foreach( minver ${MINOR_VERSIONS} )
-		set( FMOD_VERSIONS ${FMOD_VERSIONS} "fmod${X64}-4.${majver}.${minver}" )
-		set( FMOD_DIR_VERSIONS ${FMOD_DIR_VERSIONS} "${CMAKE_HOME_DIRECTORY}/fmodapi4${majver}${minver}linux${X64}" )
+		set( FMOD_VERSIONS ${FMOD_VERSIONS} "fmod-${majver}.${minver}" )
+		set( FMOD_DIR_VERSIONS ${FMOD_DIR_VERSIONS} "${CMAKE_HOME_DIRECTORY}/fmodapi${majver}${minver}linux" )
 	endforeach( minver ${MINOR_VERSIONS} )
 	foreach( dir ${FMOD_DIR_VERSIONS} )
 		set( FMOD_LOCAL_INC_DIRS ${FMOD_LOCAL_INC_DIRS} "${dir}/api/inc" )
@@ -197,17 +197,6 @@ else( WIN32 )
 	endif( FPU_CONTROL_DIR )
 endif( WIN32 )
 
-
-if( NOT NO_OPENAL )
-    find_package( OpenAL )
-	mark_as_advanced(CLEAR OPENAL_INCLUDE_DIR)
-    if( OPENAL_INCLUDE_DIR )
-        include_directories( ${OPENAL_INCLUDE_DIR} )
-    else( OPENAL_INCLUDE_DIR )
-		set( NO_OPENAL ON )
-    endif( OPENAL_INCLUDE_DIR )
-endif( NOT NO_OPENAL )
-
 if( NOT NO_FMOD )
 	# Search for FMOD include files
 	if( NOT WIN32 )
@@ -233,16 +222,8 @@ endif( NOT NO_FMOD )
 if( NOT NO_FMOD )
 	# Decide on the name of the FMOD library we want to use.
 	if( NOT FMOD_LIB_NAME AND MSVC )
-		set( FMOD_LIB_NAME fmod${X64}_vc )
+		set( FMOD_LIB_NAME fmod_vc )
 	endif( NOT FMOD_LIB_NAME AND MSVC )
-
-	if( NOT FMOD_LIB_NAME AND BORLAND )
-		set( FMOD_LIB_NAME fmod${X64}_bc )
-	endif( NOT FMOD_LIB_NAME AND BORLAND )
-
-	if( NOT FMOD_LIB_NAME )
-		set( FMOD_LIB_NAME fmod${X64} )
-	endif( NOT FMOD_LIB_NAME )
 
 	# Search for FMOD library
 	if( WIN32 OR APPLE )
@@ -267,20 +248,6 @@ endif( NOT NO_FMOD )
 if( NO_FMOD )
 	add_definitions( -DNO_FMOD=1 )
 endif( NO_FMOD )
-if( NO_OPENAL )
-	add_definitions( -DNO_OPENAL=1 )
-
-	set(MPG123_FOUND NO)
-	set(SNDFILE_FOUND NO)
-else( NO_OPENAL )
-	# Search for libSndFile
-
-	find_package( SndFile )
-
-	# Search for libmpg123
-
-	find_package( MPG123 )
-endif( NO_OPENAL )
 
 # Search for FluidSynth
 
@@ -905,7 +872,6 @@ add_executable( rzdoom WIN32 MACOSX_BUNDLE
 	sound/music_timidity_mididevice.cpp
 	sound/music_wildmidi_mididevice.cpp
 	sound/music_win_mididevice.cpp
-	sound/oalsound.cpp
 	sound/sndfile_decoder.cpp
 	sound/music_pseudo_mididevice.cpp
 	textures/animations.cpp
@@ -1022,9 +988,9 @@ endif( NOT ZDOOM_OUTPUT_OLDSTYLE OR NO_GENERATOR_EXPRESSIONS )
 if( MSVC )
 	option( ZDOOM_GENERATE_MAPFILE "Generate .map file for debugging." OFF )
 	if( ZDOOM_GENERATE_MAPFILE )
-		set_target_properties(rzdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO /DELAYLOAD:\"fmod${X64}.dll\" /DELAYLOAD:\"openal32.dll\" /DELAYLOAD:\"libmpg123-0.dll\" /DELAYLOAD:\"libsndfile-1.dll\" /MAP")
+		set_target_properties(rzdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO /DELAYLOAD:\"fmod.dll\" /DELAYLOAD:\"libmpg123-0.dll\" /DELAYLOAD:\"libsndfile-1.dll\" /MAP")
 	else( ZDOOM_GENERATE_MAPFILE )
-		set_target_properties(rzdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO /DELAYLOAD:\"fmod${X64}.dll\" /DELAYLOAD:\"openal32.dll\" /DELAYLOAD:\"libmpg123-0.dll\" /DELAYLOAD:\"libsndfile-1.dll\"")
+		set_target_properties(rzdoom PROPERTIES LINK_FLAGS "/MANIFEST:NO /DELAYLOAD:\"fmod.dll\" /DELAYLOAD:\"libmpg123-0.dll\" /DELAYLOAD:\"libsndfile-1.dll\"")
 	endif( ZDOOM_GENERATE_MAPFILE )
 
 	if( NO_GENERATOR_EXPRESSIONS )
