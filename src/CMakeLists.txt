@@ -57,7 +57,7 @@ endif( NOT FMOD_LOCAL_LIB_DIRS )
 set( FMOD_DIR_VERSIONS ${FMOD_DIR_VERSIONS} "../fmod" )
 foreach( majver ${MAJOR_VERSIONS} )
 	foreach( minver ${MINOR_VERSIONS} )
-		set( FMOD_VERSIONS ${FMOD_VERSIONS} "fmodex${X64}-4.${majver}.${minver}" )
+		set( FMOD_VERSIONS ${FMOD_VERSIONS} "fmod${X64}-4.${majver}.${minver}" )
 		set( FMOD_DIR_VERSIONS ${FMOD_DIR_VERSIONS} "${CMAKE_HOME_DIRECTORY}/fmodapi4${majver}${minver}linux${X64}" )
 	endforeach( minver ${MINOR_VERSIONS} )
 	foreach( dir ${FMOD_DIR_VERSIONS} )
@@ -146,7 +146,7 @@ if( WIN32 )
 		DelayImp )
 else( WIN32 )
 	if( APPLE )
-		set( FMOD_SEARCH_PATHS "/Developer/FMOD Programmers API Mac/api" )
+		set( FMOD_SEARCH_PATHS "/Developer/FMOD Programmers API/api/core" )
 		set( FMOD_INC_PATH_SUFFIXES PATH_SUFFIXES inc )
 		set( FMOD_LIB_PATH_SUFFIXES PATH_SUFFIXES lib )
 		set( NO_GTK ON )
@@ -162,8 +162,9 @@ else( WIN32 )
 			/opt/local/include
 			/opt/local/include/fmod
 			/opt/include
+			/Library
 			/opt/include/fmod )
-		set( FMOD_INC_PATH_SUFFIXES PATH_SUFFIXES fmodex )
+		set( FMOD_INC_PATH_SUFFIXES PATH_SUFFIXES fmod )
 
 		# Use GTK+ for the IWAD picker, if available.
 		if( NOT NO_GTK )
@@ -232,15 +233,15 @@ endif( NOT NO_FMOD )
 if( NOT NO_FMOD )
 	# Decide on the name of the FMOD library we want to use.
 	if( NOT FMOD_LIB_NAME AND MSVC )
-		set( FMOD_LIB_NAME fmodex${X64}_vc )
+		set( FMOD_LIB_NAME fmod${X64}_vc )
 	endif( NOT FMOD_LIB_NAME AND MSVC )
 
 	if( NOT FMOD_LIB_NAME AND BORLAND )
-		set( FMOD_LIB_NAME fmodex${X64}_bc )
+		set( FMOD_LIB_NAME fmod${X64}_bc )
 	endif( NOT FMOD_LIB_NAME AND BORLAND )
 
 	if( NOT FMOD_LIB_NAME )
-		set( FMOD_LIB_NAME fmodex${X64} )
+		set( FMOD_LIB_NAME fmod${X64} )
 	endif( NOT FMOD_LIB_NAME )
 
 	# Search for FMOD library
@@ -1067,9 +1068,9 @@ if( APPLE )
 			COMMAND awk "{print $1}"
 			OUTPUT_VARIABLE FMOD_LINK
 			OUTPUT_STRIP_TRAILING_WHITESPACE )
-		add_custom_command( TARGET zdoom POST_BUILD
-			COMMAND "${INSTALL_NAME_TOOL}" -change "${FMOD_LINK}" @executable_path/../Frameworks/libfmod.dylib "$<TARGET_FILE:zdoom>"
-			COMMENT "Relinking FMOD Ex" )
+		add_custom_command( TARGET rzdoom POST_BUILD
+			COMMAND "${INSTALL_NAME_TOOL}" -change "${FMOD_LINK}" @executable_path/../Frameworks/libfmod.dylib "$<TARGET_FILE:rzdoom>"
+			COMMENT "Relinking FMOD" )
 	endif( NOT NO_FMOD )
 endif( APPLE )
 

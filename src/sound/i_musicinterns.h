@@ -39,33 +39,33 @@ EXTERN_CVAR (Float, timidity_mastervolume)
 #ifndef _WIN32
 struct MIDIHDR
 {
-	BYTE *lpData;
-	DWORD dwBufferLength;
-	DWORD dwBytesRecorded;
-	MIDIHDR *lpNext;
+    BYTE *lpData;
+    DWORD dwBufferLength;
+    DWORD dwBytesRecorded;
+    MIDIHDR *lpNext;
 };
 
 enum
 {
-	MOD_MIDIPORT = 1,
-	MOD_SYNTH,
-	MOD_SQSYNTH,
-	MOD_FMSYNTH,
-	MOD_MAPPER,
-	MOD_WAVETABLE,
-	MOD_SWSYNTH
+    MOD_MIDIPORT = 1,
+    MOD_SYNTH,
+    MOD_SQSYNTH,
+    MOD_FMSYNTH,
+    MOD_MAPPER,
+    MOD_WAVETABLE,
+    MOD_SWSYNTH
 };
 
 typedef BYTE *LPSTR;
 
-#define MEVT_TEMPO			((BYTE)1)
-#define MEVT_NOP			((BYTE)2)
-#define MEVT_LONGMSG		((BYTE)128)
+#define MEVT_TEMPO            ((BYTE)1)
+#define MEVT_NOP            ((BYTE)2)
+#define MEVT_LONGMSG        ((BYTE)128)
 
-#define MEVT_EVENTTYPE(x)	((BYTE)((x) >> 24))
+#define MEVT_EVENTTYPE(x)    ((BYTE)((x) >> 24))
 #define MEVT_EVENTPARM(x)   ((x) & 0xffffff)
 
-#define MOM_DONE			969
+#define MOM_DONE            969
 #else
 // w32api does not define these
 #ifndef MOD_WAVETABLE
@@ -79,32 +79,32 @@ class MIDIStreamer;
 class MIDIDevice
 {
 public:
-	MIDIDevice();
-	virtual ~MIDIDevice();
+    MIDIDevice();
+    virtual ~MIDIDevice();
 
-	virtual int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata) = 0;
-	virtual void Close() = 0;
-	virtual bool IsOpen() const = 0;
-	virtual int GetTechnology() const = 0;
-	virtual int SetTempo(int tempo) = 0;
-	virtual int SetTimeDiv(int timediv) = 0;
-	virtual int StreamOut(MIDIHDR *data) = 0;
-	virtual int StreamOutSync(MIDIHDR *data) = 0;
-	virtual int Resume() = 0;
-	virtual void Stop() = 0;
-	virtual int PrepareHeader(MIDIHDR *data);
-	virtual int UnprepareHeader(MIDIHDR *data);
-	virtual bool FakeVolume();
-	virtual bool Pause(bool paused) = 0;
-	virtual bool NeedThreadedCallback();
-	virtual void PrecacheInstruments(const WORD *instruments, int count);
-	virtual void TimidityVolumeChanged();
-	virtual void FluidSettingInt(const char *setting, int value);
-	virtual void FluidSettingNum(const char *setting, double value);
-	virtual void FluidSettingStr(const char *setting, const char *value);
-	virtual void WildMidiSetOption(int opt, int set);
-	virtual bool Preprocess(MIDIStreamer *song, bool looping);
-	virtual FString GetStats();
+    virtual int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata) = 0;
+    virtual void Close() = 0;
+    virtual bool IsOpen() const = 0;
+    virtual int GetTechnology() const = 0;
+    virtual int SetTempo(int tempo) = 0;
+    virtual int SetTimeDiv(int timediv) = 0;
+    virtual int StreamOut(MIDIHDR *data) = 0;
+    virtual int StreamOutSync(MIDIHDR *data) = 0;
+    virtual int Resume() = 0;
+    virtual void Stop() = 0;
+    virtual int PrepareHeader(MIDIHDR *data);
+    virtual int UnprepareHeader(MIDIHDR *data);
+    virtual bool FakeVolume();
+    virtual bool Pause(bool paused) = 0;
+    virtual bool NeedThreadedCallback();
+    virtual void PrecacheInstruments(const WORD *instruments, int count);
+    virtual void TimidityVolumeChanged();
+    virtual void FluidSettingInt(const char *setting, int value);
+    virtual void FluidSettingNum(const char *setting, double value);
+    virtual void FluidSettingStr(const char *setting, const char *value);
+    virtual void WildMidiSetOption(int opt, int set);
+    virtual bool Preprocess(MIDIStreamer *song, bool looping);
+    virtual FString GetStats();
 };
 
 // WinMM implementation of a MIDI output device -----------------------------
@@ -113,35 +113,35 @@ public:
 class WinMIDIDevice : public MIDIDevice
 {
 public:
-	WinMIDIDevice(int dev_id);
-	~WinMIDIDevice();
-	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
-	void Close();
-	bool IsOpen() const;
-	int GetTechnology() const;
-	int SetTempo(int tempo);
-	int SetTimeDiv(int timediv);
-	int StreamOut(MIDIHDR *data);
-	int StreamOutSync(MIDIHDR *data);
-	int Resume();
-	void Stop();
-	int PrepareHeader(MIDIHDR *data);
-	int UnprepareHeader(MIDIHDR *data);
-	bool FakeVolume();
-	bool NeedThreadedCallback();
-	bool Pause(bool paused);
-	void PrecacheInstruments(const WORD *instruments, int count);
+    WinMIDIDevice(int dev_id);
+    ~WinMIDIDevice();
+    int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
+    void Close();
+    bool IsOpen() const;
+    int GetTechnology() const;
+    int SetTempo(int tempo);
+    int SetTimeDiv(int timediv);
+    int StreamOut(MIDIHDR *data);
+    int StreamOutSync(MIDIHDR *data);
+    int Resume();
+    void Stop();
+    int PrepareHeader(MIDIHDR *data);
+    int UnprepareHeader(MIDIHDR *data);
+    bool FakeVolume();
+    bool NeedThreadedCallback();
+    bool Pause(bool paused);
+    void PrecacheInstruments(const WORD *instruments, int count);
 
 protected:
-	static void CALLBACK CallbackFunc(HMIDIOUT, UINT, DWORD_PTR, DWORD, DWORD);
+    static void CALLBACK CallbackFunc(HMIDIOUT, UINT, DWORD_PTR, DWORD, DWORD);
 
-	HMIDISTRM MidiOut;
-	UINT DeviceID;
-	DWORD SavedVolume;
-	bool VolumeWorks;
+    HMIDISTRM MidiOut;
+    UINT DeviceID;
+    DWORD SavedVolume;
+    bool VolumeWorks;
 
-	void (*Callback)(unsigned int, void *, DWORD, DWORD);
-	void *CallbackData;
+    void (*Callback)(unsigned int, void *, DWORD, DWORD);
+    void *CallbackData;
 };
 #endif
 
@@ -150,25 +150,25 @@ protected:
 class PseudoMIDIDevice : public MIDIDevice
 {
 public:
-	PseudoMIDIDevice();
-	~PseudoMIDIDevice();
+    PseudoMIDIDevice();
+    ~PseudoMIDIDevice();
 
-	void Close();
-	bool IsOpen() const;
-	int GetTechnology() const;
-	bool Pause(bool paused);
-	int Resume();
-	void Stop();
-	int StreamOut(MIDIHDR *data);
-	int StreamOutSync(MIDIHDR *data);
-	int SetTempo(int tempo);
-	int SetTimeDiv(int timediv);
-	FString GetStats();
+    void Close();
+    bool IsOpen() const;
+    int GetTechnology() const;
+    bool Pause(bool paused);
+    int Resume();
+    void Stop();
+    int StreamOut(MIDIHDR *data);
+    int StreamOutSync(MIDIHDR *data);
+    int SetTempo(int tempo);
+    int SetTimeDiv(int timediv);
+    FString GetStats();
 
 protected:
-	SoundStream *Stream;
-	bool Started;
-	bool bLooping;
+    SoundStream *Stream;
+    bool Started;
+    bool bLooping;
 };
 
 // Sound System pseudo-MIDI device ------------------------------------------
@@ -176,8 +176,8 @@ protected:
 class SndSysMIDIDevice : public PseudoMIDIDevice
 {
 public:
-	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
-	bool Preprocess(MIDIStreamer *song, bool looping);
+    int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
+    bool Preprocess(MIDIStreamer *song, bool looping);
 };
 
 // MIDI file played with TiMidity++ and possibly streamed through the Sound System
@@ -185,38 +185,38 @@ public:
 class TimidityPPMIDIDevice : public PseudoMIDIDevice
 {
 public:
-	TimidityPPMIDIDevice(const char *args);
-	~TimidityPPMIDIDevice();
+    TimidityPPMIDIDevice(const char *args);
+    ~TimidityPPMIDIDevice();
 
-	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
-	bool Preprocess(MIDIStreamer *song, bool looping);
-	bool IsOpen() const;
-	int Resume();
+    int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
+    bool Preprocess(MIDIStreamer *song, bool looping);
+    bool IsOpen() const;
+    int Resume();
 
-	void Stop();
-	bool IsOpen();
-	void TimidityVolumeChanged();
+    void Stop();
+    bool IsOpen();
+    void TimidityVolumeChanged();
 
 protected:
-	bool LaunchTimidity();
+    bool LaunchTimidity();
 
-	FTempFileName DiskName;
+    FTempFileName DiskName;
 #ifdef _WIN32
-	HANDLE ReadWavePipe;
-	HANDLE WriteWavePipe;
-	HANDLE ChildProcess;
-	bool Validated;
-	bool ValidateTimidity();
+    HANDLE ReadWavePipe;
+    HANDLE WriteWavePipe;
+    HANDLE ChildProcess;
+    bool Validated;
+    bool ValidateTimidity();
 #else // _WIN32
-	int WavePipe[2];
-	pid_t ChildProcess;
+    int WavePipe[2];
+    pid_t ChildProcess;
 #endif
-	FString CommandLine;
-	size_t LoopPos;
+    FString CommandLine;
+    size_t LoopPos;
 
-	static bool FillStream(SoundStream *stream, void *buff, int len, void *userdata);
+    static bool FillStream(SoundStream *stream, void *buff, int len, void *userdata);
 #ifdef _WIN32
-	static const char EventName[];
+    static const char EventName[];
 #endif
 };
 
@@ -225,44 +225,44 @@ protected:
 class SoftSynthMIDIDevice : public MIDIDevice
 {
 public:
-	SoftSynthMIDIDevice();
-	~SoftSynthMIDIDevice();
+    SoftSynthMIDIDevice();
+    ~SoftSynthMIDIDevice();
 
-	void Close();
-	bool IsOpen() const;
-	int GetTechnology() const;
-	int SetTempo(int tempo);
-	int SetTimeDiv(int timediv);
-	int StreamOut(MIDIHDR *data);
-	int StreamOutSync(MIDIHDR *data);
-	int Resume();
-	void Stop();
-	bool Pause(bool paused);
+    void Close();
+    bool IsOpen() const;
+    int GetTechnology() const;
+    int SetTempo(int tempo);
+    int SetTimeDiv(int timediv);
+    int StreamOut(MIDIHDR *data);
+    int StreamOutSync(MIDIHDR *data);
+    int Resume();
+    void Stop();
+    bool Pause(bool paused);
 
 protected:
-	FCriticalSection CritSec;
-	SoundStream *Stream;
-	double Tempo;
-	double Division;
-	double SamplesPerTick;
-	double NextTickIn;
-	MIDIHDR *Events;
-	bool Started;
-	DWORD Position;
-	int SampleRate;
+    FCriticalSection CritSec;
+    SoundStream *Stream;
+    double Tempo;
+    double Division;
+    double SamplesPerTick;
+    double NextTickIn;
+    MIDIHDR *Events;
+    bool Started;
+    DWORD Position;
+    int SampleRate;
 
-	void (*Callback)(unsigned int, void *, DWORD, DWORD);
-	void *CallbackData;
+    void (*Callback)(unsigned int, void *, DWORD, DWORD);
+    void *CallbackData;
 
-	virtual void CalcTickRate();
-	int PlayTick();
-	int OpenStream(int chunks, int flags, void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
-	static bool FillStream(SoundStream *stream, void *buff, int len, void *userdata);
-	virtual bool ServiceStream (void *buff, int numbytes);
+    virtual void CalcTickRate();
+    int PlayTick();
+    int OpenStream(int chunks, int flags, void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
+    static bool FillStream(SoundStream *stream, void *buff, int len, void *userdata);
+    virtual bool ServiceStream (void *buff, int numbytes);
 
-	virtual void HandleEvent(int status, int parm1, int parm2) = 0;
-	virtual void HandleLongEvent(const BYTE *data, int len) = 0;
-	virtual void ComputeOutput(float *buffer, int len) = 0;
+    virtual void HandleEvent(int status, int parm1, int parm2) = 0;
+    virtual void HandleLongEvent(const BYTE *data, int len) = 0;
+    virtual void ComputeOutput(float *buffer, int len) = 0;
 };
 
 // OPL implementation of a MIDI output device -------------------------------
@@ -270,19 +270,19 @@ protected:
 class OPLMIDIDevice : public SoftSynthMIDIDevice, protected OPLmusicBlock
 {
 public:
-	OPLMIDIDevice(const char *args);
-	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
-	void Close();
-	int GetTechnology() const;
-	FString GetStats();
+    OPLMIDIDevice(const char *args);
+    int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
+    void Close();
+    int GetTechnology() const;
+    FString GetStats();
 
 protected:
-	void CalcTickRate();
-	int PlayTick();
-	void HandleEvent(int status, int parm1, int parm2);
-	void HandleLongEvent(const BYTE *data, int len);
-	void ComputeOutput(float *buffer, int len);
-	bool ServiceStream(void *buff, int numbytes);
+    void CalcTickRate();
+    int PlayTick();
+    void HandleEvent(int status, int parm1, int parm2);
+    void HandleLongEvent(const BYTE *data, int len);
+    void ComputeOutput(float *buffer, int len);
+    bool ServiceStream(void *buff, int numbytes);
 };
 
 // OPL dumper implementation of a MIDI output device ------------------------
@@ -290,10 +290,10 @@ protected:
 class OPLDumperMIDIDevice : public OPLMIDIDevice
 {
 public:
-	OPLDumperMIDIDevice(const char *filename);
-	~OPLDumperMIDIDevice();
-	int Resume();
-	void Stop();
+    OPLDumperMIDIDevice(const char *filename);
+    ~OPLDumperMIDIDevice();
+    int Resume();
+    void Stop();
 };
 
 // Internal TiMidity MIDI device --------------------------------------------
@@ -303,19 +303,19 @@ namespace Timidity { struct Renderer; }
 class TimidityMIDIDevice : public SoftSynthMIDIDevice
 {
 public:
-	TimidityMIDIDevice(const char *args);
-	~TimidityMIDIDevice();
+    TimidityMIDIDevice(const char *args);
+    ~TimidityMIDIDevice();
 
-	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
-	void PrecacheInstruments(const WORD *instruments, int count);
-	FString GetStats();
+    int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
+    void PrecacheInstruments(const WORD *instruments, int count);
+    FString GetStats();
 
 protected:
-	Timidity::Renderer *Renderer;
+    Timidity::Renderer *Renderer;
 
-	void HandleEvent(int status, int parm1, int parm2);
-	void HandleLongEvent(const BYTE *data, int len);
-	void ComputeOutput(float *buffer, int len);
+    void HandleEvent(int status, int parm1, int parm2);
+    void HandleLongEvent(const BYTE *data, int len);
+    void ComputeOutput(float *buffer, int len);
 };
 
 // Internal TiMidity disk writing version of a MIDI device ------------------
@@ -323,13 +323,13 @@ protected:
 class TimidityWaveWriterMIDIDevice : public TimidityMIDIDevice
 {
 public:
-	TimidityWaveWriterMIDIDevice(const char *filename, int rate);
-	~TimidityWaveWriterMIDIDevice();
-	int Resume();
-	void Stop();
+    TimidityWaveWriterMIDIDevice(const char *filename, int rate);
+    ~TimidityWaveWriterMIDIDevice();
+    int Resume();
+    void Stop();
 
 protected:
-	FILE *File;
+    FILE *File;
 };
 
 // WildMidi implementation of a MIDI device ---------------------------------
@@ -337,20 +337,20 @@ protected:
 class WildMIDIDevice : public SoftSynthMIDIDevice
 {
 public:
-	WildMIDIDevice(const char *args);
-	~WildMIDIDevice();
+    WildMIDIDevice(const char *args);
+    ~WildMIDIDevice();
 
-	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
-	void PrecacheInstruments(const WORD *instruments, int count);
-	FString GetStats();
+    int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
+    void PrecacheInstruments(const WORD *instruments, int count);
+    FString GetStats();
 
 protected:
-	WildMidi_Renderer *Renderer;
+    WildMidi_Renderer *Renderer;
 
-	void HandleEvent(int status, int parm1, int parm2);
-	void HandleLongEvent(const BYTE *data, int len);
-	void ComputeOutput(float *buffer, int len);
-	void WildMidiSetOption(int opt, int set);
+    void HandleEvent(int status, int parm1, int parm2);
+    void HandleLongEvent(const BYTE *data, int len);
+    void ComputeOutput(float *buffer, int len);
+    void WildMidiSetOption(int opt, int set);
 };
 
 // FluidSynth implementation of a MIDI device -------------------------------
@@ -359,9 +359,6 @@ protected:
 #ifndef DYN_FLUIDSYNTH
 #include <fluidsynth.h>
 #else
-#include "i_module.h"
-extern FModule FluidSynthModule;
-
 struct fluid_settings_t;
 struct fluid_synth_t;
 #endif
@@ -369,57 +366,62 @@ struct fluid_synth_t;
 class FluidSynthMIDIDevice : public SoftSynthMIDIDevice
 {
 public:
-	FluidSynthMIDIDevice(const char *args);
-	~FluidSynthMIDIDevice();
+    FluidSynthMIDIDevice(const char *args);
+    ~FluidSynthMIDIDevice();
 
-	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
-	FString GetStats();
-	void FluidSettingInt(const char *setting, int value);
-	void FluidSettingNum(const char *setting, double value);
-	void FluidSettingStr(const char *setting, const char *value);
+    int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
+    FString GetStats();
+    void FluidSettingInt(const char *setting, int value);
+    void FluidSettingNum(const char *setting, double value);
+    void FluidSettingStr(const char *setting, const char *value);
 
 protected:
-	void HandleEvent(int status, int parm1, int parm2);
-	void HandleLongEvent(const BYTE *data, int len);
-	void ComputeOutput(float *buffer, int len);
-	int LoadPatchSets(const char *patches);
+    void HandleEvent(int status, int parm1, int parm2);
+    void HandleLongEvent(const BYTE *data, int len);
+    void ComputeOutput(float *buffer, int len);
+    int LoadPatchSets(const char *patches);
 
-	fluid_settings_t *FluidSettings;
-	fluid_synth_t *FluidSynth;
+    fluid_settings_t *FluidSettings;
+    fluid_synth_t *FluidSynth;
 
 #ifdef DYN_FLUIDSYNTH
-	enum { FLUID_FAILED = -1, FLUID_OK = 0 };
-	static TReqProc<FluidSynthModule, fluid_settings_t *(*)()> new_fluid_settings;
-	static TReqProc<FluidSynthModule, fluid_synth_t *(*)(fluid_settings_t *)> new_fluid_synth;
-	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *)> delete_fluid_synth;
-	static TReqProc<FluidSynthModule, void (*)(fluid_settings_t *)> delete_fluid_settings;
-	static TReqProc<FluidSynthModule, int (*)(fluid_settings_t *, const char *, double)> fluid_settings_setnum;
-	static TReqProc<FluidSynthModule, int (*)(fluid_settings_t *, const char *, const char *)> fluid_settings_setstr;
-	static TReqProc<FluidSynthModule, int (*)(fluid_settings_t *, const char *, int)> fluid_settings_setint;
-	static TReqProc<FluidSynthModule, int (*)(fluid_settings_t *, const char *, char **)> fluid_settings_getstr;
-	static TReqProc<FluidSynthModule, int (*)(fluid_settings_t *, const char *, int *)> fluid_settings_getint;
-	static TReqProc<FluidSynthModule, void (*)(fluid_synth_t *, int)> fluid_synth_set_reverb_on;
-	static TReqProc<FluidSynthModule, void (*)(fluid_synth_t *, int)> fluid_synth_set_chorus_on;
-	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *, int, int)> fluid_synth_set_interp_method;
-	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *, int)> fluid_synth_set_polyphony;
-	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *)> fluid_synth_get_polyphony;
-	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *)> fluid_synth_get_active_voice_count;
-	static TReqProc<FluidSynthModule, double (*)(fluid_synth_t *)> fluid_synth_get_cpu_load;
-	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *)> fluid_synth_system_reset;
-	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *, int, int, int)> fluid_synth_noteon;
-	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *, int, int)> fluid_synth_noteoff;
-	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *, int, int, int)> fluid_synth_cc;
-	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *, int, int)> fluid_synth_program_change;
-	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *, int, int)> fluid_synth_channel_pressure;
-	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *, int, int)> fluid_synth_pitch_bend;
-	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *, int, void *, int, int, void *, int, int)> fluid_synth_write_float;
-	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *, const char *, int)> fluid_synth_sfload;
-	static TReqProc<FluidSynthModule, void (*)(fluid_synth_t *, double, double, double, double)> fluid_synth_set_reverb;
-	static TReqProc<FluidSynthModule, void (*)(fluid_synth_t *, int, double, double, double, int)> fluid_synth_set_chorus;
-	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *, const char *, int, char *, int *, int *, int)> fluid_synth_sysex;
+    enum { FLUID_FAILED = -1, FLUID_OK = 0 };
+    fluid_settings_t *(STACK_ARGS *new_fluid_settings)();
+    fluid_synth_t *(STACK_ARGS *new_fluid_synth)(fluid_settings_t *);
+    int (STACK_ARGS *delete_fluid_synth)(fluid_synth_t *);
+    void (STACK_ARGS *delete_fluid_settings)(fluid_settings_t *);
+    int (STACK_ARGS *fluid_settings_setnum)(fluid_settings_t *, const char *, double);
+    int (STACK_ARGS *fluid_settings_setstr)(fluid_settings_t *, const char *, const char *);
+    int (STACK_ARGS *fluid_settings_setint)(fluid_settings_t *, const char *, int);
+    int (STACK_ARGS *fluid_settings_getstr)(fluid_settings_t *, const char *, char **);
+    int (STACK_ARGS *fluid_settings_getint)(fluid_settings_t *, const char *, int *);
+    void (STACK_ARGS *fluid_synth_set_reverb_on)(fluid_synth_t *, int);
+    void (STACK_ARGS *fluid_synth_set_chorus_on)(fluid_synth_t *, int);
+    int (STACK_ARGS *fluid_synth_set_interp_method)(fluid_synth_t *, int, int);
+    int (STACK_ARGS *fluid_synth_set_polyphony)(fluid_synth_t *, int);
+    int (STACK_ARGS *fluid_synth_get_polyphony)(fluid_synth_t *);
+    int (STACK_ARGS *fluid_synth_get_active_voice_count)(fluid_synth_t *);
+    double (STACK_ARGS *fluid_synth_get_cpu_load)(fluid_synth_t *);
+    int (STACK_ARGS *fluid_synth_system_reset)(fluid_synth_t *);
+    int (STACK_ARGS *fluid_synth_noteon)(fluid_synth_t *, int, int, int);
+    int (STACK_ARGS *fluid_synth_noteoff)(fluid_synth_t *, int, int);
+    int (STACK_ARGS *fluid_synth_cc)(fluid_synth_t *, int, int, int);
+    int (STACK_ARGS *fluid_synth_program_change)(fluid_synth_t *, int, int);
+    int (STACK_ARGS *fluid_synth_channel_pressure)(fluid_synth_t *, int, int);
+    int (STACK_ARGS *fluid_synth_pitch_bend)(fluid_synth_t *, int, int);
+    int (STACK_ARGS *fluid_synth_write_float)(fluid_synth_t *, int, void *, int, int, void *, int, int);
+    int (STACK_ARGS *fluid_synth_sfload)(fluid_synth_t *, const char *, int);
+    void (STACK_ARGS *fluid_synth_set_reverb)(fluid_synth_t *, double, double, double, double);
+    void (STACK_ARGS *fluid_synth_set_chorus)(fluid_synth_t *, int, double, double, double, int);
+    int (STACK_ARGS *fluid_synth_sysex)(fluid_synth_t *, const char *, int, char *, int *, int *, int);
 
-	bool LoadFluidSynth();
-	void UnloadFluidSynth();
+#ifdef _WIN32
+    HMODULE FluidSynthDLL;
+#else
+    void *FluidSynthSO;
+#endif
+    bool LoadFluidSynth();
+    void UnloadFluidSynth();
 #endif
 };
 #endif
@@ -429,93 +431,93 @@ protected:
 class MIDIStreamer : public MusInfo
 {
 public:
-	MIDIStreamer(EMidiDevice type, const char *args);
-	~MIDIStreamer();
+    MIDIStreamer(EMidiDevice type, const char *args);
+    ~MIDIStreamer();
 
-	void MusicVolumeChanged();
-	void TimidityVolumeChanged();
-	void Play(bool looping, int subsong);
-	void Pause();
-	void Resume();
-	void Stop();
-	bool IsPlaying();
-	bool IsMIDI() const;
-	bool IsValid() const;
-	bool SetSubsong(int subsong);
-	void Update();
-	FString GetStats();
-	void FluidSettingInt(const char *setting, int value);
-	void FluidSettingNum(const char *setting, double value);
-	void FluidSettingStr(const char *setting, const char *value);
-	void WildMidiSetOption(int opt, int set);
-	void CreateSMF(TArray<BYTE> &file, int looplimit=0);
+    void MusicVolumeChanged();
+    void TimidityVolumeChanged();
+    void Play(bool looping, int subsong);
+    void Pause();
+    void Resume();
+    void Stop();
+    bool IsPlaying();
+    bool IsMIDI() const;
+    bool IsValid() const;
+    bool SetSubsong(int subsong);
+    void Update();
+    FString GetStats();
+    void FluidSettingInt(const char *setting, int value);
+    void FluidSettingNum(const char *setting, double value);
+    void FluidSettingStr(const char *setting, const char *value);
+    void WildMidiSetOption(int opt, int set);
+    void CreateSMF(TArray<BYTE> &file, int looplimit=0);
 
 protected:
-	MIDIStreamer(const char *dumpname, EMidiDevice type);
+    MIDIStreamer(const char *dumpname, EMidiDevice type);
 
-	void OutputVolume (DWORD volume);
-	int FillBuffer(int buffer_num, int max_events, DWORD max_time);
-	int FillStopBuffer(int buffer_num);
-	DWORD *WriteStopNotes(DWORD *events);
-	int ServiceEvent();
-	int VolumeControllerChange(int channel, int volume);
-	int ClampLoopCount(int loopcount);
-	void SetTempo(int new_tempo);
-	static EMidiDevice SelectMIDIDevice(EMidiDevice devtype);
-	MIDIDevice *CreateMIDIDevice(EMidiDevice devtype) const;
+    void OutputVolume (DWORD volume);
+    int FillBuffer(int buffer_num, int max_events, DWORD max_time);
+    int FillStopBuffer(int buffer_num);
+    DWORD *WriteStopNotes(DWORD *events);
+    int ServiceEvent();
+    int VolumeControllerChange(int channel, int volume);
+    int ClampLoopCount(int loopcount);
+    void SetTempo(int new_tempo);
+    static EMidiDevice SelectMIDIDevice(EMidiDevice devtype);
+    MIDIDevice *CreateMIDIDevice(EMidiDevice devtype) const;
 
-	static void Callback(unsigned int uMsg, void *userdata, DWORD dwParam1, DWORD dwParam2);
+    static void Callback(unsigned int uMsg, void *userdata, DWORD dwParam1, DWORD dwParam2);
 
-	// Virtuals for subclasses to override
-	virtual void StartPlayback();
-	virtual void CheckCaps(int tech);
-	virtual void DoInitialSetup() = 0;
-	virtual void DoRestart() = 0;
-	virtual bool CheckDone() = 0;
-	virtual void Precache();
-	virtual bool SetMIDISubsong(int subsong);
-	virtual DWORD *MakeEvents(DWORD *events, DWORD *max_event_p, DWORD max_time) = 0;
+    // Virtuals for subclasses to override
+    virtual void StartPlayback();
+    virtual void CheckCaps(int tech);
+    virtual void DoInitialSetup() = 0;
+    virtual void DoRestart() = 0;
+    virtual bool CheckDone() = 0;
+    virtual void Precache();
+    virtual bool SetMIDISubsong(int subsong);
+    virtual DWORD *MakeEvents(DWORD *events, DWORD *max_event_p, DWORD max_time) = 0;
 
-	enum
-	{
-		MAX_EVENTS = 128
-	};
+    enum
+    {
+        MAX_EVENTS = 128
+    };
 
-	enum
-	{
-		SONG_MORE,
-		SONG_DONE,
-		SONG_ERROR
-	};
+    enum
+    {
+        SONG_MORE,
+        SONG_DONE,
+        SONG_ERROR
+    };
 
 #ifdef _WIN32
-	static DWORD WINAPI PlayerProc (LPVOID lpParameter);
-	DWORD PlayerLoop();
-	
-	HANDLE PlayerThread;
-	HANDLE ExitEvent;
-	HANDLE BufferDoneEvent;
+    static DWORD WINAPI PlayerProc (LPVOID lpParameter);
+    DWORD PlayerLoop();
+    
+    HANDLE PlayerThread;
+    HANDLE ExitEvent;
+    HANDLE BufferDoneEvent;
 #endif
 
-	MIDIDevice *MIDI;
-	DWORD Events[2][MAX_EVENTS*3];
-	MIDIHDR Buffer[2];
-	int BufferNum;
-	int EndQueued;
-	bool VolumeChanged;
-	bool Restarting;
-	bool InitialPlayback;
-	DWORD NewVolume;
-	int Division;
-	int Tempo;
-	int InitialTempo;
-	BYTE ChannelVolumes[16];
-	DWORD Volume;
-	EMidiDevice DeviceType;
-	bool CallbackIsThreaded;
-	int LoopLimit;
-	FString DumpFilename;
-	FString Args;
+    MIDIDevice *MIDI;
+    DWORD Events[2][MAX_EVENTS*3];
+    MIDIHDR Buffer[2];
+    int BufferNum;
+    int EndQueued;
+    bool VolumeChanged;
+    bool Restarting;
+    bool InitialPlayback;
+    DWORD NewVolume;
+    int Division;
+    int Tempo;
+    int InitialTempo;
+    BYTE ChannelVolumes[16];
+    DWORD Volume;
+    EMidiDevice DeviceType;
+    bool CallbackIsThreaded;
+    int LoopLimit;
+    FString DumpFilename;
+    FString Args;
 };
 
 // MUS file played with a MIDI stream ---------------------------------------
@@ -523,25 +525,25 @@ protected:
 class MUSSong2 : public MIDIStreamer
 {
 public:
-	MUSSong2(FileReader &reader, EMidiDevice type, const char *args);
-	~MUSSong2();
+    MUSSong2(FileReader &reader, EMidiDevice type, const char *args);
+    ~MUSSong2();
 
-	MusInfo *GetOPLDumper(const char *filename);
-	MusInfo *GetWaveDumper(const char *filename, int rate);
+    MusInfo *GetOPLDumper(const char *filename);
+    MusInfo *GetWaveDumper(const char *filename, int rate);
 
 protected:
-	MUSSong2(const MUSSong2 *original, const char *filename, EMidiDevice type);	// file dump constructor
+    MUSSong2(const MUSSong2 *original, const char *filename, EMidiDevice type);    // file dump constructor
 
-	void DoInitialSetup();
-	void DoRestart();
-	bool CheckDone();
-	void Precache();
-	DWORD *MakeEvents(DWORD *events, DWORD *max_events_p, DWORD max_time);
+    void DoInitialSetup();
+    void DoRestart();
+    bool CheckDone();
+    void Precache();
+    DWORD *MakeEvents(DWORD *events, DWORD *max_events_p, DWORD max_time);
 
-	MUSHeader *MusHeader;
-	BYTE *MusBuffer;
-	BYTE LastVelocity[16];
-	size_t MusP, MaxMusP;
+    MUSHeader *MusHeader;
+    BYTE *MusBuffer;
+    BYTE LastVelocity[16];
+    size_t MusP, MaxMusP;
 };
 
 // MIDI file played with a MIDI stream --------------------------------------
@@ -549,99 +551,99 @@ protected:
 class MIDISong2 : public MIDIStreamer
 {
 public:
-	MIDISong2(FileReader &reader, EMidiDevice type, const char *args);
-	~MIDISong2();
+    MIDISong2(FileReader &reader, EMidiDevice type, const char *args);
+    ~MIDISong2();
 
-	MusInfo *GetOPLDumper(const char *filename);
-	MusInfo *GetWaveDumper(const char *filename, int rate);
+    MusInfo *GetOPLDumper(const char *filename);
+    MusInfo *GetWaveDumper(const char *filename, int rate);
 
 protected:
-	MIDISong2(const MIDISong2 *original, const char *filename, EMidiDevice type);	// file dump constructor
+    MIDISong2(const MIDISong2 *original, const char *filename, EMidiDevice type);    // file dump constructor
 
-	void CheckCaps(int tech);
-	void DoInitialSetup();
-	void DoRestart();
-	bool CheckDone();
-	DWORD *MakeEvents(DWORD *events, DWORD *max_events_p, DWORD max_time);
-	void AdvanceTracks(DWORD time);
+    void CheckCaps(int tech);
+    void DoInitialSetup();
+    void DoRestart();
+    bool CheckDone();
+    DWORD *MakeEvents(DWORD *events, DWORD *max_events_p, DWORD max_time);
+    void AdvanceTracks(DWORD time);
 
-	struct TrackInfo;
+    struct TrackInfo;
 
-	void ProcessInitialMetaEvents ();
-	DWORD *SendCommand (DWORD *event, TrackInfo *track, DWORD delay, ptrdiff_t room, bool &sysex_noroom);
-	TrackInfo *FindNextDue ();
+    void ProcessInitialMetaEvents ();
+    DWORD *SendCommand (DWORD *event, TrackInfo *track, DWORD delay, ptrdiff_t room, bool &sysex_noroom);
+    TrackInfo *FindNextDue ();
 
-	BYTE *MusHeader;
-	int SongLen;
-	TrackInfo *Tracks;
-	TrackInfo *TrackDue;
-	int NumTracks;
-	int Format;
-	WORD DesignationMask;
+    BYTE *MusHeader;
+    int SongLen;
+    TrackInfo *Tracks;
+    TrackInfo *TrackDue;
+    int NumTracks;
+    int Format;
+    WORD DesignationMask;
 };
 
 // HMI file played with a MIDI stream ---------------------------------------
 
 struct AutoNoteOff
 {
-	DWORD Delay;
-	BYTE Channel, Key;
+    DWORD Delay;
+    BYTE Channel, Key;
 };
 // Sorry, std::priority_queue, but I want to be able to modify the contents of the heap.
 class NoteOffQueue : public TArray<AutoNoteOff>
 {
 public:
-	void AddNoteOff(DWORD delay, BYTE channel, BYTE key);
-	void AdvanceTime(DWORD time);
-	bool Pop(AutoNoteOff &item);
+    void AddNoteOff(DWORD delay, BYTE channel, BYTE key);
+    void AdvanceTime(DWORD time);
+    bool Pop(AutoNoteOff &item);
 
 protected:
-	void Heapify();
+    void Heapify();
 
-	unsigned int Parent(unsigned int i) const { return (i + 1u) / 2u - 1u; }
-	unsigned int Left(unsigned int i) const { return (i + 1u) * 2u - 1u; }
-	unsigned int Right(unsigned int i) const { return (i + 1u) * 2u; }
+    unsigned int Parent(unsigned int i) const { return (i + 1u) / 2u - 1u; }
+    unsigned int Left(unsigned int i) const { return (i + 1u) * 2u - 1u; }
+    unsigned int Right(unsigned int i) const { return (i + 1u) * 2u; }
 };
 
 class HMISong : public MIDIStreamer
 {
 public:
-	HMISong(FileReader &reader, EMidiDevice type, const char *args);
-	~HMISong();
+    HMISong(FileReader &reader, EMidiDevice type, const char *args);
+    ~HMISong();
 
-	MusInfo *GetOPLDumper(const char *filename);
-	MusInfo *GetWaveDumper(const char *filename, int rate);
+    MusInfo *GetOPLDumper(const char *filename);
+    MusInfo *GetWaveDumper(const char *filename, int rate);
 
 protected:
-	HMISong(const HMISong *original, const char *filename, EMidiDevice type);	// file dump constructor
+    HMISong(const HMISong *original, const char *filename, EMidiDevice type);    // file dump constructor
 
-	void SetupForHMI(int len);
-	void SetupForHMP(int len);
-	void CheckCaps(int tech);
+    void SetupForHMI(int len);
+    void SetupForHMP(int len);
+    void CheckCaps(int tech);
 
-	void DoInitialSetup();
-	void DoRestart();
-	bool CheckDone();
-	DWORD *MakeEvents(DWORD *events, DWORD *max_events_p, DWORD max_time);
-	void AdvanceTracks(DWORD time);
+    void DoInitialSetup();
+    void DoRestart();
+    bool CheckDone();
+    DWORD *MakeEvents(DWORD *events, DWORD *max_events_p, DWORD max_time);
+    void AdvanceTracks(DWORD time);
 
-	struct TrackInfo;
+    struct TrackInfo;
 
-	void ProcessInitialMetaEvents ();
-	DWORD *SendCommand (DWORD *event, TrackInfo *track, DWORD delay, ptrdiff_t room, bool &sysex_noroom);
-	TrackInfo *FindNextDue ();
+    void ProcessInitialMetaEvents ();
+    DWORD *SendCommand (DWORD *event, TrackInfo *track, DWORD delay, ptrdiff_t room, bool &sysex_noroom);
+    TrackInfo *FindNextDue ();
 
-	static DWORD ReadVarLenHMI(TrackInfo *);
-	static DWORD ReadVarLenHMP(TrackInfo *);
+    static DWORD ReadVarLenHMI(TrackInfo *);
+    static DWORD ReadVarLenHMP(TrackInfo *);
 
-	BYTE *MusHeader;
-	int SongLen;
-	int NumTracks;
-	TrackInfo *Tracks;
-	TrackInfo *TrackDue;
-	TrackInfo *FakeTrack;
-	DWORD (*ReadVarLen)(TrackInfo *);
-	NoteOffQueue NoteOffs;
+    BYTE *MusHeader;
+    int SongLen;
+    int NumTracks;
+    TrackInfo *Tracks;
+    TrackInfo *TrackDue;
+    TrackInfo *FakeTrack;
+    DWORD (*ReadVarLen)(TrackInfo *);
+    NoteOffQueue NoteOffs;
 };
 
 // XMI file played with a MIDI stream ---------------------------------------
@@ -649,38 +651,38 @@ protected:
 class XMISong : public MIDIStreamer
 {
 public:
-	XMISong(FileReader &reader, EMidiDevice type, const char *args);
-	~XMISong();
+    XMISong(FileReader &reader, EMidiDevice type, const char *args);
+    ~XMISong();
 
-	MusInfo *GetOPLDumper(const char *filename);
-	MusInfo *GetWaveDumper(const char *filename, int rate);
+    MusInfo *GetOPLDumper(const char *filename);
+    MusInfo *GetWaveDumper(const char *filename, int rate);
 
 protected:
-	struct TrackInfo;
-	enum EventSource { EVENT_None, EVENT_Real, EVENT_Fake };
+    struct TrackInfo;
+    enum EventSource { EVENT_None, EVENT_Real, EVENT_Fake };
 
-	XMISong(const XMISong *original, const char *filename, EMidiDevice type);	// file dump constructor
+    XMISong(const XMISong *original, const char *filename, EMidiDevice type);    // file dump constructor
 
-	int FindXMIDforms(const BYTE *chunk, int len, TrackInfo *songs) const;
-	void FoundXMID(const BYTE *chunk, int len, TrackInfo *song) const;
-	bool SetMIDISubsong(int subsong);
-	void DoInitialSetup();
-	void DoRestart();
-	bool CheckDone();
-	DWORD *MakeEvents(DWORD *events, DWORD *max_events_p, DWORD max_time);
-	void AdvanceSong(DWORD time);
+    int FindXMIDforms(const BYTE *chunk, int len, TrackInfo *songs) const;
+    void FoundXMID(const BYTE *chunk, int len, TrackInfo *song) const;
+    bool SetMIDISubsong(int subsong);
+    void DoInitialSetup();
+    void DoRestart();
+    bool CheckDone();
+    DWORD *MakeEvents(DWORD *events, DWORD *max_events_p, DWORD max_time);
+    void AdvanceSong(DWORD time);
 
-	void ProcessInitialMetaEvents();
-	DWORD *SendCommand (DWORD *event, EventSource track, DWORD delay, ptrdiff_t room, bool &sysex_noroom);
-	EventSource FindNextDue();
+    void ProcessInitialMetaEvents();
+    DWORD *SendCommand (DWORD *event, EventSource track, DWORD delay, ptrdiff_t room, bool &sysex_noroom);
+    EventSource FindNextDue();
 
-	BYTE *MusHeader;
-	int SongLen;		// length of the entire file
-	int NumSongs;
-	TrackInfo *Songs;
-	TrackInfo *CurrSong;
-	NoteOffQueue NoteOffs;
-	EventSource EventDue;
+    BYTE *MusHeader;
+    int SongLen;        // length of the entire file
+    int NumSongs;
+    TrackInfo *Songs;
+    TrackInfo *CurrSong;
+    NoteOffQueue NoteOffs;
+    EventSource EventDue;
 };
 
 // Anything supported by the sound system out of the box --------------------
@@ -689,22 +691,22 @@ class StreamSong : public MusInfo
 {
 public:
     StreamSong (FileReader *reader);
-	StreamSong (const char *url);
-	~StreamSong ();
-	void Play (bool looping, int subsong);
-	void Pause ();
-	void Resume ();
-	void Stop ();
-	bool IsPlaying ();
-	bool IsValid () const { return m_Stream != NULL; }
-	bool SetPosition (unsigned int pos);
-	bool SetSubsong (int subsong);
-	FString GetStats();
+    StreamSong (const char *url);
+    ~StreamSong ();
+    void Play (bool looping, int subsong);
+    void Pause ();
+    void Resume ();
+    void Stop ();
+    bool IsPlaying ();
+    bool IsValid () const { return m_Stream != NULL; }
+    bool SetPosition (unsigned int pos);
+    bool SetSubsong (int subsong);
+    FString GetStats();
 
 protected:
-	StreamSong () : m_Stream(NULL) {}
+    StreamSong () : m_Stream(NULL) {}
 
-	SoundStream *m_Stream;
+    SoundStream *m_Stream;
 };
 
 // MUS file played by a software OPL2 synth and streamed through the sound system
@@ -712,27 +714,27 @@ protected:
 class OPLMUSSong : public StreamSong
 {
 public:
-	OPLMUSSong (FileReader &reader, const char *args);
-	~OPLMUSSong ();
-	void Play (bool looping, int subsong);
-	bool IsPlaying ();
-	bool IsValid () const;
-	void ResetChips ();
-	MusInfo *GetOPLDumper(const char *filename);
+    OPLMUSSong (FileReader &reader, const char *args);
+    ~OPLMUSSong ();
+    void Play (bool looping, int subsong);
+    bool IsPlaying ();
+    bool IsValid () const;
+    void ResetChips ();
+    MusInfo *GetOPLDumper(const char *filename);
 
 protected:
-	OPLMUSSong(const OPLMUSSong *original, const char *filename);	// OPL dump constructor
+    OPLMUSSong(const OPLMUSSong *original, const char *filename);    // OPL dump constructor
 
-	static bool FillStream (SoundStream *stream, void *buff, int len, void *userdata);
+    static bool FillStream (SoundStream *stream, void *buff, int len, void *userdata);
 
-	OPLmusicFile *Music;
+    OPLmusicFile *Music;
 };
 
 class OPLMUSDumper : public OPLMUSSong
 {
 public:
-	OPLMUSDumper(const OPLMUSSong *original, const char *filename);
-	void Play(bool looping, int);
+    OPLMUSDumper(const OPLMUSSong *original, const char *filename);
+    void Play(bool looping, int);
 };
 
 // CD track/disk played through the multimedia system -----------------------
@@ -740,20 +742,20 @@ public:
 class CDSong : public MusInfo
 {
 public:
-	CDSong (int track, int id);
-	~CDSong ();
-	void Play (bool looping, int subsong);
-	void Pause ();
-	void Resume ();
-	void Stop ();
-	bool IsPlaying ();
-	bool IsValid () const { return m_Inited; }
+    CDSong (int track, int id);
+    ~CDSong ();
+    void Play (bool looping, int subsong);
+    void Pause ();
+    void Resume ();
+    void Stop ();
+    bool IsPlaying ();
+    bool IsValid () const { return m_Inited; }
 
 protected:
-	CDSong () : m_Inited(false) {}
+    CDSong () : m_Inited(false) {}
 
-	int m_Track;
-	bool m_Inited;
+    int m_Track;
+    bool m_Inited;
 };
 
 // CD track on a specific disk played through the multimedia system ---------
@@ -761,7 +763,7 @@ protected:
 class CDDAFile : public CDSong
 {
 public:
-	CDDAFile (FileReader &reader);
+    CDDAFile (FileReader &reader);
 };
 
 // Module played via foo_dumb -----------------------------------------------
