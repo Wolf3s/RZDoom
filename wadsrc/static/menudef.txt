@@ -37,6 +37,8 @@ DEFAULTLISTMENU
 
 LISTMENU "MainMenu"
 {
+	StaticPatch 5, 185, "FMOD"
+	
 	IfGame(Doom, Chex)
 	{
 		StaticPatch 94, 2, "M_DOOM"
