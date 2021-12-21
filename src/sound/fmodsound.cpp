@@ -32,6 +32,15 @@
 **
 */
 
+/* Adam (Gibbon) 2021
+* So I ended up taking the following:
+* 1. FMOD_STUDIO API from GZDoom 2.4 (credits to Graf Zahl)
+* 2. Sound and Music code (i_sound, i_music, s_sound) from ZDoom32 (credits to DrFrag)
+* 3. Other code I Myself modified in order to correctly merge it all together
+*    and have it working as it should be.
+* 4. All OpenAL code is now removed.
+*/
+
 // HEADER FILES ------------------------------------------------------------
 
 #ifdef _WIN32

@@ -819,9 +819,6 @@
     <ClCompile Include="src\sound\music_xmi_midiout.cpp">
       <Filter>Audio Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\sound\oalsound.cpp">
-      <Filter>Audio Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\oplsynth\fmopl.cpp">
       <Filter>Audio Files\OPL Synth</Filter>
     </ClCompile>
@@ -1859,9 +1856,6 @@
     <ClInclude Include="src\version.h">
       <Filter>Versioning</Filter>
     </ClInclude>
-    <ClInclude Include="src\sound\efx.h">
-      <Filter>Audio Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\sound\i_music.h">
       <Filter>Audio Files</Filter>
     </ClInclude>
@@ -1872,9 +1866,6 @@
       <Filter>Audio Files</Filter>
     </ClInclude>
     <ClInclude Include="src\sound\i_soundinternal.h">
-      <Filter>Audio Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\sound\oalsound.h">
       <Filter>Audio Files</Filter>
     </ClInclude>
     <ClInclude Include="src\oplsynth\DEFTYPES.H">
