@@ -13,14 +13,17 @@
  *              it for you, and do an initial run-   |  \/ /\   /
  *              through.                              \_  /  > /
  *                                                      | \ / /
- * By Christopher Snowhill.                             |  ' /
+ * By Chris Moeller.                                    |  ' /
  *                                                       \__/
  */
 
 #include "dumb.h"
 
-DUH *dumb_load_okt(const char *filename) {
-    DUH *duh = dumb_load_okt_quick(filename);
-    dumb_it_do_initial_runthrough(duh);
-    return duh;
+
+
+DUH *DUMBEXPORT dumb_load_okt(const char *filename)
+{
+	DUH *duh = dumb_load_okt_quick(filename);
+	dumb_it_do_initial_runthrough(duh);
+	return duh;
 }

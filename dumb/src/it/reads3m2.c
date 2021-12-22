@@ -19,8 +19,11 @@
 
 #include "dumb.h"
 
-DUH *dumb_read_s3m(DUMBFILE *f) {
-    DUH *duh = dumb_read_s3m_quick(f);
-    dumb_it_do_initial_runthrough(duh);
-    return duh;
+
+
+DUH *DUMBEXPORT dumb_read_s3m(DUMBFILE *f)
+{
+	DUH *duh = dumb_read_s3m_quick(f);
+	dumb_it_do_initial_runthrough(duh);
+	return duh;
 }

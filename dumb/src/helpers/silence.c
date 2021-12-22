@@ -20,6 +20,10 @@
 #include <string.h>
 #include "dumb.h"
 
-void dumb_silence(sample_t *samples, long length) {
-    memset(samples, 0, length * sizeof(*samples));
+
+
+void DUMBEXPORT dumb_silence(sample_t *samples, int32 length)
+{
+	memset(samples, 0, length * sizeof(*samples));
 }
+

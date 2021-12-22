@@ -12,15 +12,18 @@
  *              module from an open file and do an   | <  /   \_
  *              initial run-through.                 |  \/ /\   /
  *                                                    \_  /  > /
- * By Christopher Snowhill.                             | \ / /
+ * By Chris Moeller.                                    | \ / /
  *                                                      |  ' /
  *                                                       \__/
  */
 
 #include "dumb.h"
 
-DUH *dumb_read_stm(DUMBFILE *f) {
-    DUH *duh = dumb_read_stm_quick(f);
-    dumb_it_do_initial_runthrough(duh);
-    return duh;
+
+
+DUH *DUMBEXPORT dumb_read_stm(DUMBFILE *f)
+{
+	DUH *duh = dumb_read_stm_quick(f);
+	dumb_it_do_initial_runthrough(duh);
+	return duh;
 }

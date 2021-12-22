@@ -1908,7 +1908,7 @@
 						>
 					</File>
 					<File
-						RelativePath="..\..\src\helpers\resampler.c"
+						RelativePath="..\..\src\helpers\fir_resampler.c"
 						>
 					</File>
 					<File
@@ -1988,7 +1988,7 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\include\internal\resampler.h"
+					RelativePath="..\..\include\internal\fir_resampler.h"
 					>
 				</File>
 				<File

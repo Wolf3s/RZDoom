@@ -26,9 +26,17 @@
 #include "dumb.h"
 #include "internal/dumb.h"
 
-dumb_off_t duh_get_length(DUH *duh) { return duh ? duh->length : 0; }
 
-void duh_set_length(DUH *duh, dumb_off_t length) {
-    if (duh)
-        duh->length = length;
+
+int32 DUMBEXPORT duh_get_length(DUH *duh)
+{
+	return duh ? duh->length : 0;
+}
+
+
+
+void DUMBEXPORT duh_set_length(DUH *duh, int32 length)
+{
+	if (duh)
+		duh->length = length;
 }

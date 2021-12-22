@@ -3,7 +3,8 @@
 
 #include "../dumb.h"
 
-struct DUMBFILE {
+struct DUMBFILE
+{
     const DUMBFILE_SYSTEM *dfs;
     void *file;
     long pos;
