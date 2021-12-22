@@ -1436,7 +1436,7 @@ void V_DrawFrame (int left, int top, int width, int height)
 	screen->DrawTexture (TexMan[border->br], left+width, top+height, TAG_DONE);
 }
 
-CVAR (Int, r_bordertexture, 20, CVAR_ARCHIVE);
+CVAR (Int, r_bordertexture, 50, CVAR_ARCHIVE);
 //==========================================================================
 //
 // V_DrawBorder
