@@ -96,7 +96,6 @@ ReverbContainer *ForcedEnvironment;
 
 CVAR (Int, snd_driver, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Int, snd_buffercount, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Bool, snd_hrtf, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, snd_waterreverb, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, snd_resampler, "Linear", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, snd_speakermode, "Auto", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -835,17 +834,7 @@ bool FMODSoundRenderer::Init()
 
 	// Try to init
 	initflags = FMOD_INIT_NORMAL;
-	if (snd_hrtf)
-	{
-		// These flags are the same thing, just with different names.
-#ifdef FMOD_INIT_CHANNEL_LOWPASS
-		initflags |= FMOD_INIT_CHANNEL_LOWPASS;
-#elif defined(FMOD_INIT_SOFTWARE_HRTF)
-		initflags |= FMOD_INIT_SOFTWARE_HRTF;
-#else
-		initflags |= FMOD_INIT_HRTF_LOWPASS;
-#endif
-	}
+
 	if (snd_profile)
 	{
 #ifdef FMOD_INIT_PROFILE_ENABLE

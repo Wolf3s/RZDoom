@@ -1533,7 +1533,6 @@ OptionMenu FMODSoundItems
 	Option "Output format",      "snd_output_format", "OutputFormats"
 	Option "Speaker mode",       "snd_speakermode", "SpeakerModes"
 	Option "Resampler",          "snd_resampler", "Resamplers"
-	Option "HRTF filter",        "snd_hrtf", "OnOff"
 	StaticText " "
 	Option "Buffer size",	    "snd_buffersize", "BufferSizes"
 	Option "Buffer count",	    "snd_buffercount", "BufferCounts"
