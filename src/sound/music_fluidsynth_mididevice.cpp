@@ -49,17 +49,14 @@
 #ifdef DYN_FLUIDSYNTH
 
 #ifdef _WIN32
-#ifndef _M_X64
-#define FLUIDSYNTHLIB1    "fluidsynth.dll"
-#define FLUIDSYNTHLIB2    "libfluidsynth.dll"
-#else
 #define FLUIDSYNTHLIB1    "fluidsynth64.dll"
 #define FLUIDSYNTHLIB2    "libfluidsynth64.dll"
-#endif
+#elif __linux__
+#include <dlfcn.h>
+#define FLUIDSYNTHLIB    "libfluidsynth.so.1"
 #else
 #include <dlfcn.h>
-
-#define FLUIDSYNTHLIB    "libfluidsynth.so.1"
+#define FLUIDSYNTHLIB    "libfluidsynth.3.0.4.dylib"
 #endif
 
 #define FLUID_REVERB_DEFAULT_ROOMSIZE 0.2f
@@ -623,8 +620,8 @@ FString FluidSynthMIDIDevice::GetStats()
     double load = fluid_synth_get_cpu_load(FluidSynth);
     char *chorus, *reverb;
     int maxpoly;
-    fluid_settings_getstr(FluidSettings, "synth.chorus.active", &chorus);
-    fluid_settings_getstr(FluidSettings, "synth.reverb.active", &reverb);
+    fluid_settings_getstr_default(FluidSettings, "synth.chorus.active", &chorus);
+    fluid_settings_getstr_default(FluidSettings, "synth.reverb.active", &reverb);
     fluid_settings_getint(FluidSettings, "synth.polyphony", &maxpoly);
     CritSec.Leave();
 
@@ -663,7 +660,7 @@ bool FluidSynthMIDIDevice::LoadFluidSynth()
         { (void **)&fluid_settings_setnum,                "fluid_settings_setnum" },
         { (void **)&fluid_settings_setstr,                "fluid_settings_setstr" },
         { (void **)&fluid_settings_setint,                "fluid_settings_setint" },
-        { (void **)&fluid_settings_getstr,                "fluid_settings_getstr" },
+        { (void **)&fluid_settings_getstr_default,        "fluid_settings_getstr_default" },
         { (void **)&fluid_settings_getint,                "fluid_settings_getint" },
         { (void **)&fluid_synth_set_reverb_on,            "fluid_synth_set_reverb_on" },
         { (void **)&fluid_synth_set_chorus_on,            "fluid_synth_set_chorus_on" },
