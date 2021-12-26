@@ -16,10 +16,6 @@
 
 #include <SDL.h>
 
-#ifdef __APPLE__
-#include <OpenGL/OpenGL.h>
-#endif // __APPLE__
-
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -718,16 +714,7 @@ void SDLFB::ResetSDLRenderer ()
 
 void SDLFB::SetVSync (bool vsync)
 {
-#ifdef __APPLE__
-    if (CGLContextObj context = CGLGetCurrentContext())
-    {
-        // Apply vsync for native backend only (where OpenGL context is set)
-        const GLint value = vsync ? 1 : 0;
-        CGLSetParameter(context, kCGLCPSwapInterval, &value);
-    }
-#else
     ResetSDLRenderer ();
-#endif // __APPLE__
 }
 
 void SDLFB::ScaleCoordsFromWindow(SWORD &x, SWORD &y)
