@@ -406,6 +406,19 @@ set( PLAT_POSIX_SOURCES
 	posix/i_cd.cpp
 	posix/i_movie.cpp
 	posix/i_steam.cpp )
+if ( APPLE AND NOT OSX_COCOA_BACKEND )
+set( PLAT_SDL_SOURCES
+	posix/sdl/crashcatcher.c
+	posix/sdl/hardware.cpp
+	posix/sdl/i_gui.cpp
+	posix/sdl/i_input.cpp
+	posix/sdl/i_joystick.cpp
+	posix/sdl/i_main.cpp
+	posix/sdl/i_system.cpp
+	posix/sdl/i_timer_cocoa.cpp
+	posix/sdl/sdlvideo.cpp
+	posix/sdl/st_start.cpp )
+else ( NOT APPLE )
 set( PLAT_SDL_SOURCES
 	posix/sdl/crashcatcher.c
 	posix/sdl/hardware.cpp
@@ -417,6 +430,7 @@ set( PLAT_SDL_SOURCES
 	posix/sdl/i_timer.cpp
 	posix/sdl/sdlvideo.cpp
 	posix/sdl/st_start.cpp )
+endif ( APPLE AND NOT OSX_COCOA_BACKEND )
 set( PLAT_OSX_SOURCES
 	posix/osx/iwadpicker_cocoa.mm
 	posix/osx/rzdoom.icns )

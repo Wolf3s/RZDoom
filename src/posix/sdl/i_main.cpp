@@ -62,6 +62,15 @@
 
 // MACROS ------------------------------------------------------------------
 
+// haleyjd: SDL init flags
+#define BASE_INIT_FLAGS (SDL_INIT_VIDEO | SDL_INIT_JOYSTICK)
+
+#ifdef _DEBUG
+#define INIT_FLAGS (BASE_INIT_FLAGS | SDL_INIT_NOPARACHUTE)
+#else
+#define INIT_FLAGS BASE_INIT_FLAGS
+#endif
+
 // The maximum number of functions that can be registered with atterm.
 #define MAX_TERMS	64
 
@@ -210,14 +219,9 @@ int main (int argc, char **argv)
 	// clear the setlocale call at least this will be correct.
 	// Note that the LANG environment variable is overridden by LC_*
 	setenv ("LC_NUMERIC", "C", 1);
-
-#ifndef NO_GTK
-	GtkAvailable = gtk_init_check (&argc, &argv);
-#endif
-	
 	setlocale (LC_ALL, "C");
 
-	if (SDL_Init (0) < 0)
+    if(SDL_Init(INIT_FLAGS) == -1)
 	{
 		fprintf (stderr, "Could not initialize SDL:\n%s\n", SDL_GetError());
 		return -1;

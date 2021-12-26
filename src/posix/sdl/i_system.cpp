@@ -158,16 +158,17 @@ static int has_exited;
 
 void I_Quit (void)
 {
-    has_exited = 1;		/* Prevent infinitely recursive exits -- killough */
+    has_exited = 1; // Prevent infinitely recursive exits -- killough
 
     if (demorecording)
-		G_CheckDemoStatus();
+    {
+        G_CheckDemoStatus();
+    }
 
-	C_DeinitConsole();
+    C_DeinitConsole();
 
-	I_ShutdownTimer();
+    I_ShutdownTimer();
 }
-
 
 //
 // I_Error
