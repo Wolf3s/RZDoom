@@ -544,13 +544,6 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 				}
 			}
 		}
-		pickwad = I_PickIWad (&wads[0], (int)numwads, queryiwad, defiwad);
-		if (pickwad >= 0)
-		{
-			// The newly selected IWAD becomes the new default
-			FString basename = ExtractFileBase (wads[pickwad].Path);
-			defaultiwad = basename;
-		}
 	}
 
 	if (pickwad < 0)
