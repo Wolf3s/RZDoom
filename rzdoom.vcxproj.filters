@@ -555,15 +555,6 @@
     <ClCompile Include="src\win32\eaxedit.cpp">
       <Filter>Win32 Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\win32\fb_d3d9.cpp">
-      <Filter>Win32 Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\win32\fb_d3d9_wipe.cpp">
-      <Filter>Win32 Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\win32\fb_ddraw.cpp">
-      <Filter>Win32 Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\g_doomedmap.cpp">
       <Filter>Win32 Files</Filter>
     </ClCompile>
@@ -1382,6 +1373,9 @@
     </ClCompile>
     <ClCompile Include="src\sound\fmodsound.cpp">
       <Filter>Audio Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\win32\fb_ddraw.cpp">
+      <Filter>Win32 Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

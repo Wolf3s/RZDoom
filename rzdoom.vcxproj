@@ -1170,8 +1170,6 @@
     <ClCompile Include="src\wildmidi\wildmidi_lib.cpp" />
     <ClCompile Include="src\wildmidi\wm_error.cpp" />
     <ClCompile Include="src\win32\eaxedit.cpp" />
-    <ClCompile Include="src\win32\fb_d3d9.cpp" />
-    <ClCompile Include="src\win32\fb_d3d9_wipe.cpp" />
     <ClCompile Include="src\win32\fb_ddraw.cpp" />
     <ClCompile Include="src\win32\hardware.cpp" />
     <ClCompile Include="src\win32\helperthread.cpp" />

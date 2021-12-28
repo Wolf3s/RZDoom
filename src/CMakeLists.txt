@@ -92,15 +92,6 @@ if( WIN32 )
 	set( FMOD_INC_PATH_SUFFIXES PATH_SUFFIXES inc )
 	set( FMOD_LIB_PATH_SUFFIXES PATH_SUFFIXES lib )
 	
-	find_path( D3D_INCLUDE_DIR d3d9.h
-		PATHS ENV DXSDK_DIR
-		PATH_SUFFIXES Include )
-	if( NOT D3D_INCLUDE_DIR )
-		message( SEND_ERROR "Could not find DirectX 9 header files" )
-	else( NOT D3D_INCLUDE_DIR )
-		include_directories( ${D3D_INCLUDE_DIR} )
-	endif( NOT D3D_INCLUDE_DIR )
-	
 	find_path( XINPUT_INCLUDE_DIR xinput.h
 		PATHS ENV DXSDK_DIR
 		PATH_SUFFIXES Include )
@@ -125,10 +116,6 @@ if( WIN32 )
 	if( NOT DX_dinput8_LIBRARY )
 		set( DX_LIBS_FOUND NO )
 	endif( NOT DX_dinput8_LIBRARY )
-
-	if( NOT DX_LIBS_FOUND )
-		message( FATAL_ERROR "Could not find DirectX 9 libraries" )
-	endif( NOT DX_LIBS_FOUND )
 
 	set( ZDOOM_LIBS
 		wsock32
@@ -384,8 +371,6 @@ endif( NOT DYN_FLUIDSYNTH )
 # Start defining source files for ZDoom
 set( PLAT_WIN32_SOURCES
 	win32/eaxedit.cpp
-	win32/fb_d3d9.cpp
-	win32/fb_d3d9_wipe.cpp
 	win32/fb_ddraw.cpp
 	win32/hardware.cpp
 	win32/helperthread.cpp

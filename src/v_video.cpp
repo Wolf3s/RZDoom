@@ -1336,7 +1336,6 @@ bool V_DoModeSetup (int width, int height, int bits)
 	screen->SetGamma (Gamma);
 
 	// Load fonts now so they can be packed into textures straight away,
-	// if D3DFB is being used for the display.
 	FFont::StaticPreloadFonts();
 
 	V_CalcCleanFacs(320, 200, width, height, &CleanXfac, &CleanYfac, &cx1, &cx2);
