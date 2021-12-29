@@ -251,10 +251,6 @@ add_subdirectory( gdtoa )
 add_subdirectory( wadsrc )
 add_subdirectory( src )
 
-if( NOT WIN32 AND NOT APPLE )
-	add_subdirectory( output_sdl )
-endif( NOT WIN32 AND NOT APPLE )
-
 if( NOT CMAKE_CROSSCOMPILING )
 	export(TARGETS ${CROSS_EXPORTS} FILE "${CMAKE_BINARY_DIR}/ImportExecutables.cmake" )
 endif( NOT CMAKE_CROSSCOMPILING )
