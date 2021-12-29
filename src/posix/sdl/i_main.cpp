@@ -40,9 +40,6 @@
 #include <signal.h>
 #include <new>
 #include <sys/param.h>
-#ifndef NO_GTK
-#include <gtk/gtk.h>
-#endif
 #include <locale.h>
 
 #include "doomerrors.h"
