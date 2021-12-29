@@ -136,9 +136,7 @@ else( WIN32 )
 		set( FMOD_SEARCH_PATHS "/Developer/FMOD Programmers API/api/core" )
 		set( FMOD_INC_PATH_SUFFIXES PATH_SUFFIXES inc )
 		set( FMOD_LIB_PATH_SUFFIXES PATH_SUFFIXES lib )
-		set( NO_GTK ON )
 	else( APPLE )
-		option( NO_GTK "Disable GTK+ dialogs (Not applicable to Windows)" )
 		option( VALGRIND "Add special Valgrind sequences to self-modifying code" )
 
 		set( FMOD_SEARCH_PATHS
@@ -153,22 +151,7 @@ else( WIN32 )
 			/opt/include/fmod )
 		set( FMOD_INC_PATH_SUFFIXES PATH_SUFFIXES fmod )
 
-		# Use GTK+ for the IWAD picker, if available.
-		if( NOT NO_GTK )
-			pkg_check_modules( GTK2 gtk+-2.0 )
-			if( GTK2_FOUND )
-				set( ZDOOM_LIBS ${ZDOOM_LIBS} ${GTK2_LIBRARIES} )
-				include_directories( ${GTK2_INCLUDE_DIRS} )
-				link_directories( ${GTK2_LIBRARY_DIRS} )
-			else( GTK2_FOUND )
-				set( NO_GTK ON )
-			endif( GTK2_FOUND )
-		endif( NOT NO_GTK )
 	endif( APPLE )
-	
-	if( NO_GTK )
-		add_definitions( -DNO_GTK=1 )
-	endif( NO_GTK )
 	
 	# Non-Windows version also needs SDL except native OS X backend
 	if( NOT APPLE OR NOT OSX_COCOA_BACKEND )

@@ -1,6 +1,6 @@
 /*
 ** i_system.cpp
-** Timers, pre-console output, IWAD selection, and misc system routines.
+** Timers, pre-console output and misc system routines.
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2009 Randy Heit
@@ -1097,99 +1097,6 @@ void I_FlushBufferedConsoleStuff()
 		DoPrintStr(bufferedConsoleStuff[i], ConWindow, NULL);
 	}
 	bufferedConsoleStuff.Clear();
-}
-
-//==========================================================================
-//
-// SetQueryIWAD
-//
-// The user had the "Don't ask again" box checked when they closed the
-// IWAD selection dialog.
-//
-//==========================================================================
-
-static void SetQueryIWad(HWND dialog)
-{
-	HWND checkbox = GetDlgItem(dialog, IDC_DONTASKIWAD);
-	int state = (int)SendMessage(checkbox, BM_GETCHECK, 0, 0);
-	bool query = (state != BST_CHECKED);
-
-	if (!query && queryiwad)
-	{
-		MessageBox(dialog,
-			"You have chosen not to show this dialog box in the future.\n"
-			"If you wish to see it again, hold down SHIFT while starting " GAMENAME ".",
-			"Don't ask me this again",
-			MB_OK | MB_ICONINFORMATION);
-	}
-
-	queryiwad = query;
-}
-
-//==========================================================================
-//
-// IWADBoxCallback
-//
-// Dialog proc for the IWAD selector.
-//
-//==========================================================================
-
-BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	HWND ctrl;
-	int i;
-
-	switch (message)
-	{
-	case WM_INITDIALOG:
-		// Add our program name to the window title
-		{
-			TCHAR label[256];
-			FString newlabel;
-
-			GetWindowText(hDlg, label, countof(label));
-			newlabel.Format(GAMESIG " %s: %s", GetVersionString(), label);
-			SetWindowText(hDlg, newlabel.GetChars());
-		}
-		// Populate the list with all the IWADs found
-		ctrl = GetDlgItem(hDlg, IDC_IWADLIST);
-		for (i = 0; i < NumWads; i++)
-		{
-			FString work;
-			const char *filepart = strrchr(WadList[i].Path, '/');
-			if (filepart == NULL)
-				filepart = WadList[i].Path;
-			else
-				filepart++;
-			work.Format("%s (%s)", WadList[i].Name.GetChars(), filepart);
-			SendMessage(ctrl, LB_ADDSTRING, 0, (LPARAM)work.GetChars());
-			SendMessage(ctrl, LB_SETITEMDATA, i, (LPARAM)i);
-		}
-		SendMessage(ctrl, LB_SETCURSEL, DefaultWad, 0);
-		SetFocus(ctrl);
-		// Set the state of the "Don't ask me again" checkbox
-		ctrl = GetDlgItem(hDlg, IDC_DONTASKIWAD);
-		SendMessage(ctrl, BM_SETCHECK, queryiwad ? BST_UNCHECKED : BST_CHECKED, 0);
-		// Make sure the dialog is in front. If SHIFT was pressed to force it visible,
-		// then the other window will normally be on top.
-		SetForegroundWindow(hDlg);
-		break;
-
-	case WM_COMMAND:
-		if (LOWORD(wParam) == IDCANCEL)
-		{
-			EndDialog (hDlg, -1);
-		}
-		else if (LOWORD(wParam) == IDOK ||
-			(LOWORD(wParam) == IDC_IWADLIST && HIWORD(wParam) == LBN_DBLCLK))
-		{
-			SetQueryIWad(hDlg);
-			ctrl = GetDlgItem (hDlg, IDC_IWADLIST);
-			EndDialog(hDlg, SendMessage (ctrl, LB_GETCURSEL, 0, 0));
-		}
-		break;
-	}
-	return FALSE;
 }
 
 //==========================================================================

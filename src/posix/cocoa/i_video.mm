@@ -968,11 +968,7 @@ void CocoaFrameBuffer::Flip()
 		rbOpts.dirty = false;
 	}
 
-#ifdef __LITTLE_ENDIAN__
 	static const GLenum format = GL_RGBA;
-#else // __BIG_ENDIAN__
-	static const GLenum format = GL_ABGR_EXT;
-#endif // __LITTLE_ENDIAN__
 
 	glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8,
 		Width, Height, 0, format, GL_UNSIGNED_BYTE, m_pixelBuffer);
