@@ -1332,13 +1332,10 @@ OptionMenu GameplayOptions
 
 OptionValue CompatModes
 {
-	0, "Default"
-	1, "Doom"
-	2, "Doom (strict)"
-	3, "Boom"
-	6, "Boom (strict)"
-	5, "MBF"
-	4, "ZDoom 2.0.63"
+	0, "ZDoom"
+	1, "Doom Vanilla"
+	2, "Boom 2.02"
+	3, "MBF"
 }
 
 OptionMenu "CompatibilityOptions"
