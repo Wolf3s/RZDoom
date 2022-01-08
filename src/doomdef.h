@@ -295,7 +295,6 @@ enum
 	DF2_CHASECAM			= 1 << 21,	// Players can use the chasecam cheat.
 	DF2_NOSUICIDE			= 1 << 22,	// Players are not allowed to suicide.
 	DF2_NOAUTOAIM			= 1 << 23,	// Players cannot use autoaim.
-	DF2_DONTCHECKAMMO		= 1 << 24,	// Don't Check ammo when switching weapons.
 	DF2_KILLBOSSMONST		= 1 << 25,	// Kills all monsters spawned by a boss cube when the boss dies
 	DF2_NOCOUNTENDMONST		= 1 << 26,	// Do not count monsters in 'end level when dying' sectors towards kill count
 	DF2_RESPAWN_SUPER		= 1 << 27,	// Respawn invulnerability and invisibility
@@ -304,6 +303,7 @@ enum
 // [RH] Compatibility flags.
 enum
 {
+    COMPATF_DONTCHECKAMMO   = 1 << 24,  // Don't Check ammo when switching weapons.
 	COMPATF_SHORTTEX		= 1 << 0,	// Use Doom's shortest texture around behavior?
 	COMPATF_STAIRINDEX		= 1 << 1,	// Don't fix loop index for stair building?
 	COMPATF_LIMITPAIN		= 1 << 2,	// Pain elemental is limited to 20 lost souls?

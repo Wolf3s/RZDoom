@@ -1345,6 +1345,7 @@ OptionMenu "CompatibilityOptions"
 	
 	StaticText " "
 	StaticText "Actor Behavior",1
+	Option "Allow weapon switch without ammo",			"compat_dontcheckammo", "YesNo"
 	Option "Crushed monsters can be resurrected",		"compat_CORPSEGIBS", "YesNo"	
 	Option "Friendly monsters aren't blocked",			"compat_NOBLOCKFRIENDS", "YesNo"
 	Option "Limit Pain Elementals' Lost Souls",			"compat_LIMITPAIN", "YesNo"
