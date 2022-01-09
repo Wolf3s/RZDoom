@@ -1841,7 +1841,7 @@ void P_CalcHeight (player_t *player)
 =
 =================
 */
-CUSTOM_CVAR (Float, sv_aircontrol, 0.00390625f, CVAR_SERVERINFO|CVAR_NOSAVE)
+CUSTOM_CVAR (Float, sv_aircontrol, 0.0f, CVAR_SERVERINFO|CVAR_NOSAVE)
 {
 	level.aircontrol = (fixed_t)(self * 65536.f);
 	G_AirControlChanged ();

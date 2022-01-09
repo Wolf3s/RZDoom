@@ -165,7 +165,7 @@ CUSTOM_CVAR (Int, con_scaletext, 0, CVAR_ARCHIVE)		// Scale notify text at high 
 	if (self > 2) self = 2;
 }
 
-CUSTOM_CVAR(Float, con_alpha, 0.75f, CVAR_ARCHIVE)
+CUSTOM_CVAR(Float, con_alpha, 0.50f, CVAR_ARCHIVE)
 {
 	if (self < 0.f) self = 0.f;
 	if (self > 1.f) self = 1.f;

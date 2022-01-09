@@ -119,7 +119,7 @@ CUSTOM_CVAR (Float, sv_gravity, 800.f, CVAR_SERVERINFO|CVAR_NOSAVE)
 }
 
 CVAR (Bool, cl_missiledecals, true, CVAR_ARCHIVE)
-CVAR (Bool, addrocketexplosion, false, CVAR_ARCHIVE)
+CVAR (Bool, addrocketexplosion, true, CVAR_ARCHIVE)
 CVAR (Int, cl_pufftype, 0, CVAR_ARCHIVE);
 CVAR (Int, cl_bloodtype, 0, CVAR_ARCHIVE);
 

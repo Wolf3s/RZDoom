@@ -83,7 +83,7 @@ static bool NoInterpolateView;
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 CVAR (Bool, r_deathcamera, false, CVAR_ARCHIVE)
-CVAR (Int, r_clearbuffer, 0, 0)
+CVAR (Int, r_clearbuffer, 1, 0)
 CVAR (Bool, r_drawvoxels, true, 0)
 CVAR (Bool, r_drawplayersprites, true, 0)	// [RH] Draw player sprites?
 CUSTOM_CVAR(Float, r_quakeintensity, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
