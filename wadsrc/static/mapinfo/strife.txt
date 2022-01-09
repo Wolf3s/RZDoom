@@ -36,8 +36,8 @@ gameinfo
 	weaponslot = 6, "FlameThrower"
 	weaponslot = 7, "Mauler2", "Mauler"
 	weaponslot = 8, "Sigil"
-	dimcolor = "ff d7 00"
-	dimamount = 0.2
+	dimcolor = "00 00 00"
+	dimamount = 10.0
 	definventorymaxamount = 25
 	defaultrespawntime = 16
 	defaultdropstyle = 2
