@@ -52,7 +52,7 @@ gameinfo
 	menufontcolor_action = "GRAY"
 	menufontcolor_header = "GOLD"
 	menufontcolor_highlight = "YELLOW"
-	menufontcolor_selection = "BRICK"
+	menufontcolor_selection = "YELLOW"
 	menubackbutton = "M_BACK_D"
 	playerclasses = "DoomPlayer"
 	pausesign = "M_PAUSE"
