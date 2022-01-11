@@ -78,7 +78,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BetaSkullAttack)
 //
 //==========================================================================
 
-CUSTOM_CVAR (Float, transsouls, 0.75f, CVAR_ARCHIVE)
+CUSTOM_CVAR (Float, transsouls, 1.00f, CVAR_ARCHIVE)
 {
 	if (self < 0.25f)
 	{
