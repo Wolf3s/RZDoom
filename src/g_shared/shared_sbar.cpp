@@ -94,6 +94,7 @@ CVAR (Flag, pf_hexenweaps,	paletteflash, PF_HEXENWEAPONS)
 CVAR (Flag, pf_poison,		paletteflash, PF_POISON)
 CVAR (Flag, pf_ice,			paletteflash, PF_ICE)
 CVAR (Flag, pf_hazard,		paletteflash, PF_HAZARD)
+CVAR (Int, hud_stats_always_on, 0, CVAR_ARCHIVE)
 
 // Stretch status bar to full screen width?
 CUSTOM_CVAR (Bool, st_scale, true, CVAR_ARCHIVE)
@@ -1304,6 +1305,43 @@ void DBaseStatusBar::Draw (EHudState state)
 		{
 			DrawCrosshair ();
 		}
+        
+        if (hud_stats_always_on)
+        {
+        // Adam (Gibbon) - 2022 - Overlay onto main screen if CVAR activated
+        int y, time = Tics2Seconds(level.time), height;
+        int totaltime = Tics2Seconds(level.totaltime);
+        EColorRange highlight = (gameinfo.gametype & GAME_DoomChex) ?
+            CR_UNTRANSLATED : CR_YELLOW;
+        height = SmallFont->GetHeight () * CleanYfac;
+            
+        // Draw timer
+        y = ::ST_Y - height;
+        mysnprintf (line, countof(line), "%02d:%02d:%02d", time/3600, (time%3600)/60, time%60);    // Time
+        screen->DrawText (SmallFont, CR_YELLOW, 8, y, line, DTA_CleanNoMove, true, TAG_DONE);
+        y-=8*CleanYfac;
+
+        // Draw monsters
+        mysnprintf (line, countof(line), "%s" TEXTCOLOR_GREY " %d/%d",
+            GStrings("AM_MONSTERS"), level.killed_monsters, level.total_monsters);
+        screen->DrawText (SmallFont, highlight, 8, y, line,
+            DTA_CleanNoMove, true, TAG_DONE);
+        y -= height;
+
+        // Draw secrets
+        mysnprintf (line, countof(line), "%s" TEXTCOLOR_GREY " %d/%d",
+            GStrings("AM_SECRETS"), level.found_secrets, level.total_secrets);
+        screen->DrawText (SmallFont, highlight, 8, y, line,
+            DTA_CleanNoMove, true, TAG_DONE);
+        y -= height;
+
+        // Draw items
+        mysnprintf (line, countof(line), "%s" TEXTCOLOR_GREY " %d/%d",
+            GStrings("AM_ITEMS"), level.found_items, level.total_items);
+        screen->DrawText (SmallFont, highlight, 8, y, line,
+            DTA_CleanNoMove, true, TAG_DONE);
+        y -= height;
+        }
 	}
 	else if (automapactive)
 	{
@@ -1316,13 +1354,13 @@ void DBaseStatusBar::Draw (EHudState state)
 
 		// Draw timer
 		y = 8;
-		if (am_showtime)
+		if (am_showtime && !hud_stats_always_on)
 		{
 			mysnprintf (line, countof(line), "%02d:%02d:%02d", time/3600, (time%3600)/60, time%60);	// Time
 			screen->DrawText (SmallFont, CR_GREY, SCREENWIDTH - 80*CleanXfac, y, line, DTA_CleanNoMove, true, TAG_DONE);
 			y+=8*CleanYfac;
 		}
-		if (am_showtotaltime)
+		if (am_showtotaltime && !hud_stats_always_on)
 		{
 			mysnprintf (line, countof(line), "%02d:%02d:%02d", totaltime/3600, (totaltime%3600)/60, totaltime%60);	// Total time
 			screen->DrawText (SmallFont, CR_GREY, SCREENWIDTH - 80*CleanXfac, y, line, DTA_CleanNoMove, true, TAG_DONE);
@@ -1375,7 +1413,7 @@ void DBaseStatusBar::Draw (EHudState state)
 			int y = 8;
 
 			// Draw monster count
-			if (am_showmonsters)
+			if (am_showmonsters && !hud_stats_always_on)
 			{
 				mysnprintf (line, countof(line), "%s" TEXTCOLOR_GREY " %d/%d",
 					GStrings("AM_MONSTERS"), level.killed_monsters, level.total_monsters);
@@ -1385,7 +1423,7 @@ void DBaseStatusBar::Draw (EHudState state)
 			}
 
 			// Draw secret count
-			if (am_showsecrets)
+			if (am_showsecrets && !hud_stats_always_on)
 			{
 				mysnprintf (line, countof(line), "%s" TEXTCOLOR_GREY " %d/%d",
 					GStrings("AM_SECRETS"), level.found_secrets, level.total_secrets);
@@ -1395,7 +1433,7 @@ void DBaseStatusBar::Draw (EHudState state)
 			}
 
 			// Draw item count
-			if (am_showitems)
+			if (am_showitems && !hud_stats_always_on)
 			{
 				mysnprintf (line, countof(line), "%s" TEXTCOLOR_GREY " %d/%d",
 					GStrings("AM_ITEMS"), level.found_items, level.total_items);
