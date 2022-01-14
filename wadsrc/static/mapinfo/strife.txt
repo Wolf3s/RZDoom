@@ -37,7 +37,7 @@ gameinfo
 	weaponslot = 7, "Mauler2", "Mauler"
 	weaponslot = 8, "Sigil"
 	dimcolor = "00 00 00"
-	dimamount = 10.0
+	dimamount = 0.8
 	definventorymaxamount = 25
 	defaultrespawntime = 16
 	defaultdropstyle = 2

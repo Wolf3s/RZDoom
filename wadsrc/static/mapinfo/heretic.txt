@@ -36,7 +36,7 @@ gameinfo
 	weaponslot = 6, "PhoenixRod"
 	weaponslot = 7, "Mace"
 	dimcolor = "00 00 00"
-	dimamount = 10.0
+	dimamount = 0.8
 	definventorymaxamount = 16
 	defaultrespawntime = 12
 	defaultdropstyle = 1

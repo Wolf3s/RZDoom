@@ -37,7 +37,7 @@ gameinfo
 	weaponslot = 6, "PlasmaRifle"
 	weaponslot = 7, "BFG9000"
 	dimcolor = "00 00 00"
-	dimamount = 10.0
+	dimamount = 0.8
 	definventorymaxamount = 25
 	defaultrespawntime = 12
 	defaultdropstyle = 1
