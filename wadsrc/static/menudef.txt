@@ -37,15 +37,6 @@ DEFAULTLISTMENU
 
 LISTMENU "MainMenu"
 {
-	IfGame(Strife)
-	{
-		StaticPatch 116, 145, "FMOD"
-	}
-
-	IfGame(Doom, Chex, Heretic, Hexen)
-	{
-		StaticPatch 116, 165, "FMOD"
-	}
 	
 	IfGame(Doom, Chex)
 	{
