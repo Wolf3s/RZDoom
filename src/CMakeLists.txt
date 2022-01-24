@@ -400,7 +400,6 @@ set( PLAT_SDL_SOURCES
 	posix/sdl/st_start.cpp )
 endif ( APPLE AND NOT OSX_COCOA_BACKEND )
 set( PLAT_OSX_SOURCES
-	posix/osx/iwadpicker_cocoa.mm
 	posix/osx/rzdoom.icns )
 set( PLAT_COCOA_SOURCES
 	posix/cocoa/critsec.cpp

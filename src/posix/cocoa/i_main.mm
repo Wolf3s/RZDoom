@@ -143,8 +143,6 @@ char* s_argv[ARGC_MAX];
 
 TArray<FString> s_argvStorage;
 
-bool s_restartedFromWADPicker;
-
 
 void NewFailure()
 {
@@ -315,13 +313,6 @@ ApplicationController* appCtrl;
 - (BOOL)application:(NSApplication*)theApplication openFile:(NSString*)filename
 {
 	ZD_UNUSED(theApplication);
-
-	if (s_restartedFromWADPicker
-		|| 0 == [filename length]
-		|| s_argc + 2 >= ARGC_MAX)
-	{
-		return FALSE;
-	}
 
 	// Some parameters from command line are passed to this function
 	// These parameters need to be skipped to avoid duplication
@@ -508,15 +499,8 @@ int main(int argc, char** argv)
 			continue;
 		}
 
-		if (0 == strcmp(argument, "-wad_picker_restart"))
-		{
-			s_restartedFromWADPicker = true;
-		}
-		else
-		{
-			s_argvStorage.Push(argument);
-			s_argv[s_argc++] = s_argvStorage.Last().LockBuffer();
-		}
+		s_argvStorage.Push(argument);
+		s_argv[s_argc++] = s_argvStorage.Last().LockBuffer();
 	}
 
 	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
