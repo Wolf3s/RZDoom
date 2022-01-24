@@ -321,7 +321,7 @@ FString M_GetSavegamesPath()
 
 //===========================================================================
 //
-// M_GetCachePath													Mac OS X
+// M_GetCachePath													macOS
 //
 // Returns the path for cache GL nodes.
 //
@@ -349,7 +349,7 @@ FString M_GetCachePath(bool create)
 
 //===========================================================================
 //
-// M_GetAutoexecPath												Mac OS X
+// M_GetAutoexecPath												macOS
 //
 // Returns the expected location of autoexec.cfg.
 //
@@ -362,7 +362,7 @@ FString M_GetAutoexecPath()
 	char cpath[PATH_MAX];
 	FSRef folder;
 	
-	if (noErr == FSFindFolder(kUserDomain, kDocumentsFolderType, kCreateFolder, &folder) &&
+	if (noErr == FSFindFolder(kUserDomain, kApplicationSupportFolderType, kCreateFolder, &folder) &&
 		noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
 	{
 		path << cpath << "/" GAME_DIR "/autoexec.cfg";
@@ -372,7 +372,7 @@ FString M_GetAutoexecPath()
 
 //===========================================================================
 //
-// M_GetCajunPath													Mac OS X
+// M_GetCajunPath													macOS
 //
 // Returns the location of the Cajun Bot definitions.
 //
@@ -393,7 +393,7 @@ FString M_GetCajunPath(const char *botfilename)
 
 //===========================================================================
 //
-// M_GetConfigPath													Mac OS X
+// M_GetConfigPath													macOS
 //
 // Returns the path to the config file. On Windows, this can vary for reading
 // vs writing. i.e. If $PROGDIR/zdoom-<user>.ini does not exist, it will try
@@ -406,11 +406,11 @@ FString M_GetConfigPath(bool for_reading)
 	char cpath[PATH_MAX];
 	FSRef folder;
 	
-	if (noErr == FSFindFolder(kUserDomain, kPreferencesFolderType, kCreateFolder, &folder) &&
+	if (noErr == FSFindFolder(kUserDomain, kApplicationSupportFolderType, kCreateFolder, &folder) &&
 		noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
 	{
 		FString path;
-		path << cpath << "/" GAMENAMELOWERCASE ".ini";
+		path << cpath << "/" GAME_DIR "/" GAMENAMELOWERCASE ".ini";
 		return path;
 	}
 	// Ungh.
@@ -419,7 +419,7 @@ FString M_GetConfigPath(bool for_reading)
 
 //===========================================================================
 //
-// M_GetScreenshotsPath												Mac OS X
+// M_GetScreenshotsPath												macOS
 //
 // Returns the path to the default screenshots directory.
 //
@@ -431,7 +431,7 @@ FString M_GetScreenshotsPath()
 	char cpath[PATH_MAX];
 	FSRef folder;
 	
-	if (noErr == FSFindFolder(kUserDomain, kDocumentsFolderType, kCreateFolder, &folder) &&
+	if (noErr == FSFindFolder(kUserDomain, kApplicationSupportFolderType, kCreateFolder, &folder) &&
 		noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
 	{
 		path << cpath << "/" GAME_DIR "/Screenshots/";
@@ -445,7 +445,7 @@ FString M_GetScreenshotsPath()
 
 //===========================================================================
 //
-// M_GetSavegamesPath												Mac OS X
+// M_GetSavegamesPath												macOS
 //
 // Returns the path to the default save games directory.
 //
@@ -457,7 +457,7 @@ FString M_GetSavegamesPath()
 	char cpath[PATH_MAX];
 	FSRef folder;
 
-	if (noErr == FSFindFolder(kUserDomain, kDocumentsFolderType, kCreateFolder, &folder) &&
+	if (noErr == FSFindFolder(kUserDomain, kApplicationSupportFolderType, kCreateFolder, &folder) &&
 		noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
 	{
 		path << cpath << "/" GAME_DIR "/Savegames/";
