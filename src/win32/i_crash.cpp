@@ -125,7 +125,7 @@ RtlVirtualUnwind (
 #define UPLOAD_BOUNDARY	"Von-DnrNbJl0 P9d_BD;cEEsQVWpYMq0pbZ6NUmYHus;yIbFbkgB?.N=YC5O=BGZm+Rab5"
 #define DBGHELP_URI		"/msredist/dbghelp.dl_"
 
-#define UPLOAD_AGENT	GAMENAME "/" VERSIONSTR " (" GAMESIG ")"
+#define UPLOAD_AGENT	GAMENAME "/" VERSIONSTR
 
 // Time, in milliseconds, to wait for a send() or recv() to complete.
 #define TIMEOUT			60000

@@ -1,31 +1,51 @@
-/* Gibbon - Ok, so let me clarify what this file is for
- * This essentially is just to get the CPU info so it can display and dump that information
- * which can be useful for debugging.  This code will 'only ever' be run on a 32bit system
- * and uses a lot of ancient Visual Studio macro's (M_IX86).
- * I've added some macro's to check for 32bit ARM CPU's too but otherwise (as some 64bit arm machines will ignore some macros)
- * as it will ignore the x86 part and try to run the code.  So these arm macros will be used to make them 'ignore' it.
- * I will leave it here as this stuff (inc the ASM inlined code) are totally fine.
- *
- * I am however, very wary of what licence this falls under since much of this code
- * was taken from AMD handbooks..  it may not be GPL compatible.
-*/ 
+/*
+**
+**
+**---------------------------------------------------------------------------
+** Copyright 2005-2016 Randy Heit
+** Copyright 2005-2016 Christoph Oelckers
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
 #include "doomtype.h"
 #include "doomdef.h"
 #include "x86.h"
 
-extern "C"
-{
-	CPUInfo CPU;
-}
+CPUInfo CPU;
 
-#if !defined(__amd64__) && !defined(__aarch64__) && !defined(__i386__) && !defined(_M_IX86) && !defined(_M_X64)
-void CheckCPUID(CPUInfo *cpu)
+#if !defined(__amd64__) && !defined(__i386__) && !defined(_M_IX86) && !defined(_M_X64)
+void CheckCPUID(CPUInfo* cpu)
 {
 	memset(cpu, 0, sizeof(*cpu));
 	cpu->DataL1LineSize = 32;	// Assume a 32-byte cache line
 }
 
-void DumpCPUInfo(const CPUInfo *cpu)
+void DumpCPUInfo(const CPUInfo* cpu)
 {
 }
 #else
@@ -33,15 +53,11 @@ void DumpCPUInfo(const CPUInfo *cpu)
 #ifdef _MSC_VER
 #include <intrin.h>
 #endif
-#if !defined (__aarch64__)
-#include <mmintrin.h>
 #include <emmintrin.h>
-#elif defined (__APPLE__) && defined (__aarch64__) || defined (WIN32) && defined (__aarch64__)
-#include "sse2neon.h"
-#endif
+
 
 #ifdef __GNUC__
-#if defined(__i386__) || defined(__PIC__)
+#if defined(__i386__) && defined(__PIC__)
 // %ebx may by the PIC register. */
 #define __cpuid(output, func) \
 	__asm__ __volatile__("xchgl\t%%ebx, %1\n\t" \
@@ -49,22 +65,22 @@ void DumpCPUInfo(const CPUInfo *cpu)
 						 "xchgl\t%%ebx, %1\n\t" \
 		: "=a" ((output)[0]), "=r" ((output)[1]), "=c" ((output)[2]), "=d" ((output)[3]) \
 		: "a" (func));
-#else !defined (__APPLE__) && !defined (__aarch64__)
+#else
 #define __cpuid(output, func) __asm__ __volatile__("cpuid" : "=a" ((output)[0]),\
 	"=b" ((output)[1]), "=c" ((output)[2]), "=d" ((output)[3]) : "a" (func));
 #endif
 #endif
 
-void CheckCPUID(CPUInfo *cpu)
+void CheckCPUID(CPUInfo* cpu)
 {
-	int cpu_id[4];
+	int foo[4];
 	unsigned int maxext;
 
 	memset(cpu, 0, sizeof(*cpu));
 
 	cpu->DataL1LineSize = 32;	// Assume a 32-byte cache line
 
-#if !defined(_M_IX86) && !defined(__i386__) && !defined(_M_X64) && !defined(__amd64__) && !defined(__aarch64__)
+#if !defined(_M_IX86) && !defined(__i386__) && !defined(_M_X64) && !defined(__amd64__)
 	return;
 #else
 
@@ -77,13 +93,13 @@ void CheckCPUID(CPUInfo *cpu)
 	{
 		pushfd				// save EFLAGS
 		pop eax				// store EFLAGS in EAX
-		mov ecx,eax			// save in ECX for later testing
-		xor eax,0x00200000	// toggle bit 21
+		mov ecx, eax			// save in ECX for later testing
+		xor eax, 0x00200000	// toggle bit 21
 		push eax			// put to stack
 		popfd				// save changed EAX to EFLAGS
 		pushfd				// push EFLAGS to TOS
 		pop eax				// store EFLAGS in EAX
-		cmp eax,ecx			// see if bit 21 has changed
+		cmp eax, ecx			// see if bit 21 has changed
 		jne haveid			// if no change, then no CPUID
 	}
 	return;
@@ -109,99 +125,89 @@ haveid:
 #endif
 
 	// Get vendor ID
-#if !defined (__APPLE__) && !defined (__aarch64__)
-	__cpuid(cpu_id, 0);
-#endif
-	cpu->dwVendorID[0] = cpu_id[1];
-	cpu->dwVendorID[1] = cpu_id[3];
-	cpu->dwVendorID[2] = cpu_id[2];
-	if (cpu_id[1] == MAKE_ID('A','u','t','h') &&
-		cpu_id[3] == MAKE_ID('e','n','t','i') &&
-		cpu_id[2] == MAKE_ID('c','A','M','D'))
+	__cpuid(foo, 0);
+	cpu->dwVendorID[0] = foo[1];
+	cpu->dwVendorID[1] = foo[3];
+	cpu->dwVendorID[2] = foo[2];
+	if (foo[1] == MAKE_ID('A', 'u', 't', 'h') &&
+		foo[3] == MAKE_ID('e', 'n', 't', 'i') &&
+		foo[2] == MAKE_ID('c', 'A', 'M', 'D'))
 	{
 		cpu->bIsAMD = true;
 	}
 
 	// Get features flags and other info
-#if !defined (__APPLE__) && !defined (__aarch64__)
-	__cpuid(cpu_id, 1);
-#endif
-	cpu->FeatureFlags[0] = cpu_id[1];	// Store brand index and other stuff
-	cpu->FeatureFlags[1] = cpu_id[2];	// Store extended feature flags
-	cpu->FeatureFlags[2] = cpu_id[3];	// Store feature flags
+	__cpuid(foo, 1);
+	cpu->FeatureFlags[0] = foo[1];	// Store brand index and other stuff
+	cpu->FeatureFlags[1] = foo[2];	// Store extended feature flags
+	cpu->FeatureFlags[2] = foo[3];	// Store feature flags
+
+	cpu->HyperThreading = (foo[3] & (1 << 28)) > 0;
 
 	// If CLFLUSH instruction is supported, get the real cache line size.
-	if (cpu_id[3] & (1 << 19))
+	if (foo[3] & (1 << 19))
 	{
-		cpu->DataL1LineSize = (cpu_id[1] & 0xFF00) >> (8 - 3);
+		cpu->DataL1LineSize = (foo[1] & 0xFF00) >> (8 - 3);
 	}
 
-	cpu->Stepping = cpu_id[0] & 0x0F;
-	cpu->Type = (cpu_id[0] & 0x3000) >> 12;	// valid on Intel only
-	cpu->Model = (cpu_id[0] & 0xF0) >> 4;
-	cpu->Family = (cpu_id[0] & 0xF00) >> 8;
+	cpu->Stepping = foo[0] & 0x0F;
+	cpu->Type = (foo[0] & 0x3000) >> 12;	// valid on Intel only
+	cpu->Model = (foo[0] & 0xF0) >> 4;
+	cpu->Family = (foo[0] & 0xF00) >> 8;
 
 	if (cpu->Family == 15)
 	{ // Add extended family.
-		cpu->Family += (cpu_id[0] >> 20) & 0xFF;
+		cpu->Family += (foo[0] >> 20) & 0xFF;
 	}
 	if (cpu->Family == 6 || cpu->Family == 15)
 	{ // Add extended model ID.
-		cpu->Model |= (cpu_id[0] >> 12) & 0xF0;
+		cpu->Model |= (foo[0] >> 12) & 0xF0;
 	}
 
 	// Check for extended functions.
-#if !defined (__APPLE__) && !defined (__aarch64__)
-	__cpuid(cpu_id, 0x80000000);
-#endif
-	maxext = (unsigned int)cpu_id[0];
+	__cpuid(foo, 0x80000000);
+	maxext = (unsigned int)foo[0];
 
 	if (maxext >= 0x80000004)
 	{ // Get processor brand string.
-#if !defined (__APPLE__) && !defined (__aarch64__)
-		__cpuid((int *)&cpu->dwCPUString[0], 0x80000002);
-		__cpuid((int *)&cpu->dwCPUString[4], 0x80000003);
-		__cpuid((int *)&cpu->dwCPUString[8], 0x80000004);
-#endif
+		__cpuid((int*)&cpu->dwCPUString[0], 0x80000002);
+		__cpuid((int*)&cpu->dwCPUString[4], 0x80000003);
+		__cpuid((int*)&cpu->dwCPUString[8], 0x80000004);
 	}
 
 	if (cpu->bIsAMD)
 	{
 		if (maxext >= 0x80000005)
 		{ // Get data L1 cache info.
-#if !defined (__APPLE__) && !defined (__aarch64__)
-			__cpuid(cpu_id, 0x80000005);
-#endif
-			cpu->AMD_DataL1Info = cpu_id[2];
+			__cpuid(foo, 0x80000005);
+			cpu->AMD_DataL1Info = foo[2];
 		}
 		if (maxext >= 0x80000001)
 		{ // Get AMD-specific feature flags.
-#if !defined (__APPLE__) && !defined (__aarch64__)
-			__cpuid(cpu_id, 0x80000001);
-#endif
-			cpu->AMDStepping = cpu_id[0] & 0x0F;
-			cpu->AMDModel = (cpu_id[0] & 0xF0) >> 4;
-			cpu->AMDFamily = (cpu_id[0] & 0xF00) >> 8;
+			__cpuid(foo, 0x80000001);
+			cpu->AMDStepping = foo[0] & 0x0F;
+			cpu->AMDModel = (foo[0] & 0xF0) >> 4;
+			cpu->AMDFamily = (foo[0] & 0xF00) >> 8;
 
 			if (cpu->AMDFamily == 15)
 			{ // Add extended model and family.
-				cpu->AMDFamily += (cpu_id[0] >> 20) & 0xFF;
-				cpu->AMDModel |= (cpu_id[0] >> 12) & 0xF0;
+				cpu->AMDFamily += (foo[0] >> 20) & 0xFF;
+				cpu->AMDModel |= (foo[0] >> 12) & 0xF0;
 			}
-			cpu->FeatureFlags[3] = cpu_id[3];	// AMD feature flags
+			cpu->FeatureFlags[3] = foo[3];	// AMD feature flags
 		}
 	}
 #endif
 }
 
-void DumpCPUInfo(const CPUInfo *cpu)
+void DumpCPUInfo(const CPUInfo* cpu)
 {
-	char cpustring[4*4*3+1];
-	
+	char cpustring[4 * 4 * 3 + 1];
+
 	// Why does Intel right-justify this string (on P4s)
 	// or add extra spaces (on Cores)?
-	const char *f = cpu->CPUString;
-	char *t;
+	const char* f = cpu->CPUString;
+	char* t;
 
 	// Skip extra whitespace at the beginning.
 	while (*f == ' ')
@@ -223,13 +229,7 @@ void DumpCPUInfo(const CPUInfo *cpu)
 
 	if (cpu->VendorID[0])
 	{
-#if defined (__APPLE__) && defined (__x86_64__)
-		Printf("CPU Vendor ID: Intel\n", cpu->VendorID);
-#elif defined (__APPLE__) && defined (__arm64__)
-        Printf("CPU Vendor ID: Apple Silicon\n", cpu->VendorID);
-#else
-        Printf("CPU Vendor ID: %s\n", cpu->VendorID);
-#endif
+		Printf("CPU Vendor ID: %s\n", cpu->VendorID);
 		if (cpustring[0])
 		{
 			Printf("  Name: %s\n", cpustring);
@@ -245,9 +245,6 @@ void DumpCPUInfo(const CPUInfo *cpu)
 				cpu->Family, cpu->Model, cpu->Stepping);
 		}
 		Printf("  Features:");
-		if (cpu->bMMX)			Printf(" MMX");
-		if (cpu->bMMXPlus)		Printf(" MMX+");
-		if (cpu->bSSE)			Printf(" SSE");
 		if (cpu->bSSE2)			Printf(" SSE2");
 		if (cpu->bSSE3)			Printf(" SSE3");
 		if (cpu->bSSSE3)		Printf(" SSSE3");
@@ -255,60 +252,13 @@ void DumpCPUInfo(const CPUInfo *cpu)
 		if (cpu->bSSE42)		Printf(" SSE4.2");
 		if (cpu->b3DNow)		Printf(" 3DNow!");
 		if (cpu->b3DNowPlus)	Printf(" 3DNow!+");
-		Printf ("\n");
+		if (cpu->HyperThreading)	Printf(" HyperThreading");
+		Printf("\n");
 	}
 }
 
-#if 0
-// Compiler output for this function is crap compared to the assembly
-// version, which is why it isn't used.
-void DoBlending_MMX2(const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a)
-{
-	__m64 blendcolor;
-	__m64 blendalpha;
-	__m64 zero;
-	__m64 blending256;
-	__m64 color1;
-	__m64 color2;
 
-	zero = _mm_setzero_si64();
-#ifndef __GNUC__
-	blending256.m64_i64 = 0x10001000100;
-#else
-	blending256 = (__m64)0x10001000100ll;
-#endif
-
-	blendcolor = _mm_unpacklo_pi8(_m_from_int((r << 16) | (g << 8) | b), zero);	// 000000RR 00GG00BB
-	blendalpha = _mm_unpacklo_pi8(_m_from_int((a << 16) | (a << 8) | a), zero);	// 000000AA 00AA00AA
-
-	blendcolor = _mm_mullo_pi16(blendcolor, blendalpha);	// premultiply blend by alpha
-	blendalpha = _mm_subs_pu16(blending256, blendalpha);	// one minus alpha
-
-	// Do two colors per iteration: Count must be even
-	for (count >>= 1; count > 0; --count)
-	{
-		color1 = *(__m64 *)from;						// 00r2g2b2 00r1g1b1
-		from += 2;
-		color2 = _mm_unpackhi_pi8(color1, zero);		// 000000r2 00g200b2
-		color1 = _mm_unpacklo_pi8(color1, zero);		// 000000r1 00g100b1
-		color1 = _mm_mullo_pi16(blendalpha, color1);	// 0000r1rr g1ggb1bb
-		color2 = _mm_mullo_pi16(blendalpha, color2);	// 0000r2rr g2ggb2bb
-		color1 = _mm_adds_pu16(blendcolor, color1);
-		color2 = _mm_adds_pu16(blendcolor, color2);
-		color1 = _mm_srli_pi16(color1, 8);
-		color2 = _mm_srli_pi16(color2, 8);
-		*(__m64 *)to = _mm_packs_pu16(color1, color2);	// 00r2g2b2 00r1g1b1
-		to += 2;
-	}
-	_mm_empty();
-}
-#endif
-
-#ifdef X86_ASM
-extern "C" void STACK_ARGS DoBlending_MMX(const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a);
-#endif
-
-void DoBlending_SSE2(const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a)
+void DoBlending_SSE2(const PalEntry* from, PalEntry* to, int count, int r, int g, int b, int a)
 {
 	__m128i blendcolor;
 	__m128i blendalpha;
@@ -320,26 +270,15 @@ void DoBlending_SSE2(const PalEntry *from, PalEntry *to, int count, int r, int g
 
 	unaligned = ((size_t)from | (size_t)to) & 0xF;
 
-#ifdef X86_ASM
-	// For unaligned accesses, the assembly MMX version is slightly faster.
-	// Note that using unaligned SSE loads and stores is still faster than
-	// the compiler-generated MMX version.
-	if (unaligned)
-	{
-		DoBlending_MMX(from, to, count, r, g, b, a);
-		return;
-	}
-#endif
-
-#if defined(__amd64__) || defined(_M_X64) || defined(__aarch64__)
-	long long color;
+#if defined(__amd64__) || defined(_M_X64)
+	int64_t color;
 
 	blending256 = _mm_set_epi64x(0x10001000100ll, 0x10001000100ll);
 
-	color = ((long long)r << 32) | (g << 16) | b;
+	color = ((int64_t)r << 32) | (g << 16) | b;
 	blendcolor = _mm_set_epi64x(color, color);
 
-	color = ((long long)a << 32) | (a << 16) | a;
+	color = ((int64_t)a << 32) | (a << 16) | a;
 	blendalpha = _mm_set_epi64x(color, color);
 #else
 	int color;
@@ -358,12 +297,11 @@ void DoBlending_SSE2(const PalEntry *from, PalEntry *to, int count, int r, int g
 
 	zero = _mm_setzero_si128();
 
-#ifndef X86_ASM
 	if (unaligned)
 	{
 		for (count >>= 2; count > 0; --count)
 		{
-			color1 = _mm_loadu_si128((__m128i *)from);
+			color1 = _mm_loadu_si128((__m128i*)from);
 			from += 4;
 			color2 = _mm_unpackhi_epi8(color1, zero);
 			color1 = _mm_unpacklo_epi8(color1, zero);
@@ -373,16 +311,15 @@ void DoBlending_SSE2(const PalEntry *from, PalEntry *to, int count, int r, int g
 			color2 = _mm_adds_epu16(blendcolor, color2);
 			color1 = _mm_srli_epi16(color1, 8);
 			color2 = _mm_srli_epi16(color2, 8);
-			_mm_storeu_si128((__m128i *)to, _mm_packus_epi16(color1, color2));
+			_mm_storeu_si128((__m128i*)to, _mm_packus_epi16(color1, color2));
 			to += 4;
 		}
 	}
 	else
-#endif
 	{
 		for (count >>= 2; count > 0; --count)
 		{
-			color1 = _mm_load_si128((__m128i *)from);
+			color1 = _mm_load_si128((__m128i*)from);
 			from += 4;
 			color2 = _mm_unpackhi_epi8(color1, zero);
 			color1 = _mm_unpacklo_epi8(color1, zero);
@@ -392,10 +329,9 @@ void DoBlending_SSE2(const PalEntry *from, PalEntry *to, int count, int r, int g
 			color2 = _mm_adds_epu16(blendcolor, color2);
 			color1 = _mm_srli_epi16(color1, 8);
 			color2 = _mm_srli_epi16(color2, 8);
-			_mm_store_si128((__m128i *)to, _mm_packus_epi16(color1, color2));
+			_mm_store_si128((__m128i*)to, _mm_packus_epi16(color1, color2));
 			to += 4;
 		}
 	}
 }
 #endif
-
