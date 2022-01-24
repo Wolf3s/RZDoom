@@ -49,8 +49,6 @@
 #include "resourcefiles/resourcefile.h"
 #include "version.h"
 
-
-CVAR (Bool, queryiwad, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR (String, defaultiwad, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 
 //==========================================================================

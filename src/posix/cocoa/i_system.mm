@@ -228,25 +228,6 @@ void I_PrintStr(const char* const message)
 	fflush(stdout);
 }
 
-
-int I_PickIWad(WadStuff* const wads, const int numwads, const bool showwin, const int defaultiwad)
-{
-	if (!showwin)
-	{
-		return defaultiwad;
-	}
-
-	I_SetMainWindowVisible(false);
-
-	extern int I_PickIWad_Cocoa(WadStuff*, int, bool, int);
-	const int result = I_PickIWad_Cocoa(wads, numwads, showwin, defaultiwad);
-
-	I_SetMainWindowVisible(true);
-
-	return result;
-}
-
-
 bool I_WriteIniFailed()
 {
 	printf("The config file %s could not be saved:\n%s\n", GameConfig->GetPathName(), strerror(errno));

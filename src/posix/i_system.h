@@ -114,12 +114,6 @@ void popterm ();
 // Print a console string
 void I_PrintStr (const char *str);
 
-// Set the title string of the startup window
-void I_SetIWADInfo ();
-
-// Pick from multiple IWADs to use
-int I_PickIWad (WadStuff *wads, int numwads, bool queryiwad, int defaultiwad);
-
 // [RH] Checks the registry for Steam's install path, so we can scan its
 // directories for IWADs if the user purchased any through Steam.
 TArray<FString> I_GetSteamPath();
