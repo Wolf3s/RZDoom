@@ -143,6 +143,7 @@ void *I_FindFirst (const char *filespec, findstate_t *fileinfo);
 int I_FindNext (void *handle, findstate_t *fileinfo);
 int I_FindClose (void *handle);
 int I_FindAttr (findstate_t *fileinfo); 
+int I_PickIWad (WadStuff *wads, int numwads, bool queryiwad, int defaultiwad);
 
 #define I_FindName(a)	((a)->namelist[(a)->current]->d_name)
 

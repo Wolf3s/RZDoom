@@ -400,6 +400,7 @@ set( PLAT_SDL_SOURCES
 	posix/sdl/st_start.cpp )
 endif ( APPLE AND NOT OSX_COCOA_BACKEND )
 set( PLAT_OSX_SOURCES
+	posix/osx/iwadpicker_cocoa.mm
 	posix/osx/rzdoom.icns )
 set( PLAT_COCOA_SOURCES
 	posix/cocoa/critsec.cpp
@@ -442,6 +443,7 @@ elseif( APPLE )
 
 	set_source_files_properties( posix/osx/rzdoom.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources )
 	set_source_files_properties( "${FMOD_LIBRARY}" PROPERTIES MACOSX_PACKAGE_LOCATION Frameworks )
+	set_source_files_properties( posix/osx/iwadpicker_cocoa.mm PROPERTIES COMPILE_FLAGS -fobjc-exceptions )
 else( WIN32 )
 	set( SYSTEM_SOURCES_DIR posix posix/sdl )
 	set( SYSTEM_SOURCES ${PLAT_POSIX_SOURCES} ${PLAT_SDL_SOURCES} )
