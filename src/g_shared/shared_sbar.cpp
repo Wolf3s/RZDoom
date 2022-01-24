@@ -95,6 +95,7 @@ CVAR (Flag, pf_poison,		paletteflash, PF_POISON)
 CVAR (Flag, pf_ice,			paletteflash, PF_ICE)
 CVAR (Flag, pf_hazard,		paletteflash, PF_HAZARD)
 CVAR (Int, hud_stats_always_on, 0, CVAR_ARCHIVE)
+CVAR (Int, hud_stats_always_on_items, 0, CVAR_ARCHIVE)
 
 // Stretch status bar to full screen width?
 CUSTOM_CVAR (Bool, st_scale, true, CVAR_ARCHIVE)
@@ -1335,13 +1336,15 @@ void DBaseStatusBar::Draw (EHudState state)
             DTA_CleanNoMove, true, TAG_DONE);
         y -= height;
 
+	if (hud_stats_always_on_items) {
         // Draw items
         mysnprintf (line, countof(line), "%s" TEXTCOLOR_GREY " %d/%d",
             GStrings("AM_ITEMS"), level.found_items, level.total_items);
         screen->DrawText (SmallFont, highlight, 8, y, line,
             DTA_CleanNoMove, true, TAG_DONE);
         y -= height;
-        }
+			}
+		}
 	}
 	else if (automapactive)
 	{
