@@ -1592,9 +1592,6 @@
     <ClInclude Include="src\memarena.h">
       <Filter>!Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\mscinlines.h">
-      <Filter>!Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\mus2midi.h">
       <Filter>!Header Files</Filter>
     </ClInclude>

@@ -14,8 +14,6 @@
 
 #if defined(__GNUC__) && defined(__i386__) && !defined(__clang__)
 #include "gccinlines.h"
-#elif defined(_MSC_VER) && defined(_M_IX86)
-#include "mscinlines.h"
 #else
 #include "basicinlines.h"
 #endif
@@ -62,24 +60,24 @@ MAKESAFEDIVSCALE(29)
 MAKESAFEDIVSCALE(30)
 #undef MAKESAFEDIVSCALE
 
-inline SDWORD SafeDivScale31 (SDWORD a, SDWORD b)
+inline SDWORD SafeDivScale31(SDWORD a, SDWORD b)
 {
-	if ((DWORD)abs(a) >= (DWORD)abs (b))
-		return (a^b)<0 ? FIXED_MIN : FIXED_MAX;
-	return DivScale31 (a, b);
+	if ((DWORD)abs(a) >= (DWORD)abs(b))
+		return (a ^ b) < 0 ? FIXED_MIN : FIXED_MAX;
+	return DivScale31(a, b);
 }
 
-inline SDWORD SafeDivScale32 (SDWORD a, SDWORD b)
+inline SDWORD SafeDivScale32(SDWORD a, SDWORD b)
 {
-	if ((DWORD)abs(a) >= (DWORD)abs (b) >> 1)
-		return (a^b)<0 ? FIXED_MIN : FIXED_MAX;
-	return DivScale32 (a, b);
+	if ((DWORD)abs(a) >= (DWORD)abs(b) >> 1)
+		return (a ^ b) < 0 ? FIXED_MIN : FIXED_MAX;
+	return DivScale32(a, b);
 }
 
 #define FixedMul MulScale16
 #define FixedDiv SafeDivScale16
 
-inline void qinterpolatedown16 (SDWORD *out, DWORD count, SDWORD val, SDWORD delta)
+inline void qinterpolatedown16(SDWORD* out, DWORD count, SDWORD val, SDWORD delta)
 {
 	if (count & 1)
 	{
@@ -97,7 +95,7 @@ inline void qinterpolatedown16 (SDWORD *out, DWORD count, SDWORD val, SDWORD del
 	}
 }
 
-inline void qinterpolatedown16short (short *out, DWORD count, SDWORD val, SDWORD delta)
+inline void qinterpolatedown16short(short* out, DWORD count, SDWORD val, SDWORD delta)
 {
 	if (count)
 	{
@@ -107,8 +105,8 @@ inline void qinterpolatedown16short (short *out, DWORD count, SDWORD val, SDWORD
 			count--;
 			val += delta;
 		}
-		DWORD *o2 = (DWORD *)out;
-		DWORD c2 = count>>1;
+		DWORD* o2 = (DWORD*)out;
+		DWORD c2 = count >> 1;
 		while (c2-- != 0)
 		{
 			SDWORD temp = val + delta;
@@ -117,20 +115,20 @@ inline void qinterpolatedown16short (short *out, DWORD count, SDWORD val, SDWORD
 		}
 		if (count & 1)
 		{
-			*(short *)o2 = (short)(val >> 16);
+			*(short*)o2 = (short)(val >> 16);
 		}
 	}
 }
 
-	//returns num/den, dmval = num%den
-inline SDWORD DivMod (SDWORD num, SDWORD den, SDWORD *dmval)
+//returns num/den, dmval = num%den
+inline SDWORD DivMod(SDWORD num, SDWORD den, SDWORD* dmval)
 {
 	*dmval = num % den;
 	return num / den;
 }
 
-	//returns num%den, dmval = num/den
-inline SDWORD ModDiv (SDWORD num, SDWORD den, SDWORD *dmval)
+//returns num%den, dmval = num/den
+inline SDWORD ModDiv(SDWORD num, SDWORD den, SDWORD* dmval)
 {
 	*dmval = num / den;
 	return num % den;

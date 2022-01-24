@@ -1280,7 +1280,6 @@
     <ClInclude Include="src\memarena.h" />
     <ClInclude Include="src\menu\menu.h" />
     <ClInclude Include="src\menu\optionmenuitems.h" />
-    <ClInclude Include="src\mscinlines.h" />
     <ClInclude Include="src\mus2midi.h" />
     <ClInclude Include="src\m_alloc.h" />
     <ClInclude Include="src\m_argv.h" />

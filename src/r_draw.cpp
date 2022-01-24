@@ -171,7 +171,6 @@ void R_InitShadeMaps()
 /*									*/
 /************************************/
 
-#ifndef	X86_ASM
 //
 // A column is a vertical slice/span from a wall texture that,
 //	given the DOOM style restrictions on the view orientation,
@@ -222,7 +221,6 @@ void R_DrawColumnP_C (void)
 		} while (--count);
 	}
 } 
-#endif
 
 // [RH] Just fills a column with a color
 void R_FillColumnP (void)
@@ -414,7 +412,6 @@ void R_InitFuzzTable (int fuzzoff)
 	}
 }
 
-#ifndef X86_ASM
 //
 // Creates a fuzzy image by copying pixels from adjacent ones above and below.
 // Used with an all black colormap, this could create the SHADOW effect,
@@ -490,7 +487,6 @@ void R_DrawFuzzColumnP_C (void)
 		fuzzpos = fuzz;
 	}
 } 
-#endif
 
 //
 // R_DrawTranlucentColumn
@@ -983,12 +979,6 @@ const BYTE*				ds_source;
 // just for profiling
 int 					dscount;
 
-#ifdef X86_ASM
-extern "C" void R_SetSpanSource_ASM (const BYTE *flat);
-extern "C" void STACK_ARGS R_SetSpanSize_ASM (int xbits, int ybits);
-extern "C" void R_SetSpanColormap_ASM (BYTE *colormap);
-extern "C" BYTE *ds_curcolormap, *ds_cursource, *ds_curtiltedsource;
-#endif
 }
 
 //==========================================================================
@@ -1002,12 +992,6 @@ extern "C" BYTE *ds_curcolormap, *ds_cursource, *ds_curtiltedsource;
 void R_SetSpanSource(const BYTE *pixels)
 {
 	ds_source = pixels;
-#ifdef X86_ASM
-	if (ds_cursource != ds_source)
-	{
-		R_SetSpanSource_ASM(pixels);
-	}
-#endif
 }
 
 //==========================================================================
@@ -1021,12 +1005,6 @@ void R_SetSpanSource(const BYTE *pixels)
 void R_SetSpanColormap(BYTE *colormap)
 {
 	ds_colormap = colormap;
-#ifdef X86_ASM
-	if (ds_colormap != ds_curcolormap)
-	{
-		R_SetSpanColormap_ASM (ds_colormap);
-	}
-#endif
 }
 
 //==========================================================================
@@ -1050,14 +1028,10 @@ void R_SetupSpanBits(FTexture *tex)
 	{
 		ds_ybits--;
 	}
-#ifdef X86_ASM
-	R_SetSpanSize_ASM (ds_xbits, ds_ybits);
-#endif
 }
 
 //
 // Draws the actual span.
-#ifndef X86_ASM
 void R_DrawSpanP_C (void)
 {
 	dsfixed_t			xfrac;
@@ -1190,7 +1164,6 @@ void R_DrawSpanMaskedP_C (void)
 		} while (--count);
 	}
 }
-#endif
 
 void R_DrawSpanTranslucentP_C (void)
 {
@@ -1486,7 +1459,6 @@ void R_FillSpan (void)
 
 // Actually, this is just R_DrawColumn with an extra width parameter.
 
-#ifndef X86_ASM
 static const BYTE *slabcolormap;
 
 extern "C" void R_SetupDrawSlabC(const BYTE *colormap)
@@ -1566,8 +1538,6 @@ extern "C" void STACK_ARGS R_DrawSlabC(int dx, fixed_t v, int dy, fixed_t vi, co
 		dy--;
 	}
 }
-#endif
-
 
 /****************************************************/
 /****************************************************/
@@ -2093,23 +2063,6 @@ const BYTE *R_GetColumn (FTexture *tex, int col)
 // [RH] Initialize the column drawer pointers
 void R_InitColumnDrawers ()
 {
-#ifdef X86_ASM
-	R_DrawColumn				= R_DrawColumnP_ASM;
-	R_DrawColumnHoriz			= R_DrawColumnHorizP_ASM;
-	R_DrawFuzzColumn			= R_DrawFuzzColumnP_ASM;
-	R_DrawTranslatedColumn		= R_DrawTranslatedColumnP_C;
-	R_DrawShadedColumn			= R_DrawShadedColumnP_C;
-	R_DrawSpan					= R_DrawSpanP_ASM;
-	R_DrawSpanMasked			= R_DrawSpanMaskedP_ASM;
-	if (CPU.Family <= 5)
-	{
-		rt_map4cols				= rt_map4cols_asm2;
-	}
-	else
-	{
-		rt_map4cols				= rt_map4cols_asm1;
-	}
-#else
 	R_DrawColumnHoriz			= R_DrawColumnHorizP_C;
 	R_DrawColumn				= R_DrawColumnP_C;
 	R_DrawFuzzColumn			= R_DrawFuzzColumnP_C;
@@ -2118,7 +2071,7 @@ void R_InitColumnDrawers ()
 	R_DrawSpan					= R_DrawSpanP_C;
 	R_DrawSpanMasked			= R_DrawSpanMaskedP_C;
 	rt_map4cols					= rt_map4cols_c;
-#endif
+
 	R_DrawSpanTranslucent		= R_DrawSpanTranslucentP_C;
 	R_DrawSpanMaskedTranslucent = R_DrawSpanMaskedTranslucentP_C;
 	R_DrawSpanAddClamp			= R_DrawSpanAddClampP_C;
