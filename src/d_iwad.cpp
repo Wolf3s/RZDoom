@@ -595,6 +595,5 @@ const FIWADInfo *FIWadManager::FindIWAD(TArray<FString> &wadfiles, const char *i
 		DoomStartupInfo.BkColor = iwad_info->BkColor;
 		DoomStartupInfo.FgColor = iwad_info->FgColor;
 	}
-	I_SetIWADInfo();
 	return iwad_info;
 }
