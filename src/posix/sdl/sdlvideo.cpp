@@ -16,6 +16,10 @@
 
 #include <SDL.h>
 
+#ifdef __APPLE__
+#include <OpenGL/OpenGL.h>
+#endif // __APPLE__
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -265,7 +269,7 @@ DFrameBuffer *SDLVideo::CreateFrameBuffer (int width, int height, bool fullscree
 		if (fb->Width == width &&
 			fb->Height == height)
 		{
-			bool fsnow = (SDL_GetWindowFlags (fb->Screen) & SDL_WINDOW_FULLSCREEN) != 0;
+			bool fsnow = (SDL_GetWindowFlags (fb->Screen) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
 	
 			if (fsnow != fullscreen)
 			{
@@ -365,11 +369,11 @@ SDLFB::SDLFB (int width, int height, bool fullscreen, SDL_Window *oldwin)
 	else
 	{
 		FString caption;
-		caption.Format(GAMESIG " %s ", GetVersionString());
+		caption.Format(GAMESIG " %s (%s)", GetVersionString(), GetGitTime());
 
 		Screen = SDL_CreateWindow (caption,
 			SDL_WINDOWPOS_UNDEFINED_DISPLAY(vid_adapter), SDL_WINDOWPOS_UNDEFINED_DISPLAY(vid_adapter),
-			width, height, (fullscreen ? SDL_WINDOW_FULLSCREEN : 0)|SDL_WINDOW_RESIZABLE);
+			width, height, (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0)|SDL_WINDOW_RESIZABLE);
 
 		if (Screen == NULL)
 			return;
@@ -631,7 +635,7 @@ void SDLFB::SetFullscreen (bool fullscreen)
 	if (IsFullscreen() == fullscreen)
 		return;
 
-	SDL_SetWindowFullscreen (Screen, fullscreen ? SDL_WINDOW_FULLSCREEN : 0);
+	SDL_SetWindowFullscreen (Screen, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
 	if (!fullscreen)
 	{
 		// Restore proper window size
@@ -643,7 +647,7 @@ void SDLFB::SetFullscreen (bool fullscreen)
 
 bool SDLFB::IsFullscreen ()
 {
-	return (SDL_GetWindowFlags (Screen) & SDL_WINDOW_FULLSCREEN) != 0;
+	return (SDL_GetWindowFlags (Screen) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
 }
 
 void SDLFB::ResetSDLRenderer ()
@@ -714,7 +718,24 @@ void SDLFB::ResetSDLRenderer ()
 
 void SDLFB::SetVSync (bool vsync)
 {
-    ResetSDLRenderer ();
+#ifdef __APPLE__
+	if (CGLContextObj context = CGLGetCurrentContext())
+	{
+		// Apply vsync for native backend only (where OpenGL context is set)
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1050
+		// Inconsistency between 10.4 and 10.5 SDKs:
+		// third argument of CGLSetParameter() is const long* on 10.4 and const GLint* on 10.5
+		// So, GLint typedef'ed to long instead of int to workaround this issue
+		typedef long GLint;
+#endif // prior to 10.5
+
+		const GLint value = vsync ? 1 : 0;
+		CGLSetParameter(context, kCGLCPSwapInterval, &value);
+	}
+#else
+	ResetSDLRenderer ();
+#endif // __APPLE__
 }
 
 void SDLFB::ScaleCoordsFromWindow(SWORD &x, SWORD &y)

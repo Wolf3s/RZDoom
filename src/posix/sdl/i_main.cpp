@@ -59,15 +59,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-// haleyjd: SDL init flags
-#define BASE_INIT_FLAGS (SDL_INIT_VIDEO | SDL_INIT_JOYSTICK)
-
-#ifdef _DEBUG
-#define INIT_FLAGS (BASE_INIT_FLAGS | SDL_INIT_NOPARACHUTE)
-#else
-#define INIT_FLAGS BASE_INIT_FLAGS
-#endif
-
 // The maximum number of functions that can be registered with atterm.
 #define MAX_TERMS	64
 
@@ -88,10 +79,6 @@ void Mac_I_FatalError(const char* errortext);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-#ifndef NO_GTK
-bool GtkAvailable;
-#endif
 
 // The command line arguments.
 DArgs *Args;
@@ -152,7 +139,7 @@ static int DoomSpecificInfo (char *buffer, char *end)
 	int i, p;
 
 	p = 0;
-	p += snprintf (buffer+p, size-p, GAMENAME" version %s \n", GetVersionString());
+	p += snprintf (buffer+p, size-p, GAMENAME" version %s (%s)\n", GetVersionString(), GetGitHash());
 #ifdef __VERSION__
 	p += snprintf (buffer+p, size-p, "Compiler version: %s\n", __VERSION__);
 #endif
@@ -206,8 +193,8 @@ int main (int argc, char **argv)
 	}
 #endif // !__APPLE__
 
-	printf(GAMENAME" %s - SDL version\nCompiled on %s\n",
-		GetVersionString(), __DATE__);
+	printf(GAMENAME" %s - %s - SDL version\nCompiled on %s\n",
+		GetVersionString(), GetGitTime(), __DATE__);
 
 	seteuid (getuid ());
     std::set_new_handler (NewFailure);
@@ -216,9 +203,10 @@ int main (int argc, char **argv)
 	// clear the setlocale call at least this will be correct.
 	// Note that the LANG environment variable is overridden by LC_*
 	setenv ("LC_NUMERIC", "C", 1);
+	
 	setlocale (LC_ALL, "C");
 
-    if(SDL_Init(INIT_FLAGS) == -1)
+	if (SDL_Init (0) < 0)
 	{
 		fprintf (stderr, "Could not initialize SDL:\n%s\n", SDL_GetError());
 		return -1;

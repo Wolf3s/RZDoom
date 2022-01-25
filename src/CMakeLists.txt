@@ -383,7 +383,7 @@ set( PLAT_SDL_SOURCES
 	posix/sdl/i_joystick.cpp
 	posix/sdl/i_main.cpp
 	posix/sdl/i_system.cpp
-	posix/sdl/i_timer_cocoa.cpp
+	posix/sdl/i_timer.cpp
 	posix/sdl/sdlvideo.cpp
 	posix/sdl/st_start.cpp )
 else ( NOT APPLE )
