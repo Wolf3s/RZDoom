@@ -37,10 +37,10 @@ enum
 	LANGIDX_SysDefault
 };
 extern uint32 LanguageIDs[4];
-extern void SetLanguageIDs ();
+extern void SetLanguageIDs();
 
 // [RH] Detects the OS the game is running under.
-void I_DetectOS (void);
+void I_DetectOS(void);
 
 typedef enum {
 	os_unknown,
@@ -72,11 +72,11 @@ public:
 		: Call(GetOptionalWin32Proc(module, function)) {}
 
 	// Wrapper object can be tested against NULL, but not directly called.
-	operator const void*() const { return Call; }
+	operator const void* () const { return Call; }
 };
 
 // Called by DoomMain.
-void I_Init (void);
+void I_Init(void);
 
 // Called by D_DoomLoop, returns current time in tics.
 extern int (*I_GetTime) (bool saveMS);
@@ -90,7 +90,7 @@ extern int (*I_WaitForTic) (int);
 // tic will never arrive (unless it's the current one).
 extern void (*I_FreezeTime) (bool frozen);
 
-fixed_t I_GetTimeFrac (uint32 *ms);
+fixed_t I_GetTimeFrac(uint32* ms);
 
 // Return a seed value for the RNG.
 unsigned int I_MakeRNGSeed();
@@ -104,7 +104,7 @@ unsigned int I_MakeRNGSeed();
 // are performed here (joystick reading).
 // Can call D_PostEvent.
 //
-void I_StartFrame (void);
+void I_StartFrame(void);
 
 
 //
@@ -112,7 +112,7 @@ void I_StartFrame (void);
 // called before processing each tic in a frame.
 // Quick syncronous operations are performed here.
 // Can call D_PostEvent.
-void I_StartTic (void);
+void I_StartTic(void);
 
 // Asynchronous interrupt functions should maintain private queues
 // that are read by the synchronous functions
@@ -122,40 +122,43 @@ void I_StartTic (void);
 // or calls a loadable driver to build it.
 // This ticcmd will then be modified by the gameloop
 // for normal input.
-ticcmd_t *I_BaseTiccmd (void);
+ticcmd_t* I_BaseTiccmd(void);
 
 
 // Called by M_Responder when quit is selected.
 // Clean exit, displays sell blurb.
-void I_Quit (void);
+void I_Quit(void);
 
 
-void I_Tactile (int on, int off, int total);
+void I_Tactile(int on, int off, int total);
 
-void STACK_ARGS I_Error (const char *error, ...) GCCPRINTF(1,2);
-void STACK_ARGS I_FatalError (const char *error, ...) GCCPRINTF(1,2);
+void STACK_ARGS I_Error(const char* error, ...) GCCPRINTF(1, 2);
+void STACK_ARGS I_FatalError(const char* error, ...) GCCPRINTF(1, 2);
 
-void atterm (void (*func)(void));
-void popterm ();
+void atterm(void (*func)(void));
+void popterm();
 
 // Set the mouse cursor. The texture must be 32x32.
 class FTexture;
-bool I_SetCursor(FTexture *cursor);
+bool I_SetCursor(FTexture* cursor);
 
 // Repaint the pre-game console
-void I_PaintConsole (void);
+void I_PaintConsole(void);
 
 // Print a console string
-void I_PrintStr (const char *cp);
+void I_PrintStr(const char* cp);
 
 // Set the title string of the startup window
-void I_SetIWADInfo ();
+void I_SetIWADInfo();
+
+// Pick from multiple IWADs to use
+int I_PickIWad(WadStuff* wads, int numwads, bool queryiwad, int defaultiwad);
 
 // The ini could not be saved at exit
-bool I_WriteIniFailed ();
+bool I_WriteIniFailed();
 
 // [RH] Returns millisecond-accurate time
-unsigned int I_MSTime (void);
+unsigned int I_MSTime(void);
 unsigned int I_FPSTime();
 
 // [RH] Used by the display code to set the normal window procedure
@@ -195,16 +198,16 @@ FString I_GetLongPathName(FString shortpath);
 struct findstate_t
 {
 	DWORD Attribs;
-	DWORD Times[3*2];
+	DWORD Times[3 * 2];
 	DWORD Size[2];
 	DWORD Reserved[2];
 	char Name[MAX_PATH];
 	char AltName[14];
 };
 
-void *I_FindFirst (const char *filespec, findstate_t *fileinfo);
-int I_FindNext (void *handle, findstate_t *fileinfo);
-int I_FindClose (void *handle);
+void* I_FindFirst(const char* filespec, findstate_t* fileinfo);
+int I_FindNext(void* handle, findstate_t* fileinfo);
+int I_FindClose(void* handle);
 
 #define I_FindName(a)	((a)->Name)
 #define I_FindAttr(a)	((a)->Attribs)

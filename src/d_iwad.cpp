@@ -49,6 +49,8 @@
 #include "resourcefiles/resourcefile.h"
 #include "version.h"
 
+
+CVAR (Bool, queryiwad, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR (String, defaultiwad, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 
 //==========================================================================
@@ -379,8 +381,6 @@ int FIWadManager::CheckIWAD (const char *doomwaddir, WadStuff *wads)
 //
 //==========================================================================
 
-static bool havepicked = false;
-
 int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, const char *zdoom_wad)
 {
 	TArray<WadStuff> wads;
@@ -525,40 +525,36 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 #endif
 	}
 
-    pickwad = 0;
+	pickwad = 0;
 
-    if (!iwadparmfound && numwads > 1)
-    {
-        int defiwad = 0;
+	if (!iwadparmfound && numwads > 1)
+	{
+		int defiwad = 0;
 
-        // Locate the user's prefered IWAD, if it was found.
-        if (defaultiwad[0] != '\0')
-        {
-            for (i = 0; i < numwads; ++i)
-            {
-                FString basename = ExtractFileBase(wads[i].Path);
-                if (stricmp(basename, defaultiwad) == 0)
-                {
-                    defiwad = (int)i;
-                    break;
-                }
-            }
-        }
-        if (!havepicked)    // just use the first IWAD if the restart doesn't have a -iwad parameter. We cannot open the picker in fullscreen mode.
-        {
-            // Adam (Gibbon) January 24th 2022 - iwadpicker is always true.
-            pickwad = I_PickIWad(&wads[0], (int)numwads, true, defiwad);
-            if (pickwad >= 0)
-            {
-                // The newly selected IWAD becomes the new default
-                FString basename = ExtractFileBase(wads[pickwad].Path);
-                defaultiwad = basename;
-            }
-            if (pickwad < 0)
-                exit(0);
-            havepicked = true;
-        }
-    }
+		// Locate the user's prefered IWAD, if it was found.
+		if (defaultiwad[0] != '\0')
+		{
+			for (i = 0; i < numwads; ++i)
+			{
+				FString basename = ExtractFileBase (wads[i].Path);
+				if (stricmp (basename, defaultiwad) == 0)
+				{
+					defiwad = (int)i;
+					break;
+				}
+			}
+		}
+		pickwad = I_PickIWad (&wads[0], (int)numwads, queryiwad, defiwad);
+		if (pickwad >= 0)
+		{
+			// The newly selected IWAD becomes the new default
+			FString basename = ExtractFileBase (wads[pickwad].Path);
+			defaultiwad = basename;
+		}
+	}
+
+	if (pickwad < 0)
+		exit (0);
 
 	// zdoom.pk3 must always be the first file loaded and the IWAD second.
 	wadfiles.Clear();
@@ -608,5 +604,6 @@ const FIWADInfo *FIWadManager::FindIWAD(TArray<FString> &wadfiles, const char *i
 		DoomStartupInfo.BkColor = iwad_info->BkColor;
 		DoomStartupInfo.FgColor = iwad_info->FgColor;
 	}
+	I_SetIWADInfo();
 	return iwad_info;
 }

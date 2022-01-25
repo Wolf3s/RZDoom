@@ -153,6 +153,13 @@
 #define IDCS_ROOMROLLOFFFACTOR          1134
 #define IDCS_REFLECTIONSDELAY2          1135
 #define IDCE_MODULATIONTIME2            1135
+#define IDC_WELCOME_FASTMONSTERS        1136
+#define IDC_WELCOME_NOMO		        1137
+#define IDC_WELCOME_RECORD		        1138
+#define IDC_WELCOME_NOAUTOLOAD          1139
+#define IDC_WELCOME_TYSON	            1140
+#define IDC_WELCOME_RESPAWN	            1141
+#define IDC_WELCOME_VERSION             1142
 
 // Next default values for new objects
 // 

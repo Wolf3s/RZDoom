@@ -60,7 +60,7 @@ static TArray<FVariableInfo*> variables;
 #define DEFINE_DEPRECATED_FLAG(name) { DEPF_##name, #name, -1, 0 }
 #define DEFINE_DUMMY_FLAG(name) { DEPF_UNUSED, #name, -1, 0 }
 
-static FFlagDef ActorFlagDefs[]=
+static FFlagDef ActorFlagDefs[] =
 {
 	DEFINE_FLAG(MF, PICKUP, APlayerPawn, flags),
 	DEFINE_FLAG(MF, SPECIAL, APlayerPawn, flags),
@@ -356,7 +356,7 @@ static FFlagDef WeaponFlagDefs[] =
 	DEFINE_FLAG(WIF, NO_AUTO_SWITCH, AWeapon, WeaponFlags),
 	DEFINE_FLAG(WIF, AMMO_CHECKBOTH, AWeapon, WeaponFlags),
 	DEFINE_FLAG(WIF, NOAUTOAIM, AWeapon, WeaponFlags),
-	
+
 	DEFINE_DUMMY_FLAG(NOLMS),
 	DEFINE_FLAG(WIF, ALT_USES_BOTH, AWeapon, WeaponFlags),
 	DEFINE_DUMMY_FLAG(ALLOW_WITH_RESPAWN_INVUL),
@@ -376,7 +376,7 @@ static FFlagDef PowerSpeedFlagDefs[] =
 	DEFINE_FLAG(PSF, NOTRAIL, APowerSpeed, SpeedFlags),
 };
 
-static const struct FFlagList { const PClass *Type; FFlagDef *Defs; int NumDefs; } FlagLists[] =
+static const struct FFlagList { const PClass* Type; FFlagDef* Defs; int NumDefs; } FlagLists[] =
 {
 	{ RUNTIME_CLASS(AActor), 		ActorFlagDefs,		countof(ActorFlagDefs) },
 	{ RUNTIME_CLASS(AInventory), 	InventoryFlagDefs,	countof(InventoryFlagDefs) },
@@ -391,14 +391,14 @@ static const struct FFlagList { const PClass *Type; FFlagDef *Defs; int NumDefs;
 // Find a flag by name using a binary search
 //
 //==========================================================================
-static FFlagDef *FindFlag (FFlagDef *flags, int numflags, const char *flag)
+static FFlagDef* FindFlag(FFlagDef* flags, int numflags, const char* flag)
 {
 	int min = 0, max = numflags - 1;
 
 	while (min <= max)
 	{
 		int mid = (min + max) / 2;
-		int lexval = stricmp (flag, flags[mid].name);
+		int lexval = stricmp(flag, flags[mid].name);
 		if (lexval == 0)
 		{
 			return &flags[mid];
@@ -421,18 +421,18 @@ static FFlagDef *FindFlag (FFlagDef *flags, int numflags, const char *flag)
 //
 //==========================================================================
 
-FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2)
+FFlagDef* FindFlag(const PClass* type, const char* part1, const char* part2)
 {
-	FFlagDef *def;
+	FFlagDef* def;
 	size_t i;
 
 	if (part2 == NULL)
 	{ // Search all lists
 		for (i = 0; i < NUM_FLAG_LISTS; ++i)
 		{
-			if (type->IsDescendantOf (FlagLists[i].Type))
+			if (type->IsDescendantOf(FlagLists[i].Type))
 			{
-				def = FindFlag (FlagLists[i].Defs, FlagLists[i].NumDefs, part1);
+				def = FindFlag(FlagLists[i].Defs, FlagLists[i].NumDefs, part1);
 				if (def != NULL)
 				{
 					return def;
@@ -444,11 +444,11 @@ FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2)
 	{ // Search just the named list
 		for (i = 0; i < NUM_FLAG_LISTS; ++i)
 		{
-			if (stricmp (FlagLists[i].Type->TypeName.GetChars(), part1) == 0)
+			if (stricmp(FlagLists[i].Type->TypeName.GetChars(), part1) == 0)
 			{
-				if (type->IsDescendantOf (FlagLists[i].Type))
+				if (type->IsDescendantOf(FlagLists[i].Type))
 				{
-					return FindFlag (FlagLists[i].Defs, FlagLists[i].NumDefs, part2);
+					return FindFlag(FlagLists[i].Defs, FlagLists[i].NumDefs, part2);
 				}
 				else
 				{
@@ -467,9 +467,9 @@ FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2)
 //
 //==========================================================================
 
-const char *GetFlagName(unsigned int flagnum, int flagoffset)
+const char* GetFlagName(unsigned int flagnum, int flagoffset)
 {
-	for(unsigned i = 0; i < countof(ActorFlagDefs); i++)
+	for (unsigned i = 0; i < countof(ActorFlagDefs); i++)
 	{
 		if (ActorFlagDefs[i].flagbit == flagnum && ActorFlagDefs[i].structoffset == flagoffset)
 		{
@@ -485,14 +485,14 @@ const char *GetFlagName(unsigned int flagnum, int flagoffset)
 //
 //==========================================================================
 
-FPropertyInfo *FindProperty(const char * string)
+FPropertyInfo* FindProperty(const char* string)
 {
-	int min = 0, max = properties.Size()-1;
+	int min = 0, max = properties.Size() - 1;
 
 	while (min <= max)
 	{
 		int mid = (min + max) / 2;
-		int lexval = stricmp (string, properties[mid]->name);
+		int lexval = stricmp(string, properties[mid]->name);
 		if (lexval == 0)
 		{
 			return properties[mid];
@@ -515,14 +515,14 @@ FPropertyInfo *FindProperty(const char * string)
 //
 //==========================================================================
 
-AFuncDesc *FindFunction(const char * string)
+AFuncDesc* FindFunction(const char* string)
 {
-	int min = 0, max = AFTable.Size()-1;
+	int min = 0, max = AFTable.Size() - 1;
 
 	while (min <= max)
 	{
 		int mid = (min + max) / 2;
-		int lexval = stricmp (string, AFTable[mid].Name);
+		int lexval = stricmp(string, AFTable[mid].Name);
 		if (lexval == 0)
 		{
 			return &AFTable[mid];
@@ -546,18 +546,18 @@ AFuncDesc *FindFunction(const char * string)
 //
 //==========================================================================
 
-FVariableInfo *FindVariable(const char * string, const PClass *cls)
+FVariableInfo* FindVariable(const char* string, const PClass* cls)
 {
-	int min = 0, max = variables.Size()-1;
+	int min = 0, max = variables.Size() - 1;
 
 	while (min <= max)
 	{
 		int mid = (min + max) / 2;
 		int lexval;
-		
+
 		if (cls < variables[mid]->owner) lexval = -1;
 		else if (cls > variables[mid]->owner) lexval = 1;
-		else lexval = stricmp (string, variables[mid]->name);
+		else lexval = stricmp(string, variables[mid]->name);
 
 		if (lexval == 0)
 		{
@@ -582,9 +582,9 @@ FVariableInfo *FindVariable(const char * string, const PClass *cls)
 //
 //==========================================================================
 
-PSymbolActionFunction *FindGlobalActionFunction(const char *name)
+PSymbolActionFunction* FindGlobalActionFunction(const char* name)
 {
-	PSymbol *sym = RUNTIME_CLASS(AActor)->Symbols.FindSymbol(name, false);
+	PSymbol* sym = RUNTIME_CLASS(AActor)->Symbols.FindSymbol(name, false);
 	if (sym != NULL && sym->SymbolType == SYM_ActionFunction)
 		return static_cast<PSymbolActionFunction*>(sym);
 	else
@@ -598,25 +598,25 @@ PSymbolActionFunction *FindGlobalActionFunction(const char *name)
 //
 //==========================================================================
 
-static int STACK_ARGS flagcmp (const void * a, const void * b)
+static int STACK_ARGS flagcmp(const void* a, const void* b)
 {
-	return stricmp( ((FFlagDef*)a)->name, ((FFlagDef*)b)->name);
+	return stricmp(((FFlagDef*)a)->name, ((FFlagDef*)b)->name);
 }
 
-static int STACK_ARGS propcmp(const void * a, const void * b)
+static int STACK_ARGS propcmp(const void* a, const void* b)
 {
-	return stricmp( (*(FPropertyInfo**)a)->name, (*(FPropertyInfo**)b)->name);
+	return stricmp((*(FPropertyInfo**)a)->name, (*(FPropertyInfo**)b)->name);
 }
 
-static int STACK_ARGS funccmp(const void * a, const void * b)
+static int STACK_ARGS funccmp(const void* a, const void* b)
 {
-	return stricmp( ((AFuncDesc*)a)->Name, ((AFuncDesc*)b)->Name);
+	return stricmp(((AFuncDesc*)a)->Name, ((AFuncDesc*)b)->Name);
 }
 
-static int STACK_ARGS varcmp(const void * a, const void * b)
+static int STACK_ARGS varcmp(const void* a, const void* b)
 {
-	FVariableInfo *A = *(FVariableInfo**)a;
-	FVariableInfo *B = *(FVariableInfo**)b;
+	FVariableInfo* A = *(FVariableInfo**)a;
+	FVariableInfo* B = *(FVariableInfo**)b;
 	if (A->owner < B->owner) return -1;
 	if (A->owner > B->owner) return 1;
 	return stricmp(A->name, B->name);
@@ -633,7 +633,7 @@ void InitThingdef()
 	// Sort the flag lists
 	for (size_t i = 0; i < NUM_FLAG_LISTS; ++i)
 	{
-		qsort (FlagLists[i].Defs, FlagLists[i].NumDefs, sizeof(FFlagDef), flagcmp);
+		qsort(FlagLists[i].Defs, FlagLists[i].NumDefs, sizeof(FFlagDef), flagcmp);
 	}
 
 	// Create a sorted list of properties
@@ -643,7 +643,7 @@ void InitThingdef()
 
 		while (*++probe != NULL)
 		{
-			properties.Push((FPropertyInfo *)*probe);
+			properties.Push((FPropertyInfo*)*probe);
 		}
 		properties.ShrinkToFit();
 		qsort(&properties[0], properties.Size(), sizeof(properties[0]), propcmp);
@@ -656,7 +656,7 @@ void InitThingdef()
 
 		while (*++probe != NULL)
 		{
-			AFTable.Push(*(AFuncDesc *)*probe);
+			AFTable.Push(*(AFuncDesc*)*probe);
 		}
 		AFTable.ShrinkToFit();
 		qsort(&AFTable[0], AFTable.Size(), sizeof(AFTable[0]), funccmp);
@@ -669,10 +669,9 @@ void InitThingdef()
 
 		while (*++probe != NULL)
 		{
-			variables.Push((FVariableInfo *)*probe);
+			variables.Push((FVariableInfo*)*probe);
 		}
 		variables.ShrinkToFit();
 		qsort(&variables[0], variables.Size(), sizeof(variables[0]), varcmp);
 	}
 }
-

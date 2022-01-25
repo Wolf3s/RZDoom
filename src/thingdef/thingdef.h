@@ -20,18 +20,18 @@ class FScanner;
 struct FFlagDef
 {
 	unsigned int flagbit;
-	const char *name;
+	const char* name;
 	int structoffset;
 	int fieldsize;
 };
 
-FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2);
-void HandleDeprecatedFlags(AActor *defaults, FActorInfo *info, bool set, int index);
-bool CheckDeprecatedFlags(const AActor *actor, FActorInfo *info, int index);
-const char *GetFlagName(unsigned int flagnum, int flagoffset);
-void ModActorFlag(AActor *actor, FFlagDef *fd, bool set);
-INTBOOL CheckActorFlag(const AActor *actor, FFlagDef *fd);
-INTBOOL CheckActorFlag(const AActor *owner, const char *flagname, bool printerror = true);
+FFlagDef* FindFlag(const PClass* type, const char* part1, const char* part2);
+void HandleDeprecatedFlags(AActor* defaults, FActorInfo* info, bool set, int index);
+bool CheckDeprecatedFlags(const AActor* actor, FActorInfo* info, int index);
+const char* GetFlagName(unsigned int flagnum, int flagoffset);
+void ModActorFlag(AActor* actor, FFlagDef* fd, bool set);
+INTBOOL CheckActorFlag(const AActor* actor, FFlagDef* fd);
+INTBOOL CheckActorFlag(const AActor* owner, const char* flagname, bool printerror = true);
 
 #define FLAG_NAME(flagnum, flagvar) GetFlagName(flagnum, myoffsetof(AActor, flagvar))
 
@@ -61,28 +61,28 @@ struct FStateDefine
 {
 	FName Label;
 	TArray<FStateDefine> Children;
-	FState *State;
+	FState* State;
 	BYTE DefineFlags;
 };
 
 class FStateDefinitions
 {
 	TArray<FStateDefine> StateLabels;
-	FState *laststate;
-	FState *laststatebeforelabel;
+	FState* laststate;
+	FState* laststatebeforelabel;
 	intptr_t lastlabel;
 	TArray<FState> StateArray;
 
-	static FStateDefine *FindStateLabelInList(TArray<FStateDefine> &list, FName name, bool create);
-	static FStateLabels *CreateStateLabelList(TArray<FStateDefine> &statelist);
-	static void MakeStateList(const FStateLabels *list, TArray<FStateDefine> &dest);
-	static void RetargetStatePointers (intptr_t count, const char *target, TArray<FStateDefine> & statelist);
-	FStateDefine *FindStateAddress(const char *name);
-	FState *FindState(const char *name);
+	static FStateDefine* FindStateLabelInList(TArray<FStateDefine>& list, FName name, bool create);
+	static FStateLabels* CreateStateLabelList(TArray<FStateDefine>& statelist);
+	static void MakeStateList(const FStateLabels* list, TArray<FStateDefine>& dest);
+	static void RetargetStatePointers(intptr_t count, const char* target, TArray<FStateDefine>& statelist);
+	FStateDefine* FindStateAddress(const char* name);
+	FState* FindState(const char* name);
 
-	FState *ResolveGotoLabel (AActor *actor, const PClass *mytype, char *name);
-	static void FixStatePointers (FActorInfo *actor, TArray<FStateDefine> & list);
-	void ResolveGotoLabels (FActorInfo *actor, AActor *defaults, TArray<FStateDefine> & list);
+	FState* ResolveGotoLabel(AActor* actor, const PClass* mytype, char* name);
+	static void FixStatePointers(FActorInfo* actor, TArray<FStateDefine>& list);
+	void ResolveGotoLabels(FActorInfo* actor, AActor* defaults, TArray<FStateDefine>& list);
 
 public:
 
@@ -93,21 +93,21 @@ public:
 		lastlabel = -1;
 	}
 
-	void SetStateLabel (const char * statename, FState * state, BYTE defflags = SDF_STATE);
-	void AddStateLabel (const char * statename);
-	int GetStateLabelIndex (FName statename);
-	void InstallStates(FActorInfo *info, AActor *defaults);
-	int FinishStates (FActorInfo *actor, AActor *defaults);
+	void SetStateLabel(const char* statename, FState* state, BYTE defflags = SDF_STATE);
+	void AddStateLabel(const char* statename);
+	int GetStateLabelIndex(FName statename);
+	void InstallStates(FActorInfo* info, AActor* defaults);
+	int FinishStates(FActorInfo* actor, AActor* defaults);
 
-	void MakeStateDefines(const PClass *cls);
-	void AddStateDefines(const FStateLabels *list);
-	void RetargetStates (intptr_t count, const char *target);
+	void MakeStateDefines(const PClass* cls);
+	void AddStateDefines(const FStateLabels* list);
+	void RetargetStates(intptr_t count, const char* target);
 
-	bool SetGotoLabel(const char *string);
+	bool SetGotoLabel(const char* string);
 	bool SetStop();
 	bool SetWait();
 	bool SetLoop();
-	bool AddStates(FState *state, const char *framechars);
+	bool AddStates(FState* state, const char* framechars);
 	int GetStateCount() const { return StateArray.Size(); }
 
 };
@@ -120,8 +120,8 @@ public:
 
 struct FStateExpression
 {
-	FxExpression *expr;
-	const PClass *owner;
+	FxExpression* expr;
+	const PClass* owner;
 	bool constant;
 	bool cloned;
 };
@@ -133,12 +133,12 @@ class FStateExpressions
 public:
 	~FStateExpressions() { Clear(); }
 	void Clear();
-	int Add(FxExpression *x, const PClass *o, bool c);
-	int Reserve(int num, const PClass *cls);
-	void Set(int num, FxExpression *x, bool cloned = false);
+	int Add(FxExpression* x, const PClass* o, bool c);
+	int Reserve(int num, const PClass* cls);
+	void Set(int num, FxExpression* x, bool cloned = false);
 	void Copy(int dest, int src, int cnt);
 	int ResolveAll();
-	FxExpression *Get(int no);
+	FxExpression* Get(int no);
 	unsigned int Size() { return expressions.Size(); }
 };
 
@@ -157,19 +157,19 @@ struct Baggage
 #ifdef _DEBUG
 	FString ClassName;	// This is here so that during debugging the class name can be seen
 #endif
-	FActorInfo *Info;
+	FActorInfo* Info;
 	bool DropItemSet;
 	bool StateSet;
 	int CurrentState;
 	int Lumpnum;
 	FStateDefinitions statedef;
 
-	FDropItem *DropItemList;
+	FDropItem* DropItemList;
 
 	FScriptPosition ScriptPosition;
 };
 
-inline void ResetBaggage (Baggage *bag, const PClass *stateclass)
+inline void ResetBaggage(Baggage* bag, const PClass* stateclass)
 {
 	bag->DropItemList = NULL;
 	bag->DropItemSet = false;
@@ -186,16 +186,16 @@ inline void ResetBaggage (Baggage *bag, const PClass *stateclass)
 
 struct AFuncDesc
 {
-	const char *Name;
+	const char* Name;
 	actionf_p Function;
 };
 
-AFuncDesc *FindFunction(const char * string);
+AFuncDesc* FindFunction(const char* string);
 
 
-void ParseStates(FScanner &sc, FActorInfo *actor, AActor *defaults, Baggage &bag);
+void ParseStates(FScanner& sc, FActorInfo* actor, AActor* defaults, Baggage& bag);
 
-PSymbolActionFunction *FindGlobalActionFunction(const char *name);
+PSymbolActionFunction* FindGlobalActionFunction(const char* name);
 
 //==========================================================================
 //
@@ -203,15 +203,15 @@ PSymbolActionFunction *FindGlobalActionFunction(const char *name);
 //
 //==========================================================================
 
-FActorInfo *CreateNewActor(const FScriptPosition &sc, FName typeName, FName parentName, bool native);
-void SetReplacement(FScanner &sc, FActorInfo *info, FName replaceName);
+FActorInfo* CreateNewActor(const FScriptPosition& sc, FName typeName, FName parentName, bool native);
+void SetReplacement(FScanner& sc, FActorInfo* info, FName replaceName);
 
-void HandleActorFlag(FScanner &sc, Baggage &bag, const char *part1, const char *part2, int mod);
-void FinishActor(const FScriptPosition &sc, FActorInfo *info, Baggage &bag);
-FxExpression *ParseParameter(FScanner &sc, PClass *cls, char type, bool constant);
+void HandleActorFlag(FScanner& sc, Baggage& bag, const char* part1, const char* part2, int mod);
+void FinishActor(const FScriptPosition& sc, FActorInfo* info, Baggage& bag);
+FxExpression* ParseParameter(FScanner& sc, PClass* cls, char type, bool constant);
 
 
-enum 
+enum
 {
 	DEPF_UNUSED,
 	DEPF_FIREDAMAGE,
@@ -230,7 +230,7 @@ enum
 
 enum
 {
-	ACMETA_BASE				= 0x83000,
+	ACMETA_BASE = 0x83000,
 	ACMETA_DropItems,		// Int (index into DropItemList)
 	ACMETA_ExplosionDamage,
 	ACMETA_ExplosionRadius,
@@ -278,10 +278,10 @@ union FPropParam
 {
 	int i;
 	float f;
-	const char *s;
+	const char* s;
 };
 
-typedef void (*PropHandler)(AActor *defaults, FActorInfo *info, Baggage &bag, FPropParam *params);
+typedef void (*PropHandler)(AActor* defaults, FActorInfo* info, Baggage& bag, FPropParam* params);
 
 enum ECategory
 {
@@ -291,24 +291,24 @@ enum ECategory
 
 struct FPropertyInfo
 {
-	const char *name;
-	const char *params;
-	const PClass *cls;
+	const char* name;
+	const char* params;
+	const PClass* cls;
 	PropHandler Handler;
 	int category;
 };
 
 struct FVariableInfo
 {
-	const char *name;
+	const char* name;
 	intptr_t address;
-	const PClass *owner;
+	const PClass* owner;
 };
 
 
-FPropertyInfo *FindProperty(const char * string);
-FVariableInfo *FindVariable(const char * string, const PClass *cls);
-int MatchString (const char *in, const char **strings);
+FPropertyInfo* FindProperty(const char* string);
+FVariableInfo* FindVariable(const char* string, const PClass* cls);
+int MatchString(const char* in, const char** strings);
 
 
 #define DEFINE_PROPERTY_BASE(name, paramlist, clas, cat) \
@@ -362,12 +362,12 @@ int MatchString (const char *in, const char **strings);
 	static FVariableInfo GlobalDef__##name = { #name, static_cast<intptr_t>(myoffsetof(cls, alias)), RUNTIME_CLASS(cls) }; \
 	MSVC_MSEG FVariableInfo *infoptr_GlobalDef__##name GCC_MSEG = &GlobalDef__##name;
 
-	
+
 
 
 struct StateCallData
 {
-	FState *State;
+	FState* State;
 	bool Result;
 };
 
@@ -396,14 +396,14 @@ struct StateCallData
 #define CALL_ACTION(name,self) AF_##name(self, self, NULL, 0, NULL)
 
 
-int EvalExpressionI (DWORD x, AActor *self);
-int EvalExpressionCol (DWORD x, AActor *self);
-FSoundID EvalExpressionSnd (DWORD x, AActor *self);
-double EvalExpressionF (DWORD x, AActor *self);
-fixed_t EvalExpressionFix (DWORD x, AActor *self);
-FState *EvalExpressionState (DWORD x, AActor *self);
-const PClass *EvalExpressionClass (DWORD x, AActor *self);
-FName EvalExpressionName (DWORD x, AActor *self);
+int EvalExpressionI(DWORD x, AActor* self);
+int EvalExpressionCol(DWORD x, AActor* self);
+FSoundID EvalExpressionSnd(DWORD x, AActor* self);
+double EvalExpressionF(DWORD x, AActor* self);
+fixed_t EvalExpressionFix(DWORD x, AActor* self);
+FState* EvalExpressionState(DWORD x, AActor* self);
+const PClass* EvalExpressionClass(DWORD x, AActor* self);
+FName EvalExpressionName(DWORD x, AActor* self);
 
 #define ACTION_PARAM_START(count)
 

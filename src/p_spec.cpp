@@ -1282,9 +1282,9 @@ void P_InitSectorSpecial(sector_t *sector, int special, bool nothinkers)
 			};
 			
 			int i = sector->special - Scroll_North_Slow;
-			double dx = hexenScrollies[i][0] / 2.;
-			double dy = hexenScrollies[i][1] / 2.;
-			if (!nothinkers) new DScroller (DScroller::sc_floor, dx, dy, -1, int(sector-sectors), 0);
+			fixed_t dx = hexenScrollies[i][0] * (FRACUNIT / 2);
+			fixed_t dy = hexenScrollies[i][1] * (FRACUNIT / 2);
+			if (!nothinkers) new DScroller(DScroller::sc_floor, dx, dy, -1, int(sector - sectors), 0);
 		}
 		else if (sector->special >= Carry_East5 &&
 					sector->special <= Carry_East35)

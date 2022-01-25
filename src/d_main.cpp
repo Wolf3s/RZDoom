@@ -161,9 +161,13 @@ extern bool demorecording;
 extern bool M_DemoNoPlay;	// [RH] if true, then skip any demos in the loop
 extern bool insave;
 
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
-
+CVAR(Bool, disableautoload, false, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
+CVAR(Bool, fastmonsterscheck, false, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
+CVAR(Bool, nomocheck, false, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
+CVAR(Bool, recorddemocheck, false, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
+CVAR(Bool, tysoncheck, false, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
+CVAR(Bool, respawncheck, false, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
 CUSTOM_CVAR (Int, fraglimit, 0, CVAR_SERVERINFO)
 {
 	// Check for the fraglimit being hit because the fraglimit is being
@@ -1988,7 +1992,7 @@ static void AddAutoloadFiles(const char *autoname)
 {
 	LumpFilterIWAD.Format("%s.", autoname);	// The '.' is appened to simplify parsing the string 
 
-	if (!(gameinfo.flags & GI_SHAREWARE) && !Args->CheckParm("-noautoload"))
+	if (!(gameinfo.flags & GI_SHAREWARE) && !Args->CheckParm("-noautoload") && !disableautoload)
 	{
 		FString file;
 
@@ -2043,9 +2047,10 @@ static void CheckCmdLine()
 	const char *v;
 
 	Printf ("Checking cmd-line parameters...\n");
-	if (Args->CheckParm ("-nomonsters"))	flags |= DF_NO_MONSTERS;
-	if (Args->CheckParm ("-respawn"))		flags |= DF_MONSTERS_RESPAWN;
-	if (Args->CheckParm ("-fast"))			flags |= DF_FAST_MONSTERS;
+	if (Args->CheckParm ("-nomonsters") || nomocheck)			flags |= DF_NO_MONSTERS;
+	if (Args->CheckParm ("-respawn") || respawncheck)							flags |= DF_MONSTERS_RESPAWN;
+	if (Args->CheckParm ("-fast") || fastmonsterscheck)			flags |= DF_FAST_MONSTERS;
+	if (Args->CheckParm ("-tyson") || tysoncheck)
 
 	devparm = !!Args->CheckParm ("-devparm");
 
@@ -2512,12 +2517,22 @@ void D_DoomMain (void)
 
 		if (!restart)
 		{
+			if (recorddemocheck)
+			{
+				// [AB] This is a dirty hack to make demo recording bia a checkbox work
+				// start the apropriate game based dummy values for recording via checkbox
+				if (Args->CheckValue("-record") || recorddemocheck)
+				{
+					G_RecordDemo("rzdoom_demo_recorded_via_checkbox");
+					autostart = true;
+				}
+			}
 			// start the apropriate game based on parms
-			v = Args->CheckValue ("-record");
+			v = Args->CheckValue("-record");
 
 			if (v)
 			{
-				G_RecordDemo (v);
+				G_RecordDemo(v);
 				autostart = true;
 			}
 

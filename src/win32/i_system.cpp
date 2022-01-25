@@ -1,6 +1,6 @@
 /*
 ** i_system.cpp
-** Timers, pre-console output and misc system routines.
+** Timers, pre-console output, IWAD selection, and misc system routines.
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2009 Randy Heit
@@ -98,7 +98,7 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-extern void CheckCPUID(CPUInfo *cpu);
+extern void CheckCPUID(CPUInfo* cpu);
 extern void LayoutMainWindow(HWND hWnd, HWND pane);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -116,26 +116,34 @@ static int I_WaitForTicEvent(int prevtic);
 static void I_FreezeTimeEventDriven(bool frozen);
 static void CALLBACK TimerTicked(UINT id, UINT msg, DWORD_PTR user, DWORD_PTR dw1, DWORD_PTR dw2);
 
-static HCURSOR CreateCompatibleCursor(FTexture *cursorpic);
-static HCURSOR CreateAlphaCursor(FTexture *cursorpic);
+static HCURSOR CreateCompatibleCursor(FTexture* cursorpic);
+static HCURSOR CreateAlphaCursor(FTexture* cursorpic);
 static HCURSOR CreateBitmapCursor(int xhot, int yhot, HBITMAP and_mask, HBITMAP color_mask);
 static void DestroyCustomCursor();
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 EXTERN_CVAR(String, language);
+EXTERN_CVAR(Bool, queryiwad);
+EXTERN_CVAR(Bool, disableautoload)
+EXTERN_CVAR(Bool, fastmonsterscheck)
+EXTERN_CVAR(Bool, nomocheck)
+EXTERN_CVAR(Bool, recorddemocheck)
+EXTERN_CVAR(Bool, tysoncheck)
+EXTERN_CVAR(Bool, respawncheck)
 
 extern HWND Window, ConWindow, GameTitleWindow;
 extern HANDLE StdOut;
 extern bool FancyStdOut;
 extern HINSTANCE g_hInst;
-extern FILE *Logfile;
+extern FILE* Logfile;
 extern bool NativeMouse;
 extern bool ConWindowHidden;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-CVAR (Bool, con_debugoutput, false, 0);
+CVAR(String, queryiwad_key, "shift", CVAR_GLOBALCONFIG | CVAR_ARCHIVE);
+CVAR(Bool, con_debugoutput, false, 0);
 
 double PerfToSec, PerfToMillisec;
 UINT TimerPeriod;
@@ -166,7 +174,7 @@ static int TicFrozen;
 static int tics;
 static DWORD ted_start, ted_next;
 
-static WadStuff *WadList;
+static WadStuff* WadList;
 static int NumWads;
 static int DefaultWad;
 
@@ -185,8 +193,8 @@ static HCURSOR CustomCursor;
 
 void I_Tactile(int on, int off, int total)
 {
-  // UNUSED.
-  on = off = total = 0;
+	// UNUSED.
+	on = off = total = 0;
 }
 
 //==========================================================================
@@ -198,7 +206,7 @@ void I_Tactile(int on, int off, int total)
 //
 //==========================================================================
 
-ticcmd_t *I_BaseTiccmd()
+ticcmd_t* I_BaseTiccmd()
 {
 	return &emptycmd;
 }
@@ -247,7 +255,7 @@ static void I_SelectTimer()
 	if (NewTicArrived)
 	{
 		UINT delay;
-		const char *cmdDelay;
+		const char* cmdDelay;
 
 		cmdDelay = Args->CheckValue("-timerdelay");
 		delay = 0;
@@ -257,7 +265,7 @@ static void I_SelectTimer()
 		}
 		if (delay == 0)
 		{
-			delay = 1000/TICRATE;
+			delay = 1000 / TICRATE;
 		}
 		MillisecondsPerTic = delay;
 		TimerEventID = timeSetEvent(delay, 0, TimerTicked, 0, TIME_PERIODIC);
@@ -339,7 +347,7 @@ static int I_GetTimePolled(bool saveMS)
 		TicNext = (tm * TICRATE / 1000 + 1) * 1000 / TICRATE;
 	}
 
-	return ((tm-basetime)*TICRATE)/1000;
+	return ((tm - basetime) * TICRATE) / 1000;
 }
 
 //==========================================================================
@@ -357,7 +365,8 @@ static int I_WaitForTicPolled(int prevtic)
 
 	assert(TicFrozen == 0);
 	while ((time = I_GetTimePolled(false)) <= prevtic)
-	{ }
+	{
+	}
 
 	return time;
 }
@@ -420,7 +429,7 @@ static int I_WaitForTicEvent(int prevtic)
 	assert(!TicFrozen);
 	while (prevtic >= tics)
 	{
-		WaitForSingleObject(NewTicArrived, 1000/TICRATE);
+		WaitForSingleObject(NewTicArrived, 1000 / TICRATE);
 	}
 	return tics;
 }
@@ -452,7 +461,7 @@ static void CALLBACK TimerTicked(UINT id, UINT msg, DWORD_PTR user, DWORD_PTR dw
 	{
 		tics++;
 	}
-	ted_start = timeGetTime ();
+	ted_start = timeGetTime();
 	ted_next = ted_start + MillisecondsPerTic;
 	SetEvent(NewTicArrived);
 }
@@ -466,7 +475,7 @@ static void CALLBACK TimerTicked(UINT id, UINT msg, DWORD_PTR user, DWORD_PTR dw
 //
 //==========================================================================
 
-fixed_t I_GetTimeFrac(uint32 *ms)
+fixed_t I_GetTimeFrac(uint32* ms)
 {
 	DWORD now = timeGetTime();
 	if (ms != NULL)
@@ -480,7 +489,7 @@ fixed_t I_GetTimeFrac(uint32 *ms)
 	}
 	else
 	{
-		fixed_t frac = clamp<fixed_t> ((now - TicStart)*FRACUNIT/step, 0, FRACUNIT);
+		fixed_t frac = clamp<fixed_t>((now - TicStart) * FRACUNIT / step, 0, FRACUNIT);
 		return frac;
 	}
 }
@@ -511,14 +520,14 @@ void I_WaitVBL(int count)
 void I_DetectOS(void)
 {
 	OSVERSIONINFOEX info;
-	const char *osname;
+	const char* osname;
 
 	info.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-	if (!GetVersionEx((OSVERSIONINFO *)&info))
+	if (!GetVersionEx((OSVERSIONINFO*)&info))
 	{
 		// Retry with the older OSVERSIONINFO structure.
 		info.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-		GetVersionEx((OSVERSIONINFO *)&info);
+		GetVersionEx((OSVERSIONINFO*)&info);
 	}
 
 	switch (info.dwPlatformId)
@@ -567,7 +576,7 @@ void I_DetectOS(void)
 			{
 				osname = (info.wProductType == VER_NT_WORKSTATION) ? "7" : "Server 2008 R2";
 			}
-			else if (info.dwMinorVersion == 2)	
+			else if (info.dwMinorVersion == 2)
 			{
 				// Starting with Windows 8.1, you need to specify in your manifest
 				// the highest version of Windows you support, which will also be the
@@ -593,22 +602,22 @@ void I_DetectOS(void)
 
 	if (OSPlatform == os_Win95)
 	{
-		Printf ("OS: Windows %s %lu.%lu.%lu %s\n",
-				osname,
-				info.dwMajorVersion, info.dwMinorVersion,
-				info.dwBuildNumber & 0xffff, info.szCSDVersion);
+		Printf("OS: Windows %s %lu.%lu.%lu %s\n",
+			osname,
+			info.dwMajorVersion, info.dwMinorVersion,
+			info.dwBuildNumber & 0xffff, info.szCSDVersion);
 	}
 	else
 	{
-		Printf ("OS: Windows %s (NT %lu.%lu) Build %lu\n    %s\n",
-				osname,
-				info.dwMajorVersion, info.dwMinorVersion,
-				info.dwBuildNumber, info.szCSDVersion);
+		Printf("OS: Windows %s (NT %lu.%lu) Build %lu\n    %s\n",
+			osname,
+			info.dwMajorVersion, info.dwMinorVersion,
+			info.dwBuildNumber, info.szCSDVersion);
 	}
 
 	if (OSPlatform == os_unknown)
 	{
-		Printf ("(Assuming Windows 2000)\n");
+		Printf("(Assuming Windows 2000)\n");
 		OSPlatform = os_Win2k;
 	}
 }
@@ -625,15 +634,15 @@ static void SubsetLanguageIDs(LCID id, LCTYPE type, int idx)
 {
 	char buf[8];
 	LCID langid;
-	char *idp;
+	char* idp;
 
 	if (!GetLocaleInfo(id, type, buf, 8))
 		return;
 	langid = MAKELCID(strtoul(buf, NULL, 16), SORT_DEFAULT);
 	if (!GetLocaleInfo(langid, LOCALE_SABBREVLANGNAME, buf, 8))
 		return;
-	idp = (char *)(&LanguageIDs[idx]);
-	memset (idp, 0, 4);
+	idp = (char*)(&LanguageIDs[idx]);
+	memset(idp, 0, 4);
 	idp[0] = tolower(buf[0]);
 	idp[1] = tolower(buf[1]);
 	idp[2] = tolower(buf[2]);
@@ -662,9 +671,9 @@ void SetLanguageIDs()
 	{
 		DWORD lang = 0;
 
-		((BYTE *)&lang)[0] = (language)[0];
-		((BYTE *)&lang)[1] = (language)[1];
-		((BYTE *)&lang)[2] = (language)[2];
+		((BYTE*)&lang)[0] = (language)[0];
+		((BYTE*)&lang)[1] = (language)[1];
+		((BYTE*)&lang)[2] = (language)[2];
 		LanguageIDs[0] = lang;
 		LanguageIDs[1] = lang;
 		LanguageIDs[2] = lang;
@@ -686,7 +695,7 @@ void CalculateCPUSpeed()
 {
 	LARGE_INTEGER freq;
 
-	QueryPerformanceFrequency (&freq);
+	QueryPerformanceFrequency(&freq);
 
 	if (freq.QuadPart != 0 && CPU.bRDTSC)
 	{
@@ -697,12 +706,12 @@ void CalculateCPUSpeed()
 		ClockCalibration.Reset();
 
 		// Count cycles for at least 55 milliseconds.
-        // The performance counter may be very low resolution compared to CPU
-        // speeds today, so the longer we count, the more accurate our estimate.
-        // On the other hand, we don't want to count too long, because we don't
-        // want the user to notice us spend time here, since most users will
-        // probably never use the performance statistics.
-        min_diff = freq.LowPart * 11 / 200;
+		// The performance counter may be very low resolution compared to CPU
+		// speeds today, so the longer we count, the more accurate our estimate.
+		// On the other hand, we don't want to count too long, because we don't
+		// want the user to notice us spend time here, since most users will
+		// probably never use the performance statistics.
+		min_diff = freq.LowPart * 11 / 200;
 
 		// Minimize the chance of task switching during the testing by going very
 		// high priority. This is another reason to avoid timing for too long.
@@ -725,7 +734,7 @@ void CalculateCPUSpeed()
 		PerfToMillisec = PerfToSec * 1000.0;
 	}
 
-	Printf ("CPU Speed: %.0f MHz\n", 0.001 / PerfToMillisec);
+	Printf("CPU Speed: %.0f MHz\n", 0.001 / PerfToMillisec);
 }
 
 //==========================================================================
@@ -743,8 +752,8 @@ void I_Init()
 	I_GetTime = I_GetTimeSelect;
 	I_WaitForTic = I_WaitForTicSelect;
 
-	atterm (I_ShutdownSound);
-	I_InitSound ();
+	atterm(I_ShutdownSound);
+	I_InitSound();
 }
 
 //==========================================================================
@@ -783,7 +792,7 @@ void I_Quit()
 //
 //==========================================================================
 
-void STACK_ARGS I_FatalError(const char *error, ...)
+void STACK_ARGS I_FatalError(const char* error, ...)
 {
 	static BOOL alreadyThrown = false;
 	gameisdead = true;
@@ -823,7 +832,7 @@ void STACK_ARGS I_FatalError(const char *error, ...)
 //
 //==========================================================================
 
-void STACK_ARGS I_Error(const char *error, ...)
+void STACK_ARGS I_Error(const char* error, ...)
 {
 	va_list argptr;
 	char errortext[MAX_ERRORTEXT];
@@ -843,7 +852,7 @@ void STACK_ARGS I_Error(const char *error, ...)
 //
 //==========================================================================
 
-void ToEditControl(HWND edit, const char *buf, wchar_t *wbuf, int bpos)
+void ToEditControl(HWND edit, const char* buf, wchar_t* wbuf, int bpos)
 {
 	// Let's just do this ourself. It's not hard, and we can compensate for
 	// special console characters at the same time.
@@ -900,7 +909,7 @@ void ToEditControl(HWND edit, const char *buf, wchar_t *wbuf, int bpos)
 		wbuf[i] = code;
 	}
 #endif
-	SendMessageW(edit, EM_REPLACESEL, FALSE, (LPARAM)wbuf); 
+	SendMessageW(edit, EM_REPLACESEL, FALSE, (LPARAM)wbuf);
 }
 
 //==========================================================================
@@ -912,7 +921,7 @@ void ToEditControl(HWND edit, const char *buf, wchar_t *wbuf, int bpos)
 //
 //==========================================================================
 
-static void DoPrintStr(const char *cp, HWND edit, HANDLE StdOut)
+static void DoPrintStr(const char* cp, HWND edit, HANDLE StdOut)
 {
 	if (edit == NULL && StdOut == NULL)
 		return;
@@ -963,9 +972,9 @@ static void DoPrintStr(const char *cp, HWND edit, HANDLE StdOut)
 		}
 		else
 		{
-			const BYTE *color_id = (const BYTE *)cp + 1;
+			const BYTE* color_id = (const BYTE*)cp + 1;
 			EColorRange range = V_ParseFontColor(color_id, CR_UNTRANSLATED, CR_YELLOW);
-			cp = (const char *)color_id;
+			cp = (const char*)color_id;
 
 			if (range != CR_UNDEFINED)
 			{
@@ -983,14 +992,14 @@ static void DoPrintStr(const char *cp, HWND edit, HANDLE StdOut)
 					if (s != 0)
 					{ // color
 						HSVtoRGB(&r, &g, &b, h, 1, 1);
-						if (r == 1)  attrib  = FOREGROUND_RED;
+						if (r == 1)  attrib = FOREGROUND_RED;
 						if (g == 1)  attrib |= FOREGROUND_GREEN;
 						if (b == 1)  attrib |= FOREGROUND_BLUE;
 						if (v > 0.6) attrib |= FOREGROUND_INTENSITY;
 					}
 					else
 					{ // gray
-						     if (v < 0.33) attrib = FOREGROUND_INTENSITY;
+						if (v < 0.33) attrib = FOREGROUND_INTENSITY;
 						else if (v < 0.90) attrib = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
 						else			   attrib = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
 					}
@@ -1030,7 +1039,7 @@ static void DoPrintStr(const char *cp, HWND edit, HANDLE StdOut)
 		// scroll. Don't scroll if the selection is anywhere else.
 		if (selection.cpMin == endselection.cpMin && selection.cpMax == endselection.cpMax)
 		{
-			selection.cpMax = selection.cpMin = GetWindowTextLength (edit);
+			selection.cpMax = selection.cpMin = GetWindowTextLength(edit);
 			lines_after = (LONG)SendMessage(edit, EM_GETLINECOUNT, 0, 0);
 			if (lines_after > lines_before)
 			{
@@ -1050,31 +1059,31 @@ static void DoPrintStr(const char *cp, HWND edit, HANDLE StdOut)
 
 static TArray<FString> bufferedConsoleStuff;
 
-void I_PrintStr(const char *cp)
+void I_PrintStr(const char* cp)
 {
 	if (con_debugoutput)
 	{
 		// Strip out any color escape sequences before writing to debug output
-		char * copy = new char[strlen(cp)+1];
-		const char * srcp = cp;
-		char * dstp = copy;
+		char* copy = new char[strlen(cp) + 1];
+		const char* srcp = cp;
+		char* dstp = copy;
 
 		while (*srcp != 0)
 		{
-			if (*srcp!=0x1c && *srcp!=0x1d && *srcp!=0x1e && *srcp!=0x1f)
+			if (*srcp != 0x1c && *srcp != 0x1d && *srcp != 0x1e && *srcp != 0x1f)
 			{
-				*dstp++=*srcp++;
+				*dstp++ = *srcp++;
 			}
 			else
 			{
-				if (srcp[1]!=0) srcp+=2;
+				if (srcp[1] != 0) srcp += 2;
 				else break;
 			}
 		}
-		*dstp=0;
+		*dstp = 0;
 
 		OutputDebugStringA(copy);
-		delete [] copy;
+		delete[] copy;
 	}
 
 	if (ConWindowHidden)
@@ -1099,13 +1108,163 @@ void I_FlushBufferedConsoleStuff()
 
 //==========================================================================
 //
+// SetQueryIWAD
+//
+// The user had the "Don't ask again" box checked when they closed the
+// IWAD selection dialog.
+//
+//==========================================================================
+
+static void SetQueryIWad(HWND dialog)
+{
+	HWND checkbox = GetDlgItem(dialog, IDC_DONTASKIWAD);
+	int state = (int)SendMessage(checkbox, BM_GETCHECK, 0, 0);
+	bool query = (state != BST_CHECKED);
+
+	if (!query && queryiwad)
+	{
+		MessageBox(dialog,
+			"You have chosen not to show this dialog box in the future.\n"
+			"If you wish to see it again, hold down SHIFT while starting " GAMENAME ".",
+			"Don't ask me this again",
+			MB_OK | MB_ICONINFORMATION);
+	}
+
+	queryiwad = query;
+}
+
+//==========================================================================
+//
+// IWADBoxCallback
+//
+// Dialog proc for the IWAD selector.
+//
+//==========================================================================
+
+BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	HWND ctrl;
+	int i;
+
+	switch (message)
+	{
+	case WM_INITDIALOG:
+		// Add our program name to the window title
+	{
+		TCHAR label[256];
+		FString newlabel;
+
+		GetWindowText(hDlg, label, countof(label));
+		FString alabel(label);
+		newlabel.Format("RZDoom WIN32 Launcher");
+		SetWindowText(hDlg, newlabel.GetChars());
+	}
+
+	// Populate the list with all the IWADs found
+	ctrl = GetDlgItem(hDlg, IDC_IWADLIST);
+	for (i = 0; i < NumWads; i++)
+	{
+		FString work;
+		const char* filepart = strrchr(WadList[i].Path, '/');
+		if (filepart == NULL)
+			filepart = WadList[i].Path;
+		else
+			filepart++;
+		work.Format("%s (%s)", WadList[i].Name.GetChars(), filepart);
+		SendMessage(ctrl, LB_ADDSTRING, 0, (LPARAM)work.GetChars());
+		SendMessage(ctrl, LB_SETITEMDATA, i, (LPARAM)i);
+	}
+
+	// [SP] This is our's
+	// [AB] Adding some of mine.
+	SendDlgItemMessage(hDlg, IDC_WELCOME_NOAUTOLOAD, BM_SETCHECK, disableautoload ? BST_CHECKED : BST_UNCHECKED, 0);
+	SendDlgItemMessage(hDlg, IDC_WELCOME_FASTMONSTERS, BM_SETCHECK, fastmonsterscheck ? BST_CHECKED : BST_UNCHECKED, 0);
+	SendDlgItemMessage(hDlg, IDC_WELCOME_NOMO, BM_SETCHECK, nomocheck ? BST_CHECKED : BST_UNCHECKED, 0);
+	SendDlgItemMessage(hDlg, IDC_WELCOME_RECORD, BM_SETCHECK, recorddemocheck ? BST_CHECKED : BST_UNCHECKED, 0);
+	SendDlgItemMessage(hDlg, IDC_WELCOME_TYSON, BM_SETCHECK, tysoncheck ? BST_CHECKED : BST_UNCHECKED, 0);
+	SendDlgItemMessage(hDlg, IDC_WELCOME_RESPAWN, BM_SETCHECK, respawncheck ? BST_CHECKED : BST_UNCHECKED, 0);
+
+	SendMessage(ctrl, LB_SETCURSEL, DefaultWad, 0);
+	SetFocus(ctrl);
+	// Set the state of the "Don't ask me again" checkbox
+	ctrl = GetDlgItem(hDlg, IDC_DONTASKIWAD);
+	SendMessage(ctrl, BM_SETCHECK, queryiwad ? BST_UNCHECKED : BST_CHECKED, 0);
+	// Make sure the dialog is in front. If SHIFT was pressed to force it visible,
+	// then the other window will normally be on top.
+	SetForegroundWindow(hDlg);
+	break;
+
+	case WM_COMMAND:
+		if (LOWORD(wParam) == IDCANCEL)
+		{
+			EndDialog(hDlg, -1);
+		}
+		else if (LOWORD(wParam) == IDOK ||
+			(LOWORD(wParam) == IDC_IWADLIST && HIWORD(wParam) == LBN_DBLCLK))
+		{
+			// [SP] This is our's.
+			// [AB] Adding some of mine.
+			disableautoload = SendDlgItemMessage(hDlg, IDC_WELCOME_NOAUTOLOAD, BM_GETCHECK, 0, 0) == BST_CHECKED;
+			fastmonsterscheck = SendDlgItemMessage(hDlg, IDC_WELCOME_FASTMONSTERS, BM_GETCHECK, 0, 0) == BST_CHECKED;
+			nomocheck = SendDlgItemMessage(hDlg, IDC_WELCOME_NOMO, BM_GETCHECK, 0, 0) == BST_CHECKED;
+			recorddemocheck = SendDlgItemMessage(hDlg, IDC_WELCOME_RECORD, BM_GETCHECK, 0, 0) == BST_CHECKED;
+			tysoncheck = SendDlgItemMessage(hDlg, IDC_WELCOME_TYSON, BM_GETCHECK, 0, 0) == BST_CHECKED;
+			respawncheck = SendDlgItemMessage(hDlg, IDC_WELCOME_RESPAWN, BM_GETCHECK, 0, 0) == BST_CHECKED;
+
+			SetQueryIWad(hDlg);
+			ctrl = GetDlgItem(hDlg, IDC_IWADLIST);
+			EndDialog(hDlg, SendMessage(ctrl, LB_GETCURSEL, 0, 0));
+		}
+		break;
+	}
+	return FALSE;
+}
+
+//==========================================================================
+//
+// I_PickIWad
+//
+// Open a dialog to pick the IWAD, if there is more than one found.
+//
+//==========================================================================
+
+int I_PickIWad(WadStuff* wads, int numwads, bool showwin, int defaultiwad)
+{
+	int vkey;
+
+	if (stricmp(queryiwad_key, "shift") == 0)
+	{
+		vkey = VK_SHIFT;
+	}
+	else if (stricmp(queryiwad_key, "control") == 0 || stricmp(queryiwad_key, "ctrl") == 0)
+	{
+		vkey = VK_CONTROL;
+	}
+	else
+	{
+		vkey = 0;
+	}
+	if (showwin || (vkey != 0 && GetAsyncKeyState(vkey)))
+	{
+		WadList = wads;
+		NumWads = numwads;
+		DefaultWad = defaultiwad;
+
+		return (int)DialogBox(g_hInst, MAKEINTRESOURCE(IDD_IWADDIALOG),
+			(HWND)Window, (DLGPROC)IWADBoxCallback);
+	}
+	return defaultiwad;
+}
+
+//==========================================================================
+//
 // I_SetCursor
 //
 // Returns true if the cursor was successfully changed.
 //
 //==========================================================================
 
-bool I_SetCursor(FTexture *cursorpic)
+bool I_SetCursor(FTexture* cursorpic)
 {
 	HCURSOR cursor;
 
@@ -1166,7 +1325,7 @@ bool I_SetCursor(FTexture *cursorpic)
 //
 //==========================================================================
 
-static HCURSOR CreateCompatibleCursor(FTexture *cursorpic)
+static HCURSOR CreateCompatibleCursor(FTexture* cursorpic)
 {
 	int picwidth = cursorpic->GetWidth();
 	int picheight = cursorpic->GetHeight();
@@ -1195,7 +1354,7 @@ static HCURSOR CreateCompatibleCursor(FTexture *cursorpic)
 	Rectangle(xor_mask_dc, 0, 0, 32, 32);
 
 	FBitmap bmp;
-	const BYTE *pixels;
+	const BYTE* pixels;
 
 	bmp.Create(picwidth, picheight);
 	cursorpic->CopyTrueColorPixels(&bmp, 0, 0);
@@ -1206,10 +1365,10 @@ static HCURSOR CreateCompatibleCursor(FTexture *cursorpic)
 	{
 		for (int x = 0; x < picwidth; ++x)
 		{
-			const BYTE *bgra = &pixels[x*4 + y*bmp.GetPitch()];
+			const BYTE* bgra = &pixels[x * 4 + y * bmp.GetPitch()];
 			if (bgra[3] != 0)
 			{
-				SetPixelV(and_mask_dc, x, y, RGB(0,0,0));
+				SetPixelV(and_mask_dc, x, y, RGB(0, 0, 0));
 				SetPixelV(xor_mask_dc, x, y, RGB(bgra[2], bgra[1], bgra[0]));
 			}
 		}
@@ -1229,12 +1388,12 @@ static HCURSOR CreateCompatibleCursor(FTexture *cursorpic)
 //
 //==========================================================================
 
-static HCURSOR CreateAlphaCursor(FTexture *cursorpic)
+static HCURSOR CreateAlphaCursor(FTexture* cursorpic)
 {
 	HDC dc;
 	BITMAPV5HEADER bi;
 	HBITMAP color, mono;
-	void *bits;
+	void* bits;
 
 	memset(&bi, 0, sizeof(bi));
 	bi.bV5Size = sizeof(bi);
@@ -1243,9 +1402,9 @@ static HCURSOR CreateAlphaCursor(FTexture *cursorpic)
 	bi.bV5Planes = 1;
 	bi.bV5BitCount = 32;
 	bi.bV5Compression = BI_BITFIELDS;
-	bi.bV5RedMask   = 0x00FF0000;
+	bi.bV5RedMask = 0x00FF0000;
 	bi.bV5GreenMask = 0x0000FF00;
-	bi.bV5BlueMask  = 0x000000FF;
+	bi.bV5BlueMask = 0x000000FF;
 	bi.bV5AlphaMask = 0xFF000000;
 
 	dc = GetDC(NULL);
@@ -1255,7 +1414,7 @@ static HCURSOR CreateAlphaCursor(FTexture *cursorpic)
 	}
 
 	// Create the DIB section with an alpha channel.
-	color = CreateDIBSection(dc, (BITMAPINFO *)&bi, DIB_RGB_COLORS, &bits, NULL, 0);
+	color = CreateDIBSection(dc, (BITMAPINFO*)&bi, DIB_RGB_COLORS, &bits, NULL, 0);
 	ReleaseDC(NULL, dc);
 
 	if (color == NULL)
@@ -1274,7 +1433,7 @@ static HCURSOR CreateAlphaCursor(FTexture *cursorpic)
 	// Copy cursor to the color bitmap. Note that GDI bitmaps are upside down compared
 	// to normal conventions, so we create the FBitmap pointing at the last row and use
 	// a negative pitch so that CopyTrueColorPixels will use GDI's orientation.
-	FBitmap bmp((BYTE *)bits + 31*32*4, -32*4, 32, 32);
+	FBitmap bmp((BYTE*)bits + 31 * 32 * 4, -32 * 4, 32, 32);
 	cursorpic->CopyTrueColorPixels(&bmp, 0, 0);
 
 	return CreateBitmapCursor(cursorpic->LeftOffset, cursorpic->TopOffset, mono, color);
@@ -1303,7 +1462,7 @@ static HCURSOR CreateBitmapCursor(int xhot, int yhot, HBITMAP and_mask, HBITMAP 
 	// Delete the bitmaps.
 	DeleteObject(and_mask);
 	DeleteObject(color_mask);
-	
+
 	return cursor;
 }
 
@@ -1332,21 +1491,21 @@ static void DestroyCustomCursor()
 
 bool I_WriteIniFailed()
 {
-	char *lpMsgBuf;
+	char* lpMsgBuf;
 	FString errortext;
 
-	FormatMessageA (FORMAT_MESSAGE_ALLOCATE_BUFFER | 
-					FORMAT_MESSAGE_FROM_SYSTEM | 
-					FORMAT_MESSAGE_IGNORE_INSERTS,
+	FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+		FORMAT_MESSAGE_FROM_SYSTEM |
+		FORMAT_MESSAGE_IGNORE_INSERTS,
 		NULL,
 		GetLastError(),
 		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
 		(LPSTR)&lpMsgBuf,
 		0,
-		NULL 
+		NULL
 	);
-	errortext.Format ("The config file %s could not be written:\n%s", GameConfig->GetPathName(), lpMsgBuf);
-	LocalFree (lpMsgBuf);
+	errortext.Format("The config file %s could not be written:\n%s", GameConfig->GetPathName(), lpMsgBuf);
+	LocalFree(lpMsgBuf);
 	return MessageBox(Window, errortext.GetChars(), GAMENAME " configuration not saved", MB_ICONEXCLAMATION | MB_RETRYCANCEL) == IDRETRY;
 }
 
@@ -1358,7 +1517,7 @@ bool I_WriteIniFailed()
 //
 //==========================================================================
 
-void *I_FindFirst(const char *filespec, findstate_t *fileinfo)
+void* I_FindFirst(const char* filespec, findstate_t* fileinfo)
 {
 	return FindFirstFileA(filespec, (LPWIN32_FIND_DATAA)fileinfo);
 }
@@ -1371,7 +1530,7 @@ void *I_FindFirst(const char *filespec, findstate_t *fileinfo)
 //
 //==========================================================================
 
-int I_FindNext(void *handle, findstate_t *fileinfo)
+int I_FindNext(void* handle, findstate_t* fileinfo)
 {
 	return !FindNextFileA((HANDLE)handle, (LPWIN32_FIND_DATAA)fileinfo);
 }
@@ -1384,7 +1543,7 @@ int I_FindNext(void *handle, findstate_t *fileinfo)
 //
 //==========================================================================
 
-int I_FindClose(void *handle)
+int I_FindClose(void* handle)
 {
 	return FindClose((HANDLE)handle);
 }
@@ -1397,20 +1556,20 @@ int I_FindClose(void *handle)
 //
 //==========================================================================
 
-static bool QueryPathKey(HKEY key, const char *keypath, const char *valname, FString &value)
+static bool QueryPathKey(HKEY key, const char* keypath, const char* valname, FString& value)
 {
 	HKEY pathkey;
 	DWORD pathtype;
 	DWORD pathlen;
 	LONG res;
 
-	if(ERROR_SUCCESS == RegOpenKeyEx(key, keypath, 0, KEY_QUERY_VALUE, &pathkey))
+	if (ERROR_SUCCESS == RegOpenKeyEx(key, keypath, 0, KEY_QUERY_VALUE, &pathkey))
 	{
 		if (ERROR_SUCCESS == RegQueryValueEx(pathkey, valname, 0, &pathtype, NULL, &pathlen) &&
 			pathtype == REG_SZ && pathlen != 0)
 		{
 			// Don't include terminating null in count
-			char *chars = value.LockNewBuffer(pathlen - 1);
+			char* chars = value.LockNewBuffer(pathlen - 1);
 			res = RegQueryValueEx(pathkey, valname, 0, NULL, (LPBYTE)chars, &pathlen);
 			value.UnlockBuffer();
 			if (res != ERROR_SUCCESS)
@@ -1488,7 +1647,7 @@ TArray<FString> I_GetGogPaths()
 TArray<FString> I_GetSteamPath()
 {
 	TArray<FString> result;
-	static const char *const steam_dirs[] =
+	static const char* const steam_dirs[] =
 	{
 		"doom 2/base",
 		"final doom/base",
@@ -1509,7 +1668,7 @@ TArray<FString> I_GetSteamPath()
 	}
 	path += "/SteamApps/common/";
 
-	for(unsigned int i = 0; i < countof(steam_dirs); ++i)
+	for (unsigned int i = 0; i < countof(steam_dirs); ++i)
 	{
 		result.Push(path + steam_dirs[i]);
 	}
@@ -1534,8 +1693,8 @@ unsigned int I_MakeRNGSeed()
 	HMODULE advapi = GetModuleHandle("advapi32.dll");
 	if (advapi != NULL)
 	{
-		BOOLEAN (APIENTRY *RtlGenRandom)(void *, ULONG) =
-			(BOOLEAN (APIENTRY *)(void *, ULONG))GetProcAddress(advapi, "SystemFunction036");
+		BOOLEAN(APIENTRY * RtlGenRandom)(void*, ULONG) =
+			(BOOLEAN(APIENTRY*)(void*, ULONG))GetProcAddress(advapi, "SystemFunction036");
 		if (RtlGenRandom != NULL)
 		{
 			if (RtlGenRandom(&seed, sizeof(seed)))
@@ -1553,7 +1712,7 @@ unsigned int I_MakeRNGSeed()
 	{
 		return (unsigned int)time(NULL);
 	}
-	if (!CryptGenRandom(prov, sizeof(seed), (BYTE *)&seed))
+	if (!CryptGenRandom(prov, sizeof(seed), (BYTE*)&seed))
 	{
 		seed = (unsigned int)time(NULL);
 	}
@@ -1572,7 +1731,7 @@ unsigned int I_MakeRNGSeed()
 
 FString I_GetLongPathName(FString shortpath)
 {
-	static TOptWin32Proc<DWORD (WINAPI*)(LPCTSTR, LPTSTR, DWORD)>
+	static TOptWin32Proc<DWORD(WINAPI*)(LPCTSTR, LPTSTR, DWORD)>
 		GetLongPathNameA("kernel32.dll", "GetLongPathNameA");
 
 	// Doesn't exist on NT4
@@ -1584,7 +1743,7 @@ FString I_GetLongPathName(FString shortpath)
 	{ // nothing to change (it doesn't exist, maybe?)
 		return shortpath;
 	}
-	TCHAR *buff = new TCHAR[buffsize];
+	TCHAR* buff = new TCHAR[buffsize];
 	DWORD buffsize2 = GetLongPathNameA.Call(shortpath.GetChars(), buff, buffsize);
 	if (buffsize2 >= buffsize)
 	{ // Failure! Just return the short path
@@ -1608,15 +1767,15 @@ FString I_GetLongPathName(FString shortpath)
 
 #include <sys/stat.h>
 
-int VS14Stat(const char *path, struct _stat64i32 *buffer)
+int VS14Stat(const char* path, struct _stat64i32* buffer)
 {
 	WIN32_FILE_ATTRIBUTE_DATA data;
-	if(!GetFileAttributesEx(path, GetFileExInfoStandard, &data))
+	if (!GetFileAttributesEx(path, GetFileExInfoStandard, &data))
 		return -1;
 
 	buffer->st_ino = 0;
-	buffer->st_mode = ((data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? S_IFDIR : S_IFREG)|
-	                  ((data.dwFileAttributes & FILE_ATTRIBUTE_READONLY) ? S_IREAD : S_IREAD|S_IWRITE);
+	buffer->st_mode = ((data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? S_IFDIR : S_IFREG) |
+		((data.dwFileAttributes & FILE_ATTRIBUTE_READONLY) ? S_IREAD : S_IREAD | S_IWRITE);
 	buffer->st_dev = buffer->st_rdev = 0;
 	buffer->st_nlink = 1;
 	buffer->st_uid = 0;

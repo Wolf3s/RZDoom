@@ -77,19 +77,19 @@ struct FMapInfoParser
 		HexenHack = false;
 	}
 
-	bool ParseLookupName(FString &dest);
-	void ParseMusic(FString &name, int &order);
+	bool ParseLookupName(FString& dest);
+	void ParseMusic(FString& name, int& order);
 	//void ParseLumpOrTextureName(char *name);
-	void ParseLumpOrTextureName(FString &name);
+	void ParseLumpOrTextureName(FString& name);
 
 	void ParseCluster();
-	void ParseNextMap(FString &mapname);
-	level_info_t *ParseMapHeader(level_info_t &defaultinfo);
-	void ParseMapDefinition(level_info_t &leveldef);
+	void ParseNextMap(FString& mapname);
+	level_info_t* ParseMapHeader(level_info_t& defaultinfo);
+	void ParseMapDefinition(level_info_t& leveldef);
 	void ParseGameInfo();
-	void ParseEpisodeInfo ();
-	void ParseSkill ();
-	void ParseMapInfo (int lump, level_info_t &gamedefaults, level_info_t &defaultinfo);
+	void ParseEpisodeInfo();
+	void ParseSkill();
+	void ParseMapInfo(int lump, level_info_t& gamedefaults, level_info_t& defaultinfo);
 
 	void ParseOpenBrace();
 	bool ParseCloseBrace();
@@ -100,9 +100,9 @@ struct FMapInfoParser
 	bool CheckNumber();
 	bool CheckFloat();
 	void SkipToNext();
-	void CheckEndOfFile(const char *block);
+	void CheckEndOfFile(const char* block);
 
-	void ParseIntermissionAction(FIntermissionDescriptor *Desc);
+	void ParseIntermissionAction(FIntermissionDescriptor* Desc);
 	void ParseIntermission();
 	void ParseDoomEdNums();
 	void ParseSpawnNums();
@@ -122,106 +122,106 @@ struct FMapInfoParser
 
 struct FMapOptInfo
 {
-	const char *name;
-	void (*handler) (FMapInfoParser &parse, level_info_t *levelinfo);
+	const char* name;
+	void (*handler) (FMapInfoParser& parse, level_info_t* levelinfo);
 	bool old;
 };
 
 enum ELevelFlags
 {
-	LEVEL_NOINTERMISSION		= 0x00000001,
-	LEVEL_NOINVENTORYBAR		= 0x00000002,	// This effects Doom only, since it's the only one without a standard inventory bar.
-	LEVEL_DOUBLESKY				= 0x00000004,
-	LEVEL_HASFADETABLE			= 0x00000008,	// Level uses Hexen's fadetable mapinfo to get fog
+	LEVEL_NOINTERMISSION = 0x00000001,
+	LEVEL_NOINVENTORYBAR = 0x00000002,	// This effects Doom only, since it's the only one without a standard inventory bar.
+	LEVEL_DOUBLESKY = 0x00000004,
+	LEVEL_HASFADETABLE = 0x00000008,	// Level uses Hexen's fadetable mapinfo to get fog
 
-	LEVEL_MAP07SPECIAL			= 0x00000010,
-	LEVEL_BRUISERSPECIAL		= 0x00000020,
-	LEVEL_CYBORGSPECIAL			= 0x00000040,
-	LEVEL_SPIDERSPECIAL			= 0x00000080,
+	LEVEL_MAP07SPECIAL = 0x00000010,
+	LEVEL_BRUISERSPECIAL = 0x00000020,
+	LEVEL_CYBORGSPECIAL = 0x00000040,
+	LEVEL_SPIDERSPECIAL = 0x00000080,
 
-	LEVEL_SPECLOWERFLOOR		= 0x00000100,
-	LEVEL_SPECOPENDOOR			= 0x00000200,
-	LEVEL_SPECLOWERFLOORTOHIGHEST=0x00000300,
-	LEVEL_SPECACTIONSMASK		= 0x00000300,
+	LEVEL_SPECLOWERFLOOR = 0x00000100,
+	LEVEL_SPECOPENDOOR = 0x00000200,
+	LEVEL_SPECLOWERFLOORTOHIGHEST = 0x00000300,
+	LEVEL_SPECACTIONSMASK = 0x00000300,
 
-	LEVEL_MONSTERSTELEFRAG		= 0x00000400,
-	LEVEL_ACTOWNSPECIAL			= 0x00000800,
-	LEVEL_SNDSEQTOTALCTRL		= 0x00001000,
-	LEVEL_FORCENOSKYSTRETCH		= 0x00002000,
+	LEVEL_MONSTERSTELEFRAG = 0x00000400,
+	LEVEL_ACTOWNSPECIAL = 0x00000800,
+	LEVEL_SNDSEQTOTALCTRL = 0x00001000,
+	LEVEL_FORCENOSKYSTRETCH = 0x00002000,
 
-	LEVEL_CROUCH_NO				= 0x00004000,
-	LEVEL_JUMP_NO				= 0x00008000,
-	LEVEL_FREELOOK_NO			= 0x00010000,
-	LEVEL_FREELOOK_YES			= 0x00020000,
+	LEVEL_CROUCH_NO = 0x00004000,
+	LEVEL_JUMP_NO = 0x00008000,
+	LEVEL_FREELOOK_NO = 0x00010000,
+	LEVEL_FREELOOK_YES = 0x00020000,
 
 	// The absence of both of the following bits means that this level does not
 	// use falling damage (though damage can be forced with dmflags,.
-	LEVEL_FALLDMG_ZD			= 0x00040000,	// Level uses ZDoom's falling damage
-	LEVEL_FALLDMG_HX			= 0x00080000,	// Level uses Hexen's falling damage
+	LEVEL_FALLDMG_ZD = 0x00040000,	// Level uses ZDoom's falling damage
+	LEVEL_FALLDMG_HX = 0x00080000,	// Level uses Hexen's falling damage
 
-	LEVEL_HEADSPECIAL			= 0x00100000,	// Heretic episode 1/4
-	LEVEL_MINOTAURSPECIAL		= 0x00200000,	// Heretic episode 2/5
-	LEVEL_SORCERER2SPECIAL		= 0x00400000,	// Heretic episode 3
-	LEVEL_SPECKILLMONSTERS		= 0x00800000,
+	LEVEL_HEADSPECIAL = 0x00100000,	// Heretic episode 1/4
+	LEVEL_MINOTAURSPECIAL = 0x00200000,	// Heretic episode 2/5
+	LEVEL_SORCERER2SPECIAL = 0x00400000,	// Heretic episode 3
+	LEVEL_SPECKILLMONSTERS = 0x00800000,
 
-	LEVEL_STARTLIGHTNING		= 0x01000000,	// Automatically start lightning
-	LEVEL_FILTERSTARTS			= 0x02000000,	// Apply mapthing filtering to player starts
-	LEVEL_LOOKUPLEVELNAME		= 0x04000000,	// Level name is the name of a language string
-	LEVEL_USEPLAYERSTARTZ		= 0x08000000,	// Use the Z position of player starts
+	LEVEL_STARTLIGHTNING = 0x01000000,	// Automatically start lightning
+	LEVEL_FILTERSTARTS = 0x02000000,	// Apply mapthing filtering to player starts
+	LEVEL_LOOKUPLEVELNAME = 0x04000000,	// Level name is the name of a language string
+	LEVEL_USEPLAYERSTARTZ = 0x08000000,	// Use the Z position of player starts
 
-	LEVEL_SWAPSKIES				= 0x10000000,	// Used by lightning
-	LEVEL_NOALLIES				= 0x20000000,	// i.e. Inside Strife's front base
-	LEVEL_CHANGEMAPCHEAT		= 0x40000000,	// Don't display cluster messages
-	LEVEL_VISITED				= 0x80000000,	// Used for intermission map
+	LEVEL_SWAPSKIES = 0x10000000,	// Used by lightning
+	LEVEL_NOALLIES = 0x20000000,	// i.e. Inside Strife's front base
+	LEVEL_CHANGEMAPCHEAT = 0x40000000,	// Don't display cluster messages
+	LEVEL_VISITED = 0x80000000,	// Used for intermission map
 
 	// The flags QWORD is now split into 2 DWORDs 
-	LEVEL2_RANDOMPLAYERSTARTS	= 0x00000001,	// Select single player starts randomnly (no voodoo dolls)
-	LEVEL2_ALLMAP				= 0x00000002,	// The player picked up a map on this level
+	LEVEL2_RANDOMPLAYERSTARTS = 0x00000001,	// Select single player starts randomnly (no voodoo dolls)
+	LEVEL2_ALLMAP = 0x00000002,	// The player picked up a map on this level
 
-	LEVEL2_LAXMONSTERACTIVATION	= 0x00000004,	// Monsters can open doors depending on the door speed
-	LEVEL2_LAXACTIVATIONMAPINFO	= 0x00000008,	// LEVEL_LAXMONSTERACTIVATION is not a default.
+	LEVEL2_LAXMONSTERACTIVATION = 0x00000004,	// Monsters can open doors depending on the door speed
+	LEVEL2_LAXACTIVATIONMAPINFO = 0x00000008,	// LEVEL_LAXMONSTERACTIVATION is not a default.
 
-	LEVEL2_MISSILESACTIVATEIMPACT=0x00000010,	// Missiles are the activators of SPAC_IMPACT events, not their shooters
-	LEVEL2_FROZEN				= 0x00000020,	// Game is frozen by a TimeFreezer
+	LEVEL2_MISSILESACTIVATEIMPACT = 0x00000010,	// Missiles are the activators of SPAC_IMPACT events, not their shooters
+	LEVEL2_FROZEN = 0x00000020,	// Game is frozen by a TimeFreezer
 
-	LEVEL2_KEEPFULLINVENTORY	= 0x00000040,	// doesn't reduce the amount of inventory items to 1
+	LEVEL2_KEEPFULLINVENTORY = 0x00000040,	// doesn't reduce the amount of inventory items to 1
 
-	LEVEL2_PRERAISEWEAPON		= 0x00000080,	// players should spawn with their weapons fully raised (but not when respawning it multiplayer)
-	LEVEL2_MONSTERFALLINGDAMAGE	= 0x00000100,
-	LEVEL2_CLIPMIDTEX			= 0x00000200,
-	LEVEL2_WRAPMIDTEX			= 0x00000400,
+	LEVEL2_PRERAISEWEAPON = 0x00000080,	// players should spawn with their weapons fully raised (but not when respawning it multiplayer)
+	LEVEL2_MONSTERFALLINGDAMAGE = 0x00000100,
+	LEVEL2_CLIPMIDTEX = 0x00000200,
+	LEVEL2_WRAPMIDTEX = 0x00000400,
 
-	LEVEL2_CHECKSWITCHRANGE		= 0x00000800,	
+	LEVEL2_CHECKSWITCHRANGE = 0x00000800,
 
-	LEVEL2_PAUSE_MUSIC_IN_MENUS	= 0x00001000,
-	LEVEL2_TOTALINFIGHTING		= 0x00002000,
-	LEVEL2_NOINFIGHTING			= 0x00004000,
+	LEVEL2_PAUSE_MUSIC_IN_MENUS = 0x00001000,
+	LEVEL2_TOTALINFIGHTING = 0x00002000,
+	LEVEL2_NOINFIGHTING = 0x00004000,
 
-	LEVEL2_NOMONSTERS			= 0x00008000,
-	LEVEL2_INFINITE_FLIGHT		= 0x00010000,
+	LEVEL2_NOMONSTERS = 0x00008000,
+	LEVEL2_INFINITE_FLIGHT = 0x00010000,
 
-	LEVEL2_ALLOWRESPAWN			= 0x00020000,
+	LEVEL2_ALLOWRESPAWN = 0x00020000,
 
-	LEVEL2_FORCETEAMPLAYON		= 0x00040000,
-	LEVEL2_FORCETEAMPLAYOFF		= 0x00080000,
+	LEVEL2_FORCETEAMPLAYON = 0x00040000,
+	LEVEL2_FORCETEAMPLAYOFF = 0x00080000,
 
-	LEVEL2_CONV_SINGLE_UNFREEZE	= 0x00100000,
-	LEVEL2_RAILINGHACK			= 0x00200000,	// but UDMF requires them to be separate to have more control
-	LEVEL2_DUMMYSWITCHES		= 0x00400000,
-	LEVEL2_HEXENHACK			= 0x00800000,	// Level was defined in a Hexen style MAPINFO
+	LEVEL2_CONV_SINGLE_UNFREEZE = 0x00100000,
+	LEVEL2_RAILINGHACK = 0x00200000,	// but UDMF requires them to be separate to have more control
+	LEVEL2_DUMMYSWITCHES = 0x00400000,
+	LEVEL2_HEXENHACK = 0x00800000,	// Level was defined in a Hexen style MAPINFO
 
-	LEVEL2_SMOOTHLIGHTING		= 0x01000000,	// Level uses the smooth lighting feature.
-	LEVEL2_POLYGRIND			= 0x02000000,	// Polyobjects grind corpses to gibs.
-	LEVEL2_RESETINVENTORY		= 0x04000000,	// Resets player inventory when starting this level (unless in a hub)
-	LEVEL2_RESETHEALTH			= 0x08000000,	// Resets player health when starting this level (unless in a hub)
+	LEVEL2_SMOOTHLIGHTING = 0x01000000,	// Level uses the smooth lighting feature.
+	LEVEL2_POLYGRIND = 0x02000000,	// Polyobjects grind corpses to gibs.
+	LEVEL2_RESETINVENTORY = 0x04000000,	// Resets player inventory when starting this level (unless in a hub)
+	LEVEL2_RESETHEALTH = 0x08000000,	// Resets player health when starting this level (unless in a hub)
 
-	LEVEL2_NOSTATISTICS			= 0x10000000,	// This level should not have statistics collected
-	LEVEL2_ENDGAME				= 0x20000000,	// This is an epilogue level that cannot be quit.
-	LEVEL2_NOAUTOSAVEHINT		= 0x40000000,	// tell the game that an autosave for this level does not need to be kept
-	LEVEL2_FORGETSTATE			= 0x80000000,	// forget this map's state in a hub
-	
+	LEVEL2_NOSTATISTICS = 0x10000000,	// This level should not have statistics collected
+	LEVEL2_ENDGAME = 0x20000000,	// This is an epilogue level that cannot be quit.
+	LEVEL2_NOAUTOSAVEHINT = 0x40000000,	// tell the game that an autosave for this level does not need to be kept
+	LEVEL2_FORGETSTATE = 0x80000000,	// forget this map's state in a hub
+
 	// More flags!
-	LEVEL3_FORCEFAKECONTRAST	= 0x00000001,	// forces fake contrast even with fog enabled
+	LEVEL3_FORCEFAKECONTRAST = 0x00000001,	// forces fake contrast even with fog enabled
 };
 
 
@@ -242,21 +242,21 @@ struct level_info_t;
 
 struct FOptionalMapinfoData
 {
-	FOptionalMapinfoData *Next;
+	FOptionalMapinfoData* Next;
 	FName identifier;
 	FOptionalMapinfoData() { Next = NULL; identifier = NAME_None; }
 	virtual ~FOptionalMapinfoData() {}
-	virtual FOptionalMapinfoData *Clone() const = 0;
+	virtual FOptionalMapinfoData* Clone() const = 0;
 };
 
 struct FOptionalMapinfoDataPtr
 {
-	FOptionalMapinfoData *Ptr;
+	FOptionalMapinfoData* Ptr;
 
 	FOptionalMapinfoDataPtr() throw() : Ptr(NULL) {}
-	~FOptionalMapinfoDataPtr() { if (Ptr!=NULL) delete Ptr; }
-	FOptionalMapinfoDataPtr(const FOptionalMapinfoDataPtr &p) throw() : Ptr(p.Ptr->Clone()) {}
-	FOptionalMapinfoDataPtr &operator= (FOptionalMapinfoDataPtr &p) throw() { Ptr = p.Ptr->Clone(); return *this; }
+	~FOptionalMapinfoDataPtr() { if (Ptr != NULL) delete Ptr; }
+	FOptionalMapinfoDataPtr(const FOptionalMapinfoDataPtr& p) throw() : Ptr(p.Ptr->Clone()) {}
+	FOptionalMapinfoDataPtr& operator= (FOptionalMapinfoDataPtr& p) throw() { Ptr = p.Ptr->Clone(); return *this; }
 };
 
 typedef TMap<FName, FOptionalMapinfoDataPtr> FOptData;
@@ -274,7 +274,7 @@ enum EMapType
 struct level_info_t
 {
 	int			levelnum;
-	
+
 	FString		MapName;
 	FString		NextMap;
 	FString		NextSecretMap;
@@ -297,9 +297,9 @@ struct level_info_t
 	FString		LevelName;
 	SBYTE		WallVertLight, WallHorizLight;
 	int			musicorder;
-	FCompressedMemFile	*snapshot;
+	FCompressedMemFile* snapshot;
 	DWORD		snapshotVer;
-	struct acsdefered_t *defered;
+	struct acsdefered_t* defered;
 	float		skyspeed1;
 	float		skyspeed2;
 	DWORD		fadeto;
@@ -341,34 +341,34 @@ struct level_info_t
 	TArray<FSoundID> PrecacheSounds;
 	TArray<FString> PrecacheTextures;
 
-	level_info_t() 
-	{ 
-		Reset(); 
+	level_info_t()
+	{
+		Reset();
 	}
 	~level_info_t()
 	{
-		ClearSnapshot(); 
+		ClearSnapshot();
 		ClearDefered();
 	}
 	void Reset();
 	bool isValid();
-	FString LookupLevelName ();
+	FString LookupLevelName();
 	void ClearSnapshot();
 	void ClearDefered();
-	level_info_t *CheckLevelRedirect ();
+	level_info_t* CheckLevelRedirect();
 
 	template<class T>
-	T *GetOptData(FName id, bool create = true)
+	T* GetOptData(FName id, bool create = true)
 	{
-		FOptionalMapinfoDataPtr *pdat = optdata.CheckKey(id);
-		
+		FOptionalMapinfoDataPtr* pdat = optdata.CheckKey(id);
+
 		if (pdat != NULL)
 		{
 			return static_cast<T*>(pdat->Ptr);
 		}
 		else if (create)
 		{
-			T *newobj = new T;
+			T* newobj = new T;
 			optdata[id].Ptr = newobj;
 			return newobj;
 		}
@@ -384,8 +384,8 @@ struct FSectorScrollValues
 
 struct FLevelLocals
 {
-	void Tick ();
-	void AddScroller (DScroller *, int secnum);
+	void Tick();
+	void AddScroller(DScroller*, int secnum);
 
 	int			time;			// time in the hub
 	int			maptime;		// time in the map
@@ -394,7 +394,7 @@ struct FLevelLocals
 	int			partime;
 	int			sucktime;
 
-	level_info_t *info;
+	level_info_t* info;
 	int			cluster;
 	int			clusterflags;
 	int			levelnum;
@@ -439,7 +439,7 @@ struct FLevelLocals
 
 	TObjPtr<class ASkyViewpoint> DefaultSkybox;
 
-	FSectorScrollValues	*Scrolls;		// NULL if no DScrollers in this level
+	FSectorScrollValues* Scrolls;		// NULL if no DScrollers in this level
 
 	SBYTE		WallVertLight;			// Light diffs for vert/horiz walls
 	SBYTE		WallHorizLight;
@@ -489,23 +489,23 @@ extern TArray<cluster_info_t> wadclusterinfos;
 extern bool savegamerestore;
 
 // mapname will be changed if it is a valid warptrans
-bool CheckWarpTransMap (FString &mapname, bool substitute);
+bool CheckWarpTransMap(FString& mapname, bool substitute);
 
-void G_InitNew (const char *mapname, bool bTitleLevel);
+void G_InitNew(const char* mapname, bool bTitleLevel);
 
 // Can be called by the startup code or M_Responder.
 // A normal game starts at map 1,
 // but a warp test can start elsewhere
-void G_DeferedInitNew (const char *mapname, int skill = -1);
+void G_DeferedInitNew(const char* mapname, int skill = -1);
 struct FGameStartup;
-void G_DeferedInitNew (FGameStartup *gs);
+void G_DeferedInitNew(FGameStartup* gs);
 
-void G_ExitLevel (int position, bool keepFacing);
-void G_SecretExitLevel (int position);
-const char *G_GetExitMap();
-const char *G_GetSecretExitMap();
+void G_ExitLevel(int position, bool keepFacing);
+void G_SecretExitLevel(int position);
+const char* G_GetExitMap();
+const char* G_GetSecretExitMap();
 
-enum 
+enum
 {
 	CHANGELEVEL_KEEPFACING = 1,
 	CHANGELEVEL_RESETINVENTORY = 2,
@@ -516,33 +516,33 @@ enum
 	CHANGELEVEL_PRERAISEWEAPON = 64,
 };
 
-void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill=-1);
+void G_ChangeLevel(const char* levelname, int position, int flags, int nextSkill = -1);
 
-void G_StartTravel ();
-void G_FinishTravel ();
+void G_StartTravel();
+void G_FinishTravel();
 
-void G_DoLoadLevel (int position, bool autosave);
+void G_DoLoadLevel(int position, bool autosave);
 
-void G_InitLevelLocals (void);
+void G_InitLevelLocals(void);
 
-void G_AirControlChanged ();
+void G_AirControlChanged();
 
-cluster_info_t *FindClusterInfo (int cluster);
-level_info_t *FindLevelInfo (const char *mapname, bool allowdefault=true);
-level_info_t *FindLevelByNum (int num);
-level_info_t *CheckLevelRedirect (level_info_t *info);
+cluster_info_t* FindClusterInfo(int cluster);
+level_info_t* FindLevelInfo(const char* mapname, bool allowdefault = true);
+level_info_t* FindLevelByNum(int num);
+level_info_t* CheckLevelRedirect(level_info_t* info);
 
-FString CalcMapName (int episode, int level);
+FString CalcMapName(int episode, int level);
 
-void G_ParseMapInfo (FString basemapinfo);
+void G_ParseMapInfo(FString basemapinfo);
 
-void G_ClearSnapshots (void);
-void P_RemoveDefereds ();
-void G_SnapshotLevel (void);
-void G_UnSnapshotLevel (bool keepPlayers);
+void G_ClearSnapshots(void);
+void P_RemoveDefereds();
+void G_SnapshotLevel(void);
+void G_UnSnapshotLevel(bool keepPlayers);
 struct PNGHandle;
-void G_ReadSnapshots (PNGHandle *png);
-void G_WriteSnapshots (FILE *file);
+void G_ReadSnapshots(PNGHandle* png);
+void G_WriteSnapshots(FILE* file);
 void G_ClearHubInfo();
 
 enum ESkillProperty
@@ -569,7 +569,7 @@ enum ESkillProperty
 	SKILLP_Infight,
 };
 int G_SkillProperty(ESkillProperty prop);
-const char * G_SkillName();
+const char* G_SkillName();
 
 typedef TMap<FName, FString> SkillMenuNames;
 
@@ -609,11 +609,11 @@ struct FSkillInfo
 	fixed_t HealthFactor;
 
 	FSkillInfo() {}
-	FSkillInfo(const FSkillInfo &other)
+	FSkillInfo(const FSkillInfo& other)
 	{
 		operator=(other);
 	}
-	FSkillInfo &operator=(const FSkillInfo &other);
+	FSkillInfo& operator=(const FSkillInfo& other);
 	int GetTextColor() const;
 
 	void SetReplacement(FName a, FName b);

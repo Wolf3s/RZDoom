@@ -68,7 +68,7 @@ extern TMap<int, FString> HexenMusic;
 //
 //==========================================================================
 
-static int FindWadLevelInfo (const char *name)
+static int FindWadLevelInfo(const char* name)
 {
 	for (unsigned int i = 0; i < wadlevelinfos.Size(); i++)
 	{
@@ -83,11 +83,11 @@ static int FindWadLevelInfo (const char *name)
 //
 //==========================================================================
 
-level_info_t *FindLevelInfo (const char *mapname, bool allowdefault)
+level_info_t* FindLevelInfo(const char* mapname, bool allowdefault)
 {
 	int i;
 
-	if ((i = FindWadLevelInfo (mapname)) > -1)
+	if ((i = FindWadLevelInfo(mapname)) > -1)
 	{
 		return &wadlevelinfos[i];
 	}
@@ -108,7 +108,7 @@ level_info_t *FindLevelInfo (const char *mapname, bool allowdefault)
 //
 //==========================================================================
 
-level_info_t *FindLevelByNum (int num)
+level_info_t* FindLevelByNum(int num)
 {
 	for (unsigned int i = 0; i < wadlevelinfos.Size(); i++)
 		if (wadlevelinfos[i].levelnum == num)
@@ -123,7 +123,7 @@ level_info_t *FindLevelByNum (int num)
 //
 //==========================================================================
 
-static level_info_t *FindLevelByWarpTrans (int num)
+static level_info_t* FindLevelByWarpTrans(int num)
 {
 	for (unsigned i = wadlevelinfos.Size(); i-- != 0; )
 		if (wadlevelinfos[i].WarpTrans == num)
@@ -137,12 +137,12 @@ static level_info_t *FindLevelByWarpTrans (int num)
 //
 //==========================================================================
 
-bool CheckWarpTransMap (FString &mapname, bool substitute)
+bool CheckWarpTransMap(FString& mapname, bool substitute)
 {
 	if (mapname[0] == '&' && (mapname[1] & 0xDF) == 'W' &&
 		(mapname[2] & 0xDF) == 'T' && mapname[3] == '@')
 	{
-		level_info_t *lev = FindLevelByWarpTrans (atoi (&mapname[4]));
+		level_info_t* lev = FindLevelByWarpTrans(atoi(&mapname[4]));
 		if (lev != NULL)
 		{
 			mapname = lev->MapName;
@@ -163,12 +163,12 @@ bool CheckWarpTransMap (FString &mapname, bool substitute)
 //
 //==========================================================================
 
-static int FindWadClusterInfo (int cluster)
+static int FindWadClusterInfo(int cluster)
 {
 	for (unsigned int i = 0; i < wadclusterinfos.Size(); i++)
 		if (wadclusterinfos[i].cluster == cluster)
 			return i;
-		
+
 	return -1;
 }
 
@@ -177,11 +177,11 @@ static int FindWadClusterInfo (int cluster)
 //
 //==========================================================================
 
-cluster_info_t *FindClusterInfo (int cluster)
+cluster_info_t* FindClusterInfo(int cluster)
 {
 	int i;
 
-	if ((i = FindWadClusterInfo (cluster)) > -1)
+	if ((i = FindWadClusterInfo(cluster)) > -1)
 		return &wadclusterinfos[i];
 	else
 		return &TheDefaultClusterInfo;
@@ -192,7 +192,7 @@ cluster_info_t *FindClusterInfo (int cluster)
 //
 //==========================================================================
 
-void G_ClearSnapshots (void)
+void G_ClearSnapshots(void)
 {
 	for (unsigned int i = 0; i < wadlevelinfos.Size(); i++)
 	{
@@ -209,7 +209,7 @@ void G_ClearSnapshots (void)
 //
 //==========================================================================
 
-void P_RemoveDefereds (void)
+void P_RemoveDefereds(void)
 {
 	for (unsigned int i = 0; i < wadlevelinfos.Size(); i++)
 	{
@@ -288,8 +288,8 @@ FString level_info_t::LookupLevelName()
 {
 	if (flags & LEVEL_LOOKUPLEVELNAME)
 	{
-		const char *thename;
-		const char *lookedup;
+		const char* thename;
+		const char* lookedup;
 
 		lookedup = GStrings[LevelName];
 		if (lookedup == NULL)
@@ -303,29 +303,29 @@ FString level_info_t::LookupLevelName()
 			// Strip out the header from the localized string
 			if (MapName.Len() > 3 && MapName[0] == 'E' && MapName[2] == 'M')
 			{
-				mysnprintf (checkstring, countof(checkstring), "%s: ", MapName.GetChars());
+				mysnprintf(checkstring, countof(checkstring), "%s: ", MapName.GetChars());
 			}
 			else if (MapName.Len() > 3 && MapName[0] == 'M' && MapName[1] == 'A' && MapName[2] == 'P')
 			{
-				mysnprintf (checkstring, countof(checkstring), "%d: ", atoi(&MapName[3]));
+				mysnprintf(checkstring, countof(checkstring), "%d: ", atoi(&MapName[3]));
 			}
 			else if (MapName.Len() > 5 && MapName[0] == 'L' && MapName[1] == 'E' && MapName[2] == 'V' && MapName[3] == 'E' && MapName[4] == 'L')
 			{
-				mysnprintf (checkstring, countof(checkstring), "%d: ", atoi(&MapName[5]));
+				mysnprintf(checkstring, countof(checkstring), "%d: ", atoi(&MapName[5]));
 			}
 			else
 			{
 				// make sure nothing is stripped.
 				checkstring[0] = '\0';
 			}
-			thename = strstr (lookedup, checkstring);
+			thename = strstr(lookedup, checkstring);
 			if (thename == NULL)
 			{
 				thename = lookedup;
 			}
 			else
 			{
-				thename += strlen (checkstring);
+				thename += strlen(checkstring);
 			}
 		}
 		return thename;
@@ -352,10 +352,10 @@ void level_info_t::ClearSnapshot()
 
 void level_info_t::ClearDefered()
 {
-	acsdefered_t *def = defered;
+	acsdefered_t* def = defered;
 	while (def)
 	{
-		acsdefered_t *next = def->next;
+		acsdefered_t* next = def->next;
 		delete def;
 		def = next;
 	}
@@ -367,16 +367,16 @@ void level_info_t::ClearDefered()
 //
 //==========================================================================
 
-level_info_t *level_info_t::CheckLevelRedirect ()
+level_info_t* level_info_t::CheckLevelRedirect()
 {
 	if (RedirectType != NAME_None)
 	{
-		const PClass *type = PClass::FindClass(RedirectType);
+		const PClass* type = PClass::FindClass(RedirectType);
 		if (type != NULL)
 		{
 			for (int i = 0; i < MAXPLAYERS; ++i)
 			{
-				if (playeringame[i] && players[i].mo->FindInventory (type))
+				if (playeringame[i] && players[i].mo->FindInventory(type))
 				{
 					// check for actual presence of the map.
 					if (P_CheckMapData(RedirectMapName))
@@ -429,11 +429,11 @@ void cluster_info_t::Reset()
 
 void FMapInfoParser::ParseOpenBrace()
 {
-	switch(format_type)
+	switch (format_type)
 	{
 	default:
 		format_type = sc.CheckString("{") ? FMT_New : FMT_Old;
-		if (format_type == FMT_New) 
+		if (format_type == FMT_New)
 			sc.SetCMode(true);
 		break;
 
@@ -516,7 +516,7 @@ void FMapInfoParser::ParseComma()
 
 bool FMapInfoParser::CheckNumber()
 {
-	if (format_type == FMT_New) 
+	if (format_type == FMT_New)
 	{
 		if (sc.CheckString(","))
 		{
@@ -535,7 +535,7 @@ bool FMapInfoParser::CheckNumber()
 
 bool FMapInfoParser::CheckFloat()
 {
-	if (format_type == FMT_New) 
+	if (format_type == FMT_New)
 	{
 		if (sc.CheckString(","))
 		{
@@ -560,8 +560,7 @@ void FMapInfoParser::SkipToNext()
 		do
 		{
 			sc.MustGetString();
-		}
-		while (sc.CheckString(","));
+		} while (sc.CheckString(","));
 	}
 }
 
@@ -572,7 +571,7 @@ void FMapInfoParser::SkipToNext()
 //
 //==========================================================================
 
-void FMapInfoParser::CheckEndOfFile(const char *block)
+void FMapInfoParser::CheckEndOfFile(const char* block)
 {
 	if (format_type == FMT_New && !sc.Compare("}"))
 	{
@@ -587,7 +586,7 @@ void FMapInfoParser::CheckEndOfFile(const char *block)
 //
 //==========================================================================
 
-bool FMapInfoParser::ParseLookupName(FString &dest)
+bool FMapInfoParser::ParseLookupName(FString& dest)
 {
 	sc.MustGetString();
 	if (sc.Compare("lookup"))
@@ -599,7 +598,7 @@ bool FMapInfoParser::ParseLookupName(FString &dest)
 	}
 	else if (sc.String[0] == '$')
 	{
-		dest = sc.String+1;
+		dest = sc.String + 1;
 		return true;
 	}
 	else if (format_type == FMT_Old)
@@ -615,10 +614,9 @@ bool FMapInfoParser::ParseLookupName(FString &dest)
 		{
 			sc.MustGetString();
 			dest << sc.String << '\n';
-		}
-		while (sc.CheckString(","));
+		} while (sc.CheckString(","));
 		// strip off the last newline
-		dest.Truncate(long(dest.Len()-1));
+		dest.Truncate(long(dest.Len() - 1));
 		return false;
 	}
 }
@@ -637,7 +635,7 @@ void FMapInfoParser::ParseLumpOrTextureName(char *name)
 }
 */
 
-void FMapInfoParser::ParseLumpOrTextureName(FString &name)
+void FMapInfoParser::ParseLumpOrTextureName(FString& name)
 {
 	sc.MustGetString();
 	name = sc.String;
@@ -649,15 +647,15 @@ void FMapInfoParser::ParseLumpOrTextureName(FString &name)
 //
 //==========================================================================
 
-void FMapInfoParser::ParseMusic(FString &name, int &order)
+void FMapInfoParser::ParseMusic(FString& name, int& order)
 {
 	sc.MustGetString();
 
 	order = 0;
-	char *colon = strchr (sc.String, ':');
+	char* colon = strchr(sc.String, ':');
 	if (colon)
 	{
-		order = atoi(colon+1);
+		order = atoi(colon + 1);
 		*colon = 0;
 	}
 	name = sc.String;
@@ -676,14 +674,14 @@ void FMapInfoParser::ParseMusic(FString &name, int &order)
 
 void FMapInfoParser::ParseCluster()
 {
-	sc.MustGetNumber ();
-	int clusterindex = FindWadClusterInfo (sc.Number);
+	sc.MustGetNumber();
+	int clusterindex = FindWadClusterInfo(sc.Number);
 	if (clusterindex == -1)
 	{
 		clusterindex = wadclusterinfos.Reserve(1);
 	}
 
-	cluster_info_t *clusterinfo = &wadclusterinfos[clusterindex];
+	cluster_info_t* clusterinfo = &wadclusterinfos[clusterindex];
 	clusterinfo->Reset();
 	clusterinfo->cluster = sc.Number;
 
@@ -739,7 +737,7 @@ void FMapInfoParser::ParseCluster()
 		{
 			ParseAssign();
 			sc.MustGetString();
-			clusterinfo->cdid = strtoul (sc.String, NULL, 16);
+			clusterinfo->cdid = strtoul(sc.String, NULL, 16);
 		}
 		else if (sc.Compare("entertextislump"))
 		{
@@ -771,7 +769,7 @@ void FMapInfoParser::ParseCluster()
 //
 //==========================================================================
 
-void FMapInfoParser::ParseNextMap(FString &mapname)
+void FMapInfoParser::ParseNextMap(FString& mapname)
 {
 	if (sc.CheckNumber())
 	{
@@ -837,10 +835,10 @@ DEFINE_MAP_OPTION(cluster, true)
 	// for Hexen, because it doesn't have clusterdefs. If we don't do this, every
 	// level on Hexen will sometimes be considered as being on the same hub,
 	// depending on the check done.
-	if (FindWadClusterInfo (parse.sc.Number) == -1)
+	if (FindWadClusterInfo(parse.sc.Number) == -1)
 	{
 		unsigned int clusterindex = wadclusterinfos.Reserve(1);
-		cluster_info_t *clusterinfo = &wadclusterinfos[clusterindex];
+		cluster_info_t* clusterinfo = &wadclusterinfos[clusterindex];
 		clusterinfo->Reset();
 		clusterinfo->cluster = parse.sc.Number;
 		if (parse.HexenHack)
@@ -961,7 +959,7 @@ DEFINE_MAP_OPTION(cdid, true)
 {
 	parse.ParseAssign();
 	parse.sc.MustGetString();
-	info->cdid = strtoul (parse.sc.String, NULL, 16);
+	info->cdid = strtoul(parse.sc.String, NULL, 16);
 }
 
 DEFINE_MAP_OPTION(warptrans, true)
@@ -975,14 +973,14 @@ DEFINE_MAP_OPTION(vertwallshade, true)
 {
 	parse.ParseAssign();
 	parse.sc.MustGetNumber();
-	info->WallVertLight = (SBYTE)clamp (parse.sc.Number / 2, -128, 127);
+	info->WallVertLight = (SBYTE)clamp(parse.sc.Number / 2, -128, 127);
 }
 
 DEFINE_MAP_OPTION(horizwallshade, true)
 {
 	parse.ParseAssign();
 	parse.sc.MustGetNumber();
-	info->WallHorizLight = (SBYTE)clamp (parse.sc.Number / 2, -128, 127);
+	info->WallHorizLight = (SBYTE)clamp(parse.sc.Number / 2, -128, 127);
 }
 
 DEFINE_MAP_OPTION(gravity, true)
@@ -1031,7 +1029,7 @@ DEFINE_MAP_OPTION(specialaction, true)
 {
 	parse.ParseAssign();
 
-	FSpecialAction *sa = &info->specialactions[info->specialactions.Reserve(1)];
+	FSpecialAction* sa = &info->specialactions[info->specialactions.Reserve(1)];
 	int min_arg, max_arg;
 	if (parse.format_type == parse.FMT_Old) parse.sc.SetCMode(true);
 	parse.sc.MustGetString();
@@ -1175,7 +1173,7 @@ DEFINE_MAP_OPTION(defaultenvironment, false)
 	else
 	{ // Named environment
 		parse.sc.MustGetString();
-		ReverbContainer *reverb = S_FindEnvironment(parse.sc.String);
+		ReverbContainer* reverb = S_FindEnvironment(parse.sc.String);
 		if (reverb == NULL)
 		{
 			parse.sc.ScriptMessage("Unknown sound environment '%s'\n", parse.sc.String);
@@ -1214,7 +1212,7 @@ enum EMIType
 
 struct MapInfoFlagHandler
 {
-	const char *name;
+	const char* name;
 	EMIType type;
 	DWORD data1, data2;
 }
@@ -1250,8 +1248,8 @@ MapFlagHandlers[] =
 	{ "fallingdamage",					MITYPE_SCFLAGS,	LEVEL_FALLDMG_HX, ~LEVEL_FALLDMG_ZD },
 	{ "oldfallingdamage",				MITYPE_SCFLAGS,	LEVEL_FALLDMG_ZD, ~LEVEL_FALLDMG_HX },
 	{ "forcefallingdamage",				MITYPE_SCFLAGS,	LEVEL_FALLDMG_ZD, ~LEVEL_FALLDMG_HX },
-	{ "strifefallingdamage",			MITYPE_SETFLAG,	LEVEL_FALLDMG_ZD|LEVEL_FALLDMG_HX, 0 },
-	{ "nofallingdamage",				MITYPE_SCFLAGS,	0, ~(LEVEL_FALLDMG_ZD|LEVEL_FALLDMG_HX) },
+	{ "strifefallingdamage",			MITYPE_SETFLAG,	LEVEL_FALLDMG_ZD | LEVEL_FALLDMG_HX, 0 },
+	{ "nofallingdamage",				MITYPE_SCFLAGS,	0, ~(LEVEL_FALLDMG_ZD | LEVEL_FALLDMG_HX) },
 	{ "noallies",						MITYPE_SETFLAG,	LEVEL_NOALLIES, 0 },
 	{ "filterstarts",					MITYPE_SETFLAG,	LEVEL_FILTERSTARTS, 0 },
 	{ "useplayerstartz",				MITYPE_SETFLAG, LEVEL_USEPLAYERSTARTZ, 0 },
@@ -1274,7 +1272,7 @@ MapFlagHandlers[] =
 	{ "nocrouch",						MITYPE_SETFLAG,	LEVEL_CROUCH_NO, 0 },
 	{ "pausemusicinmenus",				MITYPE_SCFLAGS2,	LEVEL2_PAUSE_MUSIC_IN_MENUS, 0 },
 	{ "noinfighting",					MITYPE_SCFLAGS2,	LEVEL2_NOINFIGHTING, ~LEVEL2_TOTALINFIGHTING },
-	{ "normalinfighting",				MITYPE_SCFLAGS2,	0, ~(LEVEL2_NOINFIGHTING|LEVEL2_TOTALINFIGHTING)},
+	{ "normalinfighting",				MITYPE_SCFLAGS2,	0, ~(LEVEL2_NOINFIGHTING | LEVEL2_TOTALINFIGHTING)},
 	{ "totalinfighting",				MITYPE_SCFLAGS2,	LEVEL2_TOTALINFIGHTING, ~LEVEL2_NOINFIGHTING },
 	{ "infiniteflightpowerup",			MITYPE_SETFLAG2,	LEVEL2_INFINITE_FLIGHT, 0 },
 	{ "noinfiniteflightpowerup",		MITYPE_CLRFLAG2,	LEVEL2_INFINITE_FLIGHT, 0 },
@@ -1344,7 +1342,7 @@ MapFlagHandlers[] =
 //
 //==========================================================================
 
-void FMapInfoParser::ParseMapDefinition(level_info_t &info)
+void FMapInfoParser::ParseMapDefinition(level_info_t& info)
 {
 	int index;
 
@@ -1354,7 +1352,7 @@ void FMapInfoParser::ParseMapDefinition(level_info_t &info)
 	{
 		if ((index = sc.MatchString(&MapFlagHandlers->name, sizeof(*MapFlagHandlers))) >= 0)
 		{
-			MapInfoFlagHandler *handler = &MapFlagHandlers[index];
+			MapInfoFlagHandler* handler = &MapFlagHandlers[index];
 			switch (handler->type)
 			{
 			case MITYPE_EATNEXT:
@@ -1451,13 +1449,13 @@ void FMapInfoParser::ParseMapDefinition(level_info_t &info)
 
 			while (*++probe != NULL)
 			{
-				if (sc.Compare(((FMapOptInfo *)(*probe))->name))
+				if (sc.Compare(((FMapOptInfo*)(*probe))->name))
 				{
-					if (!((FMapOptInfo *)(*probe))->old && format_type != FMT_New)
+					if (!((FMapOptInfo*)(*probe))->old && format_type != FMT_New)
 					{
 						sc.ScriptError("MAPINFO option '%s' requires the new MAPINFO format", sc.String);
 					}
-					((FMapOptInfo *)(*probe))->handler(*this, &info);
+					((FMapOptInfo*)(*probe))->handler(*this, &info);
 					success = true;
 					break;
 				}
@@ -1489,23 +1487,23 @@ void FMapInfoParser::ParseMapDefinition(level_info_t &info)
 //
 //==========================================================================
 
-static int GetDefaultLevelNum(const char *mapname)
+static int GetDefaultLevelNum(const char* mapname)
 {
-	if (!strnicmp (mapname, "MAP", 3) && strlen(mapname) <= 5)
+	if (!strnicmp(mapname, "MAP", 3) && strlen(mapname) <= 5)
 	{
-		int mapnum = atoi (mapname + 3);
+		int mapnum = atoi(mapname + 3);
 
 		if (mapnum >= 1 && mapnum <= 99)
 			return mapnum;
 	}
 	else if (mapname[0] == 'E' &&
-			mapname[1] >= '0' && mapname[1] <= '9' &&
-			mapname[2] == 'M' &&
-			mapname[3] >= '0' && mapname[3] <= '9')
+		mapname[1] >= '0' && mapname[1] <= '9' &&
+		mapname[2] == 'M' &&
+		mapname[3] >= '0' && mapname[3] <= '9')
 	{
 		int epinum = mapname[1] - '1';
 		int mapnum = mapname[3] - '0';
-		return epinum*10 + mapnum;
+		return epinum * 10 + mapnum;
 	}
 	return 0;
 }
@@ -1517,28 +1515,28 @@ static int GetDefaultLevelNum(const char *mapname)
 //
 //==========================================================================
 
-level_info_t *FMapInfoParser::ParseMapHeader(level_info_t &defaultinfo)
+level_info_t* FMapInfoParser::ParseMapHeader(level_info_t& defaultinfo)
 {
 	FName mapname;
 
 	if (sc.CheckNumber())
 	{	// MAPNAME is a number; assume a Hexen wad
 		char maptemp[8];
-		mysnprintf (maptemp, countof(maptemp), "MAP%02d", sc.Number);
+		mysnprintf(maptemp, countof(maptemp), "MAP%02d", sc.Number);
 		mapname = maptemp;
 		HexenHack = true;
 	}
-	else 
+	else
 	{
 		sc.MustGetString();
 		mapname = sc.String;
 	}
-	int levelindex = FindWadLevelInfo (mapname);
+	int levelindex = FindWadLevelInfo(mapname);
 	if (levelindex == -1)
 	{
 		levelindex = wadlevelinfos.Reserve(1);
 	}
-	level_info_t *levelinfo = &wadlevelinfos[levelindex];
+	level_info_t* levelinfo = &wadlevelinfos[levelindex];
 	*levelinfo = defaultinfo;
 	if (HexenHack)
 	{
@@ -1549,19 +1547,19 @@ level_info_t *FMapInfoParser::ParseMapHeader(level_info_t &defaultinfo)
 		// monsters activate their own specials, and missiles
 		// are always the activators of impact lines.
 		levelinfo->flags |= LEVEL_NOINTERMISSION
-						 | LEVEL_SNDSEQTOTALCTRL
-						 | LEVEL_FALLDMG_HX
-						 | LEVEL_ACTOWNSPECIAL;
-		levelinfo->flags2|= LEVEL2_HEXENHACK
-						 | LEVEL2_INFINITE_FLIGHT
-						 | LEVEL2_MISSILESACTIVATEIMPACT
-						 | LEVEL2_MONSTERFALLINGDAMAGE;
+			| LEVEL_SNDSEQTOTALCTRL
+			| LEVEL_FALLDMG_HX
+			| LEVEL_ACTOWNSPECIAL;
+		levelinfo->flags2 |= LEVEL2_HEXENHACK
+			| LEVEL2_INFINITE_FLIGHT
+			| LEVEL2_MISSILESACTIVATEIMPACT
+			| LEVEL2_MONSTERFALLINGDAMAGE;
 
 	}
 
 	levelinfo->MapName = mapname;
 	levelinfo->MapName.ToUpper();
-	sc.MustGetString ();
+	sc.MustGetString();
 	if (sc.String[0] == '$')
 	{
 		// For consistency with other definitions allow $Stringtablename here, too.
@@ -1570,9 +1568,9 @@ level_info_t *FMapInfoParser::ParseMapHeader(level_info_t &defaultinfo)
 	}
 	else
 	{
-		if (sc.Compare ("lookup"))
+		if (sc.Compare("lookup"))
 		{
-			sc.MustGetString ();
+			sc.MustGetString();
 			levelinfo->flags |= LEVEL_LOOKUPLEVELNAME;
 		}
 		levelinfo->LevelName = sc.String;
@@ -1584,7 +1582,7 @@ level_info_t *FMapInfoParser::ParseMapHeader(level_info_t &defaultinfo)
 
 	// Does this map have a song defined via SNDINFO's $map command?
 	// Set that as this map's default music if it does.
-	FString *song;
+	FString* song;
 	if ((song = HexenMusic.CheckKey(levelinfo->levelnum)) != NULL)
 	{
 		levelinfo->Music = *song;
@@ -1607,7 +1605,7 @@ level_info_t *FMapInfoParser::ParseMapHeader(level_info_t &defaultinfo)
 //
 //==========================================================================
 
-void FMapInfoParser::ParseEpisodeInfo ()
+void FMapInfoParser::ParseEpisodeInfo()
 {
 	unsigned int i;
 	FString map;
@@ -1620,12 +1618,12 @@ void FMapInfoParser::ParseEpisodeInfo ()
 	bool extended = false;
 
 	// Get map name
-	sc.MustGetString ();
+	sc.MustGetString();
 	map = sc.String;
 
-	if (sc.CheckString ("teaser"))
+	if (sc.CheckString("teaser"))
 	{
-		sc.MustGetString ();
+		sc.MustGetString();
 		if (gameinfo.flags & GI_SHAREWARE)
 		{
 			map = sc.String;
@@ -1636,36 +1634,36 @@ void FMapInfoParser::ParseEpisodeInfo ()
 
 	while (sc.GetString())
 	{
-		if (sc.Compare ("optional"))
+		if (sc.Compare("optional"))
 		{
 			// For M4 in Doom
 			optional = true;
 		}
-		else if (sc.Compare ("extended"))
+		else if (sc.Compare("extended"))
 		{
 			// For M4 and M5 in Heretic
 			extended = true;
 		}
-		else if (sc.Compare ("name"))
+		else if (sc.Compare("name"))
 		{
 			ParseAssign();
-			sc.MustGetString ();
+			sc.MustGetString();
 			name = sc.String;
 		}
-		else if (sc.Compare ("picname"))
+		else if (sc.Compare("picname"))
 		{
 			ParseAssign();
-			sc.MustGetString ();
+			sc.MustGetString();
 			pic = sc.String;
 		}
-		else if (sc.Compare ("remove"))
+		else if (sc.Compare("remove"))
 		{
 			remove = true;
 		}
-		else if (sc.Compare ("key"))
+		else if (sc.Compare("key"))
 		{
 			ParseAssign();
-			sc.MustGetString ();
+			sc.MustGetString();
 			key = sc.String[0];
 		}
 		else if (sc.Compare("noskillmenu"))
@@ -1723,7 +1721,7 @@ void FMapInfoParser::ParseEpisodeInfo ()
 			i = AllEpisodes.Reserve(1);
 		}
 
-		FEpisode *epi = &AllEpisodes[i];
+		FEpisode* epi = &AllEpisodes[i];
 
 		epi->mEpisodeMap = map;
 		epi->mEpisodeName = name;
@@ -1752,7 +1750,7 @@ void ClearEpisodes()
 //
 //==========================================================================
 
-static void SetLevelNum (level_info_t *info, int num)
+static void SetLevelNum(level_info_t* info, int num)
 {
 	for (unsigned int i = 0; i < wadlevelinfos.Size(); ++i)
 	{
@@ -1770,14 +1768,14 @@ static void SetLevelNum (level_info_t *info, int num)
 //
 //==========================================================================
 
-void FMapInfoParser::ParseMapInfo (int lump, level_info_t &gamedefaults, level_info_t &defaultinfo)
+void FMapInfoParser::ParseMapInfo(int lump, level_info_t& gamedefaults, level_info_t& defaultinfo)
 {
 	sc.OpenLumpNum(lump);
 
 	defaultinfo = gamedefaults;
 	HexenHack = false;
 
-	while (sc.GetString ())
+	while (sc.GetString())
 	{
 		if (sc.Compare("include"))
 		{
@@ -1818,7 +1816,7 @@ void FMapInfoParser::ParseMapInfo (int lump, level_info_t &gamedefaults, level_i
 		}
 		else if (sc.Compare("map"))
 		{
-			level_info_t *levelinfo = ParseMapHeader(defaultinfo);
+			level_info_t* levelinfo = ParseMapHeader(defaultinfo);
 
 			ParseMapDefinition(*levelinfo);
 
@@ -1827,7 +1825,7 @@ void FMapInfoParser::ParseMapInfo (int lump, level_info_t &gamedefaults, level_i
 			{
 				levelinfo->SkyPic2 = levelinfo->SkyPic1;
 			}
-			SetLevelNum (levelinfo, levelinfo->levelnum);	// Wipe out matching levelnums from other maps.
+			SetLevelNum(levelinfo, levelinfo->levelnum);	// Wipe out matching levelnums from other maps.
 		}
 		// clusterdef is the old keyword but the new format has enough 
 		// structuring that 'cluster' can be handled, too. The old format does not.
@@ -1958,7 +1956,7 @@ static void ClearMapinfo()
 //
 //==========================================================================
 
-void G_ParseMapInfo (FString basemapinfo)
+void G_ParseMapInfo(FString basemapinfo)
 {
 	int lump, lastlump = 0;
 	level_info_t gamedefaults;
@@ -1974,17 +1972,17 @@ void G_ParseMapInfo (FString basemapinfo)
 		int baselump = Wads.GetNumForFullName(basemapinfo);
 		if (Wads.GetLumpFile(baselump) > 0)
 		{
-			I_FatalError("File %s is overriding core lump %s.", 
+			I_FatalError("File %s is overriding core lump %s.",
 				Wads.GetWadFullName(Wads.GetLumpFile(baselump)), basemapinfo.GetChars());
 		}
 		parse.ParseMapInfo(baselump, gamedefaults, defaultinfo);
 	}
 
-	static const char *mapinfonames[] = { "MAPINFO", "ZMAPINFO", NULL };
+	static const char* mapinfonames[] = { "MAPINFO", "ZMAPINFO", NULL };
 	int nindex;
 
 	// Parse any extra MAPINFOs.
-	while ((lump = Wads.FindLumpMulti (mapinfonames, &lastlump, false, &nindex)) != -1)
+	while ((lump = Wads.FindLumpMulti(mapinfonames, &lastlump, false, &nindex)) != -1)
 	{
 		if (nindex == 0)
 		{
@@ -1996,18 +1994,17 @@ void G_ParseMapInfo (FString basemapinfo)
 
 			if (altlump >= 0) continue;
 		}
-		FMapInfoParser parse(nindex == 1? FMapInfoParser::FMT_New : FMapInfoParser::FMT_Unknown);
+		FMapInfoParser parse(nindex == 1 ? FMapInfoParser::FMT_New : FMapInfoParser::FMT_Unknown);
 		level_info_t defaultinfo;
 		parse.ParseMapInfo(lump, gamedefaults, defaultinfo);
 	}
 
 	if (AllEpisodes.Size() == 0)
 	{
-		I_FatalError ("You cannot use clearepisodes in a MAPINFO if you do not define any new episodes after it.");
+		I_FatalError("You cannot use clearepisodes in a MAPINFO if you do not define any new episodes after it.");
 	}
 	if (AllSkills.Size() == 0)
 	{
-		I_FatalError ("You cannot use clearskills in a MAPINFO if you do not define any new skills after it.");
+		I_FatalError("You cannot use clearskills in a MAPINFO if you do not define any new skills after it.");
 	}
 }
-
