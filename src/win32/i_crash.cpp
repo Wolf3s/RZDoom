@@ -209,50 +209,50 @@ namespace zip
 #pragma pack(push,1)
 	struct LocalFileHeader
 	{
-		DWORD	Magic;						// 0
-		BYTE	VersionToExtract[2];		// 4
-		WORD	Flags;						// 6
-		WORD	Method;						// 8
-		WORD	ModTime;					// 10
-		WORD	ModDate;					// 12
-		DWORD	CRC32;						// 14
-		DWORD	CompressedSize;				// 18
-		DWORD	UncompressedSize;			// 22
-		WORD	NameLength;					// 26
-		WORD	ExtraLength;				// 28
+		uint32_t	Magic;						// 0
+		uint8_t	VersionToExtract[2];			// 4
+		uint16_t	Flags;						// 6
+		uint16_t	Method;						// 8
+		uint16_t	ModTime;					// 10
+		uint16_t	ModDate;					// 12
+		uint32_t	CRC32;						// 14
+		uint32_t	CompressedSize;				// 18
+		uint32_t	UncompressedSize;			// 22
+		uint16_t	NameLength;					// 26
+		uint16_t	ExtraLength;				// 28
 	};
 
 	struct CentralDirectoryEntry
 	{
-		DWORD	Magic;
-		BYTE	VersionMadeBy[2];
-		BYTE	VersionToExtract[2];
-		WORD	Flags;
-		WORD	Method;
-		WORD	ModTime;
-		WORD	ModDate;
-		DWORD	CRC32;
-		DWORD	CompressedSize;
-		DWORD	UncompressedSize;
-		WORD	NameLength;
-		WORD	ExtraLength;
-		WORD	CommentLength;
-		WORD	StartingDiskNumber;
-		WORD	InternalAttributes;
-		DWORD	ExternalAttributes;
-		DWORD	LocalHeaderOffset;
+		uint32_t	Magic;
+		uint8_t		VersionMadeBy[2];
+		uint8_t		VersionToExtract[2];
+		uint16_t	Flags;
+		uint16_t	Method;
+		uint16_t	ModTime;
+		uint16_t	ModDate;
+		uint32_t	CRC32;
+		uint32_t	CompressedSize;
+		uint32_t	UncompressedSize;
+		uint16_t	NameLength;
+		uint16_t	ExtraLength;
+		uint16_t	CommentLength;
+		uint16_t	StartingDiskNumber;
+		uint16_t	InternalAttributes;
+		uint32_t	ExternalAttributes;
+		uint32_t	LocalHeaderOffset;
 	};
 
 	struct EndOfCentralDirectory
 	{
-		DWORD	Magic;
-		WORD	DiskNumber;
-		WORD	FirstDisk;
-		WORD	NumEntries;
-		WORD	NumEntriesOnAllDisks;
-		DWORD	DirectorySize;
-		DWORD	DirectoryOffset;
-		WORD	ZipCommentLength;
+		uint32_t	Magic;
+		uint16_t	DiskNumber;
+		uint16_t	FirstDisk;
+		uint16_t	NumEntries;
+		uint16_t	NumEntriesOnAllDisks;
+		uint32_t	DirectorySize;
+		uint32_t	DirectoryOffset;
+		uint16_t	ZipCommentLength;
 	};
 #pragma pack(pop)
 }
@@ -262,9 +262,9 @@ struct TarFile
 	HANDLE		File;
 	const char *Filename;
 	int			ZipOffset;
-	DWORD		UncompressedSize;
-	DWORD		CompressedSize;
-	DWORD		CRC32;
+	uint32_t	UncompressedSize;
+	uint32_t	CompressedSize;
+	uint32_t	CRC32;
 	bool		Deflated;
 };
 
