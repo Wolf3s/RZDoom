@@ -1504,7 +1504,6 @@
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(RootDir)%(Directory)xlat_parser.c;%(RootDir)%(Directory)xlat_parser.h;%(Outputs)</Outputs>
     </CustomBuild>
-    <None Include="wadsrc\static\shaders\d3d9\shaders.ps" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="src\win32\boing1.ico" />

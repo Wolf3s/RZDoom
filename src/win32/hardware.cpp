@@ -49,9 +49,9 @@
 #include "version.h"
 #include "r_swrenderer.h"
 
-EXTERN_CVAR (Bool, ticker)
-EXTERN_CVAR (Bool, fullscreen)
-EXTERN_CVAR (Float, vid_winscale)
+EXTERN_CVAR(Bool, ticker)
+EXTERN_CVAR(Bool, fullscreen)
+EXTERN_CVAR(Float, vid_winscale)
 
 CVAR(Int, win_x, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Int, win_y, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -60,13 +60,13 @@ extern HWND Window;
 
 bool ForceWindowed;
 
-IVideo *Video;
+IVideo* Video;
 
-void I_ShutdownGraphics ()
+void I_ShutdownGraphics()
 {
 	if (screen)
 	{
-		DFrameBuffer *s = screen;
+		DFrameBuffer* s = screen;
 		screen = NULL;
 		s->ObjectFlags |= OF_YesReallyDelete;
 		delete s;
@@ -75,7 +75,7 @@ void I_ShutdownGraphics ()
 		delete Video, Video = NULL;
 }
 
-void I_InitGraphics ()
+void I_InitGraphics()
 {
 	UCVarValue val;
 
@@ -95,15 +95,15 @@ void I_InitGraphics ()
 		// are the active app. Huh?
 	}
 
-	val.Bool = !!Args->CheckParm ("-devparm");
-	ticker.SetGenericRepDefault (val, CVAR_Bool);
-	Video = new Win32Video (0);
+	val.Bool = !!Args->CheckParm("-devparm");
+	ticker.SetGenericRepDefault(val, CVAR_Bool);
+	Video = new Win32Video(0);
 	if (Video == NULL)
-		I_FatalError ("Failed to initialize display");
+		I_FatalError("Failed to initialize display");
 
-	atterm (I_ShutdownGraphics);
+	atterm(I_ShutdownGraphics);
 
-	Video->SetWindowedScale (vid_winscale);
+	Video->SetWindowedScale(vid_winscale);
 }
 
 static void I_DeleteRenderer()
@@ -124,10 +124,10 @@ void I_CreateRenderer()
 
 // VIDEO WRAPPERS ---------------------------------------------------------
 
-DFrameBuffer *I_SetMode (int &width, int &height, DFrameBuffer *old)
+DFrameBuffer* I_SetMode(int& width, int& height, DFrameBuffer* old)
 {
 	bool fs = false;
-	switch (Video->GetDisplayType ())
+	switch (Video->GetDisplayType())
 	{
 	case DISPLAY_WindowOnly:
 		fs = false;
@@ -146,7 +146,7 @@ DFrameBuffer *I_SetMode (int &width, int &height, DFrameBuffer *old)
 		}
 		break;
 	}
-	DFrameBuffer *res = Video->CreateFrameBuffer (width, height, fs, old);
+	DFrameBuffer* res = Video->CreateFrameBuffer(width, height, fs, old);
 
 	/* Right now, CreateFrameBuffer cannot return NULL
 	if (res == NULL)
@@ -157,12 +157,12 @@ DFrameBuffer *I_SetMode (int &width, int &height, DFrameBuffer *old)
 	return res;
 }
 
-bool I_CheckResolution (int width, int height, int bits)
+bool I_CheckResolution(int width, int height, int bits)
 {
 	int twidth, theight;
 
-	Video->StartModeIterator (bits, screen ? screen->IsFullscreen() : fullscreen);
-	while (Video->NextMode (&twidth, &theight, NULL))
+	Video->StartModeIterator(bits, screen ? screen->IsFullscreen() : fullscreen);
+	while (Video->NextMode(&twidth, &theight, NULL))
 	{
 		if (width == twidth && height == theight)
 			return true;
@@ -170,7 +170,7 @@ bool I_CheckResolution (int width, int height, int bits)
 	return false;
 }
 
-void I_ClosestResolution (int *width, int *height, int bits)
+void I_ClosestResolution(int* width, int* height, int bits)
 {
 	int twidth, theight;
 	int cwidth = 0, cheight = 0;
@@ -179,8 +179,8 @@ void I_ClosestResolution (int *width, int *height, int bits)
 
 	for (iteration = 0; iteration < 2; iteration++)
 	{
-		Video->StartModeIterator (bits, screen ? screen->IsFullscreen() : fullscreen);
-		while (Video->NextMode (&twidth, &theight, NULL))
+		Video->StartModeIterator(bits, screen ? screen->IsFullscreen() : fullscreen);
+		while (Video->NextMode(&twidth, &theight, NULL))
 		{
 			if (twidth == *width && theight == *height)
 				return;
@@ -205,27 +205,27 @@ void I_ClosestResolution (int *width, int *height, int bits)
 			return;
 		}
 	}
-}	
+}
 
-static void GetCenteredPos (int &winx, int &winy, int &winw, int &winh, int &scrwidth, int &scrheight)
+static void GetCenteredPos(int& winx, int& winy, int& winw, int& winh, int& scrwidth, int& scrheight)
 {
 	DEVMODE displaysettings;
 	RECT rect;
 	int cx, cy;
 
-	memset (&displaysettings, 0, sizeof(displaysettings));
+	memset(&displaysettings, 0, sizeof(displaysettings));
 	displaysettings.dmSize = sizeof(displaysettings);
-	EnumDisplaySettings (NULL, ENUM_CURRENT_SETTINGS, &displaysettings);
+	EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &displaysettings);
 	scrwidth = (int)displaysettings.dmPelsWidth;
 	scrheight = (int)displaysettings.dmPelsHeight;
-	GetWindowRect (Window, &rect);
+	GetWindowRect(Window, &rect);
 	cx = scrwidth / 2;
 	cy = scrheight / 2;
 	winx = cx - (winw = rect.right - rect.left) / 2;
 	winy = cy - (winh = rect.bottom - rect.top) / 2;
 }
 
-static void KeepWindowOnScreen (int &winx, int &winy, int winw, int winh, int scrwidth, int scrheight)
+static void KeepWindowOnScreen(int& winx, int& winy, int winw, int winh, int scrwidth, int scrheight)
 {
 	// If the window is too large to fit entirely on the screen, at least
 	// keep its upperleft corner visible.
@@ -247,19 +247,19 @@ static void KeepWindowOnScreen (int &winx, int &winy, int winw, int winh, int sc
 	}
 }
 
-void I_SaveWindowedPos ()
+void I_SaveWindowedPos()
 {
 	// Don't save if we were run with the -0 option.
-	if (Args->CheckParm ("-0"))
+	if (Args->CheckParm("-0"))
 	{
 		return;
 	}
 	// Make sure we only save the window position if it's not fullscreen.
-	if ((GetWindowLong (Window, GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW)
+	if ((GetWindowLong(Window, GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW)
 	{
 		RECT wrect;
 
-		if (GetWindowRect (Window, &wrect))
+		if (GetWindowRect(Window, &wrect))
 		{
 			// If (win_x,win_y) specify to center the window, don't change them
 			// if the window is still centered.
@@ -267,8 +267,8 @@ void I_SaveWindowedPos ()
 			{
 				int winx, winy, winw, winh, scrwidth, scrheight;
 
-				GetCenteredPos (winx, winy, winw, winh, scrwidth, scrheight);
-				KeepWindowOnScreen (winx, winy, winw, winh, scrwidth, scrheight);
+				GetCenteredPos(winx, winy, winw, winh, scrwidth, scrheight);
+				KeepWindowOnScreen(winx, winy, winw, winh, scrwidth, scrheight);
 				if (win_x < 0 && winx == wrect.left)
 				{
 					wrect.left = win_x;
@@ -284,14 +284,14 @@ void I_SaveWindowedPos ()
 	}
 }
 
-void I_RestoreWindowedPos ()
+void I_RestoreWindowedPos()
 {
 	int winx, winy, winw, winh, scrwidth, scrheight;
 
-	GetCenteredPos (winx, winy, winw, winh, scrwidth, scrheight);
+	GetCenteredPos(winx, winy, winw, winh, scrwidth, scrheight);
 
 	// Just move to (0,0) if we were run with the -0 option.
-	if (Args->CheckParm ("-0"))
+	if (Args->CheckParm("-0"))
 	{
 		winx = winy = 0;
 	}
@@ -305,14 +305,14 @@ void I_RestoreWindowedPos ()
 		{
 			winy = win_y;
 		}
-		KeepWindowOnScreen (winx, winy, winw, winh, scrwidth, scrheight);
+		KeepWindowOnScreen(winx, winy, winw, winh, scrwidth, scrheight);
 	}
-	MoveWindow (Window, winx, winy, winw, winh, TRUE);
+	MoveWindow(Window, winx, winy, winw, winh, TRUE);
 }
 
 extern int NewWidth, NewHeight, NewBits, DisplayBits;
 
-CUSTOM_CVAR (Bool, fullscreen, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
+CUSTOM_CVAR(Bool, fullscreen, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	NewWidth = screen->GetWidth();
 	NewHeight = screen->GetHeight();
@@ -320,7 +320,7 @@ CUSTOM_CVAR (Bool, fullscreen, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITC
 	setmodeneeded = true;
 }
 
-CUSTOM_CVAR (Float, vid_winscale, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Float, vid_winscale, 1.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (self < 1.f)
 	{
@@ -328,7 +328,7 @@ CUSTOM_CVAR (Float, vid_winscale, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	}
 	else if (Video)
 	{
-		Video->SetWindowedScale (self);
+		Video->SetWindowedScale(self);
 		NewWidth = screen->GetWidth();
 		NewHeight = screen->GetHeight();
 		NewBits = DisplayBits;
@@ -336,9 +336,9 @@ CUSTOM_CVAR (Float, vid_winscale, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	}
 }
 
-CCMD (vid_listmodes)
+CCMD(vid_listmodes)
 {
-	static const char *ratios[5] = { "", " - 16:9", " - 16:10", " - 17:10", " - 5:4" };
+	static const char* ratios[5] = { "", " - 16:9", " - 16:10", " - 17:10", " - 5:4" };
 	int width, height, bits;
 	bool letterbox;
 
@@ -349,24 +349,24 @@ CCMD (vid_listmodes)
 
 	for (bits = 1; bits <= 32; bits++)
 	{
-		Video->StartModeIterator (bits, screen->IsFullscreen());
-		while (Video->NextMode (&width, &height, &letterbox))
+		Video->StartModeIterator(bits, screen->IsFullscreen());
+		while (Video->NextMode(&width, &height, &letterbox))
 		{
 			bool thisMode = (width == DisplayWidth && height == DisplayHeight && bits == DisplayBits);
-			int ratio = CheckRatio (width, height);
-			Printf (thisMode ? PRINT_BOLD : PRINT_HIGH,
+			int ratio = CheckRatio(width, height);
+			Printf(thisMode ? PRINT_BOLD : PRINT_HIGH,
 				"%s%4d x%5d x%3d%s%s\n",
 				thisMode || !(ratio & 3) ? "" : TEXTCOLOR_GOLD,
 				width, height, bits,
 				ratios[ratio],
 				thisMode || !letterbox ? "" : TEXTCOLOR_BROWN " LB"
-				);
+			);
 		}
 	}
 }
 
-CCMD (vid_currentmode)
+CCMD(vid_currentmode)
 {
-	Printf ("%dx%dx%d\n", DisplayWidth, DisplayHeight, DisplayBits);
+	Printf("%dx%dx%d\n", DisplayWidth, DisplayHeight, DisplayBits);
 }
 

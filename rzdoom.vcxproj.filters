@@ -2050,9 +2050,6 @@
     <None Include="src\win32\cursor1.cur">
       <Filter>Win32 Files</Filter>
     </None>
-    <None Include="wadsrc\static\shaders\d3d9\shaders.ps">
-      <Filter>Win32 Files</Filter>
-    </None>
     <None Include="docs\console.html">
       <Filter>Text Files</Filter>
     </None>

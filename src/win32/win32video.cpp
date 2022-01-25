@@ -74,11 +74,11 @@
 
 IMPLEMENT_ABSTRACT_CLASS(BaseWinFB)
 
-typedef HRESULT (WINAPI *DIRECTDRAWCREATEFUNC)(GUID FAR *lpGUID, LPDIRECTDRAW FAR *lplpDD, IUnknown FAR *pUnkOuter);
+typedef HRESULT(WINAPI* DIRECTDRAWCREATEFUNC)(GUID FAR* lpGUID, LPDIRECTDRAW FAR* lplpDD, IUnknown FAR* pUnkOuter);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a);
+void DoBlending(const PalEntry* from, PalEntry* to, int count, int r, int g, int b, int a);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -87,29 +87,30 @@ static void StopFPSLimit();
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern HWND Window;
-extern IVideo *Video;
+extern IVideo* Video;
 extern BOOL AppActive;
 extern int SessionState;
 extern bool FullscreenReset;
 extern bool VidResizing;
 
-EXTERN_CVAR (Bool, fullscreen)
-EXTERN_CVAR (Float, Gamma)
-EXTERN_CVAR (Bool, cl_capfps)
+EXTERN_CVAR(Bool, fullscreen)
+EXTERN_CVAR(Float, Gamma)
+EXTERN_CVAR(Bool, cl_capfps)
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static HMODULE D3D9_dll;
 static HMODULE DDraw_dll;
 static UINT FPSLimitTimer;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-IDirectDraw2 *DDraw;
+IDirectDraw2* DDraw;
 HANDLE FPSLimitEvent;
 
-CVAR (Bool, vid_forceddraw, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR (Int, vid_adapter, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CUSTOM_CVAR (Int, vid_maxfps, 200, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, vid_forceddraw, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Int, vid_adapter, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, vid_maxfps, 200, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (vid_maxfps < TICRATE && vid_maxfps != 0)
 	{
@@ -126,28 +127,28 @@ CUSTOM_CVAR (Int, vid_maxfps, 200, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 }
 
 #if VID_FILE_DEBUG
-FILE *dbg;
+FILE* dbg;
 #endif
 
 // CODE --------------------------------------------------------------------
 
-Win32Video::Win32Video (int parm)
-: m_Modes (NULL),
-  m_IsFullscreen (false)
+Win32Video::Win32Video(int parm)
+	: m_Modes(NULL),
+	m_IsFullscreen(false)
 {
 	I_SetWndProc();
 	InitDDraw();
 }
 
-Win32Video::~Win32Video ()
+Win32Video::~Win32Video()
 {
-	FreeModes ();
+	FreeModes();
 
 	if (DDraw != NULL)
 	{
 		if (m_IsFullscreen)
 		{
-			DDraw->SetCooperativeLevel (NULL, DDSCL_NORMAL);
+			DDraw->SetCooperativeLevel(NULL, DDSCL_NORMAL);
 		}
 		DDraw->Release();
 		DDraw = NULL;
@@ -156,7 +157,7 @@ Win32Video::~Win32Video ()
 	STOPLOG;
 }
 
-void Win32Video::InitDDraw ()
+void Win32Video::InitDDraw()
 {
 	DIRECTDRAWCREATEFUNC directdraw_create;
 	LPDIRECTDRAW ddraw1;
@@ -165,56 +166,56 @@ void Win32Video::InitDDraw ()
 	HRESULT dderr;
 
 	// Load the DirectDraw library.
-	if ((DDraw_dll = LoadLibraryA ("ddraw.dll")) == NULL)
+	if ((DDraw_dll = LoadLibraryA("ddraw.dll")) == NULL)
 	{
-		I_FatalError ("Could not load ddraw.dll");
+		I_FatalError("Could not load ddraw.dll");
 	}
 
 	// Obtain an IDirectDraw interface.
-	if ((directdraw_create = (DIRECTDRAWCREATEFUNC)GetProcAddress (DDraw_dll, "DirectDrawCreate")) == NULL)
+	if ((directdraw_create = (DIRECTDRAWCREATEFUNC)GetProcAddress(DDraw_dll, "DirectDrawCreate")) == NULL)
 	{
-		I_FatalError ("The system file ddraw.dll is missing the DirectDrawCreate export");
+		I_FatalError("The system file ddraw.dll is missing the DirectDrawCreate export");
 	}
 
-	dderr = directdraw_create (NULL, &ddraw1, NULL);
+	dderr = directdraw_create(NULL, &ddraw1, NULL);
 
 	if (FAILED(dderr))
-		I_FatalError ("Could not create DirectDraw object: %08lx", dderr);
+		I_FatalError("Could not create DirectDraw object: %08lx", dderr);
 
-	dderr = ddraw1->QueryInterface (IID_IDirectDraw2, (LPVOID*)&DDraw);
+	dderr = ddraw1->QueryInterface(IID_IDirectDraw2, (LPVOID*)&DDraw);
 	if (FAILED(dderr))
 	{
-		ddraw1->Release ();
+		ddraw1->Release();
 		DDraw = NULL;
-		I_FatalError ("Could not initialize IDirectDraw2 interface: %08lx", dderr);
+		I_FatalError("Could not initialize IDirectDraw2 interface: %08lx", dderr);
 	}
 
 	// Okay, we have the IDirectDraw2 interface now, so we can release the
 	// really old-fashioned IDirectDraw one.
-	ddraw1->Release ();
+	ddraw1->Release();
 
-	DDraw->SetCooperativeLevel (Window, DDSCL_NORMAL);
-	FreeModes ();
-	dderr = DDraw->EnumDisplayModes (0, NULL, this, EnumDDModesCB);
+	DDraw->SetCooperativeLevel(Window, DDSCL_NORMAL);
+	FreeModes();
+	dderr = DDraw->EnumDisplayModes(0, NULL, this, EnumDDModesCB);
 	if (FAILED(dderr))
 	{
-		DDraw->Release ();
+		DDraw->Release();
 		DDraw = NULL;
-		I_FatalError ("Could not enumerate display modes: %08lx", dderr);
+		I_FatalError("Could not enumerate display modes: %08lx", dderr);
 	}
 	if (m_Modes == NULL)
 	{
-		DDraw->Release ();
+		DDraw->Release();
 		DDraw = NULL;
-		I_FatalError ("DirectDraw returned no display modes.\n\n"
-					"If you started " GAMENAME " from a fullscreen DOS box, run it from "
-					"a DOS window instead. If that does not work, you may need to reboot.");
+		I_FatalError("DirectDraw returned no display modes.\n\n"
+			"If you started " GAMENAME " from a fullscreen DOS box, run it from "
+			"a DOS window instead. If that does not work, you may need to reboot.");
 	}
-	if (Args->CheckParm ("-2"))
+	if (Args->CheckParm("-2"))
 	{ // Force all modes to be pixel-doubled.
 		ScaleModes(1);
 	}
-	else if (Args->CheckParm ("-4"))
+	else if (Args->CheckParm("-4"))
 	{ // Force all modes to be pixel-quadrupled.
 		ScaleModes(2);
 	}
@@ -224,18 +225,18 @@ void Win32Video::InitDDraw ()
 		{
 			// Windows 95 will let us use Mode X. If we didn't find any linear
 			// modes in the loop above, add the Mode X modes here.
-			AddMode (320, 200, 8, 200, 0);
-			AddMode (320, 240, 8, 240, 0);
+			AddMode(320, 200, 8, 200, 0);
+			AddMode(320, 240, 8, 240, 0);
 		}
-		AddLowResModes ();
+		AddLowResModes();
 	}
-	AddLetterboxModes ();
+	AddLetterboxModes();
 }
 
 // Returns true if fullscreen, false otherwise
-bool Win32Video::GoFullscreen (bool yes)
+bool Win32Video::GoFullscreen(bool yes)
 {
-	static const char *const yestypes[2] = { "windowed", "fullscreen" };
+	static const char* const yestypes[2] = { "windowed", "fullscreen" };
 	HRESULT hr[2];
 	int count;
 
@@ -244,16 +245,16 @@ bool Win32Video::GoFullscreen (bool yes)
 
 	for (count = 0; count < 2; ++count)
 	{
-		LOG1 ("fullscreen: %d\n", yes);
-		hr[count] = DDraw->SetCooperativeLevel (Window, !yes ? DDSCL_NORMAL :
+		LOG1("fullscreen: %d\n", yes);
+		hr[count] = DDraw->SetCooperativeLevel(Window, !yes ? DDSCL_NORMAL :
 			DDSCL_ALLOWMODEX | DDSCL_ALLOWREBOOT | DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
 		if (SUCCEEDED(hr[count]))
 		{
 			if (count != 0)
 			{
-// Ack! Cannot print because the screen does not exist right now.
-//				Printf ("Setting %s mode failed. Error %08lx\n",
-//					yestypes[!yes], hr[0]);
+				// Ack! Cannot print because the screen does not exist right now.
+				//				Printf ("Setting %s mode failed. Error %08lx\n",
+				//					yestypes[!yes], hr[0]);
 			}
 			m_IsFullscreen = yes;
 			return yes;
@@ -261,25 +262,25 @@ bool Win32Video::GoFullscreen (bool yes)
 		yes = !yes;
 	}
 
-	I_FatalError ("Could not set %s mode: %08lx\n"
-				  "Could not set %s mode: %08lx\n",
-				  yestypes[yes], hr[0], yestypes[!yes], hr[1]);
+	I_FatalError("Could not set %s mode: %08lx\n"
+		"Could not set %s mode: %08lx\n",
+		yestypes[yes], hr[0], yestypes[!yes], hr[1]);
 
 	// Appease the compiler, even though we never return if we get here.
 	return false;
 }
 
 // Flips to the GDI surface and clears it; used by the movie player
-void Win32Video::BlankForGDI ()
+void Win32Video::BlankForGDI()
 {
-	static_cast<BaseWinFB *> (screen)->Blank ();
+	static_cast<BaseWinFB*> (screen)->Blank();
 }
 
 // Mode enumeration --------------------------------------------------------
 
-HRESULT WINAPI Win32Video::EnumDDModesCB (LPDDSURFACEDESC desc, void *data)
+HRESULT WINAPI Win32Video::EnumDDModesCB(LPDDSURFACEDESC desc, void* data)
 {
-	((Win32Video *)data)->AddMode (desc->dwWidth, desc->dwHeight, 8, desc->dwHeight, 0);
+	((Win32Video*)data)->AddMode(desc->dwWidth, desc->dwHeight, 8, desc->dwHeight, 0);
 	return DDENUMRET_OK;
 }
 
@@ -288,25 +289,28 @@ HRESULT WINAPI Win32Video::EnumDDModesCB (LPDDSURFACEDESC desc, void *data)
 // Win32Video :: AddLowResModes
 //
 // Recent NVidia drivers no longer support resolutions below 640x480, even
-// if you try to add them as a custom resolution
+// if you try to add them as a custom resolution. With D3DFB, pixel doubling
+// is quite easy to do and hardware-accelerated. If you have 1280x800, then
+// you can have 320x200, but don't be surprised if it shows up as widescreen
+// on a widescreen monitor, since that's what it is.
 //
 //==========================================================================
 
 void Win32Video::AddLowResModes()
 {
-	ModeInfo *mode, *nextmode;
+	ModeInfo* mode, * nextmode;
 
 	for (mode = m_Modes; mode != NULL; mode = nextmode)
 	{
 		nextmode = mode->next;
 		if (mode->realheight == mode->height &&
 			mode->doubling == 0 &&
-			mode->height >= 200*2 &&
-			mode->height <= 480*2 &&
-			mode->width >= 320*2 &&
-			mode->width <= 640*2)
+			mode->height >= 200 * 2 &&
+			mode->height <= 480 * 2 &&
+			mode->width >= 320 * 2 &&
+			mode->width <= 640 * 2)
 		{
-			AddMode (mode->width / 2, mode->height / 2, mode->bits, mode->height / 2, 1);
+			AddMode(mode->width / 2, mode->height / 2, mode->bits, mode->height / 2, 1);
 		}
 	}
 	for (mode = m_Modes; mode != NULL; mode = nextmode)
@@ -314,39 +318,39 @@ void Win32Video::AddLowResModes()
 		nextmode = mode->next;
 		if (mode->realheight == mode->height &&
 			mode->doubling == 0 &&
-			mode->height >= 200*4 &&
-			mode->height <= 480*4 &&
-			mode->width >= 320*4 &&
-			mode->width <= 640*4)
+			mode->height >= 200 * 4 &&
+			mode->height <= 480 * 4 &&
+			mode->width >= 320 * 4 &&
+			mode->width <= 640 * 4)
 		{
-			AddMode (mode->width / 4, mode->height / 4, mode->bits, mode->height / 4, 2);
+			AddMode(mode->width / 4, mode->height / 4, mode->bits, mode->height / 4, 2);
 		}
 	}
 }
 
 // Add 16:9 and 16:10 resolutions you can use in a window or letterboxed
-void Win32Video::AddLetterboxModes ()
+void Win32Video::AddLetterboxModes()
 {
-	ModeInfo *mode, *nextmode;
+	ModeInfo* mode, * nextmode;
 
 	for (mode = m_Modes; mode != NULL; mode = nextmode)
 	{
 		nextmode = mode->next;
-		if (mode->realheight == mode->height && mode->height * 4/3 == mode->width)
+		if (mode->realheight == mode->height && mode->height * 4 / 3 == mode->width)
 		{
 			if (mode->width >= 360)
 			{
-				AddMode (mode->width, mode->width * 9/16, mode->bits, mode->height, mode->doubling);
+				AddMode(mode->width, mode->width * 9 / 16, mode->bits, mode->height, mode->doubling);
 			}
 			if (mode->width > 640)
 			{
-				AddMode (mode->width, mode->width * 10/16, mode->bits, mode->height, mode->doubling);
+				AddMode(mode->width, mode->width * 10 / 16, mode->bits, mode->height, mode->doubling);
 			}
 		}
 	}
 }
 
-void Win32Video::AddMode (int x, int y, int bits, int y2, int doubling)
+void Win32Video::AddMode(int x, int y, int bits, int y2, int doubling)
 {
 	// Reject modes that do not meet certain criteria.
 	if ((x & 1) != 0 ||
@@ -358,8 +362,8 @@ void Win32Video::AddMode (int x, int y, int bits, int y2, int doubling)
 		return;
 	}
 
-	ModeInfo **probep = &m_Modes;
-	ModeInfo *probe = m_Modes;
+	ModeInfo** probep = &m_Modes;
+	ModeInfo* probe = m_Modes;
 
 	// This mode may have been already added to the list because it is
 	// enumerated multiple times at different refresh rates. If it's
@@ -380,17 +384,17 @@ void Win32Video::AddMode (int x, int y, int bits, int y2, int doubling)
 		return;
 	}
 
-	*probep = new ModeInfo (x, y, bits, y2, doubling);
+	*probep = new ModeInfo(x, y, bits, y2, doubling);
 	(*probep)->next = probe;
 }
 
-void Win32Video::FreeModes ()
+void Win32Video::FreeModes()
 {
-	ModeInfo *mode = m_Modes;
+	ModeInfo* mode = m_Modes;
 
 	while (mode)
 	{
-		ModeInfo *tempmode = mode;
+		ModeInfo* tempmode = mode;
 		mode = mode->next;
 		delete tempmode;
 	}
@@ -400,9 +404,9 @@ void Win32Video::FreeModes ()
 // For every mode, set its scaling factor. Modes that end up with too
 // small a display area are discarded.
 
-void Win32Video::ScaleModes (int doubling)
+void Win32Video::ScaleModes(int doubling)
 {
-	ModeInfo *mode, **prev;
+	ModeInfo* mode, ** prev;
 
 	prev = &m_Modes;
 	mode = m_Modes;
@@ -427,14 +431,14 @@ void Win32Video::ScaleModes (int doubling)
 	}
 }
 
-void Win32Video::StartModeIterator (int bits, bool fs)
+void Win32Video::StartModeIterator(int bits, bool fs)
 {
 	m_IteratorMode = m_Modes;
 	m_IteratorBits = bits;
 	m_IteratorFS = fs;
 }
 
-bool Win32Video::NextMode (int *width, int *height, bool *letterbox)
+bool Win32Video::NextMode(int* width, int* height, bool* letterbox)
 {
 	if (m_IteratorMode)
 	{
@@ -455,26 +459,27 @@ bool Win32Video::NextMode (int *width, int *height, bool *letterbox)
 	return false;
 }
 
-DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscreen, DFrameBuffer *old)
+DFrameBuffer* Win32Video::CreateFrameBuffer(int width, int height, bool fullscreen, DFrameBuffer* old)
 {
 	static int retry = 0;
 	static int owidth, oheight;
 
+	BaseWinFB* fb;
 	PalEntry flashColor;
 	int flashAmount;
 
-	LOG4 ("CreateFB %d %d %d %p\n", width, height, fullscreen, old);
+	LOG4("CreateFB %d %d %d %p\n", width, height, fullscreen, old);
 
 	if (old != NULL)
 	{ // Reuse the old framebuffer if its attributes are the same
-		BaseWinFB *fb = static_cast<BaseWinFB *> (old);
+		BaseWinFB* fb = static_cast<BaseWinFB*> (old);
 		if (fb->Width == width &&
 			fb->Height == height &&
 			fb->Windowed == !fullscreen)
 		{
 			return old;
 		}
-		old->GetFlash (flashColor, flashAmount);
+		old->GetFlash(flashColor, flashAmount);
 		old->ObjectFlags |= OF_YesReallyDelete;
 		if (old == screen) screen = NULL;
 		delete old;
@@ -485,7 +490,7 @@ DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscr
 		flashAmount = 0;
 	}
 
-	DDrawFB* fb = new DDrawFB(width, height, fullscreen);
+	fb = new DDrawFB(width, height, fullscreen);
 	LOG1("New fb created @ %p\n", fb);
 
 	// If we could not create the framebuffer, try again with slightly
@@ -495,7 +500,7 @@ DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscr
 	// 3. Try in the opposite screen mode with the closest size
 	// This is a somewhat confusing mass of recursion here.
 
-	while (fb == NULL || !fb->IsValid ())
+	while (fb == NULL || !fb->IsValid())
 	{
 		static HRESULT hr;
 
@@ -503,20 +508,20 @@ DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscr
 		{
 			if (retry == 0)
 			{
-				hr = fb->GetHR ();
+				hr = fb->GetHR();
 			}
 			fb->ObjectFlags |= OF_YesReallyDelete;
 			delete fb;
 
-			LOG1 ("fb is bad: %08lx\n", hr);
+			LOG1("fb is bad: %08lx\n", hr);
 		}
 		else
 		{
-			LOG ("Could not create fb at all\n");
+			LOG("Could not create fb at all\n");
 		}
 		screen = NULL;
 
-		LOG1 ("Retry number %d\n", retry);
+		LOG1("Retry number %d\n", retry);
 
 		switch (retry)
 		{
@@ -525,8 +530,8 @@ DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscr
 			oheight = height;
 		case 2:
 			// Try a different resolution. Hopefully that will work.
-			I_ClosestResolution (&width, &height, 8);
-			LOG2 ("Retry with size %d,%d\n", width, height);
+			I_ClosestResolution(&width, &height, 8);
+			LOG2("Retry with size %d,%d\n", width, height);
 			break;
 
 		case 1:
@@ -534,25 +539,25 @@ DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscr
 			width = owidth;
 			height = oheight;
 			fullscreen = !fullscreen;
-			LOG1 ("Retry with fullscreen %d\n", fullscreen);
+			LOG1("Retry with fullscreen %d\n", fullscreen);
 			break;
 
 		default:
 			// I give up!
-			LOG3 ("Could not create new screen (%d x %d): %08lx", owidth, oheight, hr);
-			I_FatalError ("Could not create new screen (%d x %d): %08lx", owidth, oheight, hr);
+			LOG3("Could not create new screen (%d x %d): %08lx", owidth, oheight, hr);
+			I_FatalError("Could not create new screen (%d x %d): %08lx", owidth, oheight, hr);
 		}
 
 		++retry;
-		fb = static_cast<DDrawFB *>(CreateFrameBuffer (width, height, fullscreen, NULL));
+		fb = static_cast<DDrawFB*>(CreateFrameBuffer(width, height, fullscreen, NULL));
 	}
 	retry = 0;
 
-	fb->SetFlash (flashColor, flashAmount);
+	fb->SetFlash(flashColor, flashAmount);
 	return fb;
 }
 
-void Win32Video::SetWindowedScale (float scale)
+void Win32Video::SetWindowedScale(float scale)
 {
 	// FIXME
 }
@@ -566,7 +571,7 @@ void Win32Video::SetWindowedScale (float scale)
 //
 //==========================================================================
 
-void BaseWinFB::ScaleCoordsFromWindow(SWORD &x, SWORD &y)
+void BaseWinFB::ScaleCoordsFromWindow(SWORD& x, SWORD& y)
 {
 	RECT rect;
 
