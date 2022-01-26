@@ -307,6 +307,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\rzdoom-2.8.1\src\win32\hardware.cpp" />
     <ClCompile Include="src\actorptrselect.cpp" />
     <ClCompile Include="src\am_map.cpp" />
     <ClCompile Include="src\bbannouncer.cpp" />
@@ -1170,6 +1171,8 @@
     <ClCompile Include="src\wildmidi\wildmidi_lib.cpp" />
     <ClCompile Include="src\wildmidi\wm_error.cpp" />
     <ClCompile Include="src\win32\eaxedit.cpp" />
+    <ClCompile Include="src\win32\fb_d3d9.cpp" />
+    <ClCompile Include="src\win32\fb_d3d9_wipe.cpp" />
     <ClCompile Include="src\win32\fb_ddraw.cpp" />
     <ClCompile Include="src\win32\hardware.cpp" />
     <ClCompile Include="src\win32\helperthread.cpp" />
@@ -1202,6 +1205,7 @@
     <ClCompile Include="src\__autostart.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\rzdoom-2.8.1\src\win32\hardware.h" />
     <ClInclude Include="src\actionspecials.h" />
     <ClInclude Include="src\actor.h" />
     <ClInclude Include="src\actorptrselect.h" />

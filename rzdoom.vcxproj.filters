@@ -600,9 +600,6 @@
     <ClCompile Include="src\win32\st_start.cpp">
       <Filter>Win32 Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\win32\win32video.cpp">
-      <Filter>Win32 Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\g_shared\a_action.cpp">
       <Filter>Shared Game</Filter>
     </ClCompile>
@@ -1374,6 +1371,18 @@
     <ClCompile Include="src\sound\fmodsound.cpp">
       <Filter>Audio Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\rzdoom-2.8.1\src\win32\hardware.cpp">
+      <Filter>Win32 Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\win32\fb_d3d9.cpp">
+      <Filter>Win32 Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\win32\fb_d3d9_wipe.cpp">
+      <Filter>Win32 Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\win32\win32video.cpp">
+      <Filter>Win32 Files</Filter>
+    </ClCompile>
     <ClCompile Include="src\win32\fb_ddraw.cpp">
       <Filter>Win32 Files</Filter>
     </ClCompile>
@@ -1781,9 +1790,6 @@
     <ClInclude Include="src\win32\resource.h">
       <Filter>Win32 Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\win32\win32iface.h">
-      <Filter>Win32 Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\g_shared\a_action.h">
       <Filter>Shared Game</Filter>
     </ClInclude>
@@ -2044,6 +2050,12 @@
     </ClInclude>
     <ClInclude Include="src\sound\fmodsound.h">
       <Filter>Audio Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rzdoom-2.8.1\src\win32\hardware.h">
+      <Filter>Win32 Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\win32\win32iface.h">
+      <Filter>Win32 Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
