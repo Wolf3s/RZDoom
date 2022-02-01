@@ -1468,47 +1468,51 @@ void V_DrawBorder (int x1, int y1, int x2, int y2)
             picnum = TexMan.CheckForTexture ("CEIL5_2", FTexture::TEX_Flat);
         } else if (r_bordertexture == 6) {
             picnum = TexMan.CheckForTexture ("CC1", FTexture::TEX_Flat);
+        } else if (r_bordertexture == 7) {
+            picnum = TexMan.CheckForTexture ("AA", FTexture::TEX_Flat);
+        } else if (r_bordertexture == 8) {
+            picnum = TexMan.CheckForTexture ("SL", FTexture::TEX_Flat);
         }
         /* Heretic */
-        else if (r_bordertexture == 7) {
+        else if (r_bordertexture == 9) {
             picnum = TexMan.CheckForTexture ("FLOOR03", FTexture::TEX_Flat);
-        } else if (r_bordertexture == 8) {
-            picnum = TexMan.CheckForTexture ("FLOOR05", FTexture::TEX_Flat);
-        } else if (r_bordertexture == 9) {
-            picnum = TexMan.CheckForTexture ("FLOOR26", FTexture::TEX_Flat);
         } else if (r_bordertexture == 10) {
-            picnum = TexMan.CheckForTexture ("FLOOR18", FTexture::TEX_Flat);
+            picnum = TexMan.CheckForTexture ("FLOOR05", FTexture::TEX_Flat);
         } else if (r_bordertexture == 11) {
-            picnum = TexMan.CheckForTexture ("FLOOR27", FTexture::TEX_Flat);
+            picnum = TexMan.CheckForTexture ("FLOOR26", FTexture::TEX_Flat);
         } else if (r_bordertexture == 12) {
+            picnum = TexMan.CheckForTexture ("FLOOR18", FTexture::TEX_Flat);
+        } else if (r_bordertexture == 13) {
+            picnum = TexMan.CheckForTexture ("FLOOR27", FTexture::TEX_Flat);
+        } else if (r_bordertexture == 14) {
             picnum = TexMan.CheckForTexture ("FLOOR17", FTexture::TEX_Flat);
         }
         /* Hexen */
-        else if (r_bordertexture == 13) {
+        else if (r_bordertexture == 15) {
             picnum = TexMan.CheckForTexture ("F_004", FTexture::TEX_Flat);
-        } else if (r_bordertexture == 14) {
-            picnum = TexMan.CheckForTexture ("F_008", FTexture::TEX_Flat);
-        } else if (r_bordertexture == 15) {
-            picnum = TexMan.CheckForTexture ("F_012", FTexture::TEX_Flat);
         } else if (r_bordertexture == 16) {
-            picnum = TexMan.CheckForTexture ("F_065", FTexture::TEX_Flat);
+            picnum = TexMan.CheckForTexture ("F_008", FTexture::TEX_Flat);
         } else if (r_bordertexture == 17) {
-            picnum = TexMan.CheckForTexture ("F_0082", FTexture::TEX_Flat);
+            picnum = TexMan.CheckForTexture ("F_012", FTexture::TEX_Flat);
         } else if (r_bordertexture == 18) {
+            picnum = TexMan.CheckForTexture ("F_065", FTexture::TEX_Flat);
+        } else if (r_bordertexture == 19) {
+            picnum = TexMan.CheckForTexture ("F_0082", FTexture::TEX_Flat);
+        } else if (r_bordertexture == 20) {
             picnum = TexMan.CheckForTexture ("F_074", FTexture::TEX_Flat);
         }
         /* Strife */
-        else if (r_bordertexture == 19) {
+        else if (r_bordertexture == 21) {
             picnum = TexMan.CheckForTexture ("F_GDCONC", FTexture::TEX_Flat);
-        } else if (r_bordertexture == 20) {
-            picnum = TexMan.CheckForTexture ("F_BASHXL", FTexture::TEX_Flat);
-        } else if (r_bordertexture == 21) {
-            picnum = TexMan.CheckForTexture ("F_DECK", FTexture::TEX_Flat);
         } else if (r_bordertexture == 22) {
-            picnum = TexMan.CheckForTexture ("F_TEKABS", FTexture::TEX_Flat);
+            picnum = TexMan.CheckForTexture ("F_BASHXL", FTexture::TEX_Flat);
         } else if (r_bordertexture == 23) {
-            picnum = TexMan.CheckForTexture ("F_FANTEK", FTexture::TEX_Flat);
+            picnum = TexMan.CheckForTexture ("F_DECK", FTexture::TEX_Flat);
         } else if (r_bordertexture == 24) {
+            picnum = TexMan.CheckForTexture ("F_TEKABS", FTexture::TEX_Flat);
+        } else if (r_bordertexture == 25) {
+            picnum = TexMan.CheckForTexture ("F_FANTEK", FTexture::TEX_Flat);
+        } else if (r_bordertexture == 26) {
             picnum = TexMan.CheckForTexture ("F_SIGWIN", FTexture::TEX_Flat);
         }
         /* Default for all games */
