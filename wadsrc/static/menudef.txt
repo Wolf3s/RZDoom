@@ -762,40 +762,41 @@ OptionValue BorderTexturesDoom
 	9.0, "Icarus"
 	10.0, "Vanguard"
 	11.0, "Sunder"
-	12.0, "Sunder"
+	12.0, "Vanilla"
+	13.0, "Community Trunk"
 	50.0, "Default"
 }
 
 OptionValue BorderTexturesHeretic
 {
-	13.0, "FLOOR03"
-	14.0, "FLOOR05"
-	15.0, "FLOOR26"
-	16.0, "FLOOR18"
-	17.0, "FLOOR27"
-	18.0, "FLOOR17"
+	14.0, "FLOOR03"
+	15.0, "FLOOR05"
+	16.0, "FLOOR26"
+	17.0, "FLOOR18"
+	18.0, "FLOOR27"
+	19.0, "FLOOR17"
 	50.0, "Default"
 }
 
 OptionValue BorderTexturesHexen
 {
-	19.0, "F_004"
-	20.0, "F_008"
-	21.0, "F_0012"
-	22.0, "F_065"
-	23.0, "F_0082"
-	24.0, "F_074"
+	20.0, "F_004"
+	21.0, "F_008"
+	22.0, "F_0012"
+	23.0, "F_065"
+	24.0, "F_0082"
+	25.0, "F_074"
 	50.0, "Default"
 }
 
 OptionValue BorderTexturesStrife
 {
-	25.0, "F_GDCONC"
-	26.0, "F_BASHXL"
-	27.0, "F_DECK"
-	28.0, "F_TEKABS"
-	29.0, "F_FANTEK"
-	30.0, "F_SIGWIN"
+	26.0, "F_GDCONC"
+	27.0, "F_BASHXL"
+	28.0, "F_DECK"
+	29.0, "F_TEKABS"
+	30.0, "F_FANTEK"
+	31.0, "F_SIGWIN"
 	50.0, "Default"
 }
 
