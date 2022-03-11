@@ -767,7 +767,7 @@ void FHexenStartupScreen::NetProgress(int count)
 			y = ST_NETPROGRESS_Y;
 			ST_Util_DrawBlock (StartupBitmap, NetNotchBits, x, y, ST_NETNOTCH_WIDTH / 2, ST_NETNOTCH_HEIGHT);
 		}
-		S_Sound (CHAN_BODY, "misc/netnotch", 1, ATTN_NONE);
+		S_Sound(CHAN_BODY, "misc/netnotch", 1, ATTN_NONE);
 		I_GetEvent ();
 	}
 }
@@ -1086,12 +1086,12 @@ void ST_Endoom()
 {
 	if (showendoom == 0) exit(0);
 
-	if (gameinfo.Endoom.Len() == 0) 
+	if (gameinfo.Endoom[0] == 0) 
 	{
 		exit(0);
 	}
 
-	int endoom_lump = Wads.CheckNumForFullName (gameinfo.Endoom, true);
+	int endoom_lump = Wads.CheckNumForName (gameinfo.Endoom);
 
 	BYTE endoom_screen[4000];
 	BYTE *font;
@@ -1227,11 +1227,9 @@ void ST_Util_SizeWindowForBitmap (int scale)
 	{
 		rect.bottom = 0;
 	}
-	RECT sizerect = { 0, 0, StartupBitmap->bmiHeader.biWidth * scale,
-		StartupBitmap->bmiHeader.biHeight * scale + rect.bottom };
-	AdjustWindowRectEx(&sizerect, WS_VISIBLE|WS_OVERLAPPEDWINDOW, FALSE, WS_EX_APPWINDOW);
-	w = sizerect.right - sizerect.left;
-	h = sizerect.bottom - sizerect.top;
+	w = StartupBitmap->bmiHeader.biWidth * scale + GetSystemMetrics (SM_CXSIZEFRAME)*2;
+	h = StartupBitmap->bmiHeader.biHeight * scale + rect.bottom
+		+ GetSystemMetrics (SM_CYSIZEFRAME) * 2 + GetSystemMetrics (SM_CYCAPTION);
 
 	// Resize the window, but keep its center point the same, unless that
 	// puts it partially offscreen.
@@ -1581,7 +1579,7 @@ void ST_Util_DrawChar (BITMAPINFO *screen, const BYTE *font, int x, int y, BYTE 
 	const BYTE fg      = attrib & 0x0F;
 	const BYTE fg_left = fg << 4;
 	const BYTE bg      = bg_left >> 4;
-	const BYTE color_array[4] = { bg_left | bg, attrib & 0x7F, fg_left | bg, fg_left | fg };
+	const BYTE color_array[4] = { (BYTE)(bg_left | bg), (BYTE)(attrib & 0x7F), (BYTE)(fg_left | bg), (BYTE)(fg_left | fg) };
 	const BYTE *src = font + 1 + charnum * font[0];
 	int pitch = screen->bmiHeader.biWidth >> 1;
 	BYTE *dest = ST_Util_BitsForBitmap(screen) + x*4 + y * font[0] * pitch;
