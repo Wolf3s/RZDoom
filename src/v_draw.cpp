@@ -1397,45 +1397,6 @@ void V_SetBorderNeedRefresh()
 	}
 }
 
-//==========================================================================
-//
-// V_DrawFrame
-//
-// Draw a frame around the specified area using the view border
-// frame graphics. The border is drawn outside the area, not in it.
-//
-//==========================================================================
-
-void V_DrawFrame (int left, int top, int width, int height)
-{
-	FTexture *p;
-	const gameborder_t *border = &gameinfo.Border;
-	// Sanity check for incomplete gameinfo
-	if (border == NULL)
-		return;
-	int offset = border->offset;
-	int right = left + width;
-	int bottom = top + height;
-
-	// Draw top and bottom sides.
-	p = TexMan[border->t];
-	screen->FlatFill(left, top - p->GetHeight(), right, top, p, true);
-	p = TexMan[border->b];
-	screen->FlatFill(left, bottom, right, bottom + p->GetHeight(), p, true);
-
-	// Draw left and right sides.
-	p = TexMan[border->l];
-	screen->FlatFill(left - p->GetWidth(), top, left, bottom, p, true);
-	p = TexMan[border->r];
-	screen->FlatFill(right, top, right + p->GetWidth(), bottom, p, true);
-
-	// Draw beveled corners.
-	screen->DrawTexture (TexMan[border->tl], left-offset, top-offset, TAG_DONE);
-	screen->DrawTexture (TexMan[border->tr], left+width, top-offset, TAG_DONE);
-	screen->DrawTexture (TexMan[border->bl], left-offset, top+height, TAG_DONE);
-	screen->DrawTexture (TexMan[border->br], left+width, top+height, TAG_DONE);
-}
-
 CVAR (Int, r_bordertexture, 50, CVAR_ARCHIVE);
 //==========================================================================
 //
@@ -1571,7 +1532,6 @@ static void V_DrawViewBorder (void)
 	V_DrawBorder (viewwindowx + viewwidth, viewwindowy, SCREENWIDTH, viewheight + viewwindowy);
 	V_DrawBorder (0, viewwindowy + viewheight, SCREENWIDTH, ST_Y);
 
-	V_DrawFrame (viewwindowx, viewwindowy, viewwidth, viewheight);
 	V_MarkRect (0, 0, SCREENWIDTH, ST_Y);
 }
 
