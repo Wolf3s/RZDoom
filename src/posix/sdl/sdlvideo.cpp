@@ -370,7 +370,7 @@ SDLFB::SDLFB (int width, int height, bool fullscreen, SDL_Window *oldwin)
 	else
 	{
 		FString caption;
-		caption.Format(GAMESIG " %s ", GetVersionString());
+		caption.Format(GAMESIG, VERSIONSTR);
 
 		Screen = SDL_CreateWindow (caption,
 			SDL_WINDOWPOS_UNDEFINED_DISPLAY(vid_adapter), SDL_WINDOWPOS_UNDEFINED_DISPLAY(vid_adapter),
