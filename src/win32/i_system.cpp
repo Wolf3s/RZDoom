@@ -745,9 +745,7 @@ void CalculateCPUSpeed()
 
 void I_Init()
 {
-	CheckCPUID(&CPU);
 	CalculateCPUSpeed();
-	DumpCPUInfo(&CPU);
 
 	I_GetTime = I_GetTimeSelect;
 	I_WaitForTic = I_WaitForTicSelect;

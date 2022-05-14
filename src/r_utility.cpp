@@ -488,8 +488,8 @@ CUSTOM_CVAR (Int, screenblocks, 10, CVAR_ARCHIVE)
 {
 	if (self > 12)
 		self = 12;
-	else if (self < 3)
-		self = 3;
+	else if (self < 10)
+		self = 10;
 	else
 		R_SetViewSize (self);
 }
