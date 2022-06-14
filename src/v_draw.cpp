@@ -1397,6 +1397,45 @@ void V_SetBorderNeedRefresh()
 	}
 }
 
+//==========================================================================
+//
+// V_DrawFrame
+//
+// Draw a frame around the specified area using the view border
+// frame graphics. The border is drawn outside the area, not in it.
+//
+//==========================================================================
+
+void V_DrawFrame (int left, int top, int width, int height)
+{
+	FTexture *p;
+	const gameborder_t *border = &gameinfo.Border;
+	// Sanity check for incomplete gameinfo
+	if (border == NULL)
+		return;
+	int offset = border->offset;
+	int right = left + width;
+	int bottom = top + height;
+
+	// Draw top and bottom sides.
+	p = TexMan[border->t];
+	screen->FlatFill(left, top - p->GetHeight(), right, top, p, true);
+	p = TexMan[border->b];
+	screen->FlatFill(left, bottom, right, bottom + p->GetHeight(), p, true);
+
+	// Draw left and right sides.
+	p = TexMan[border->l];
+	screen->FlatFill(left - p->GetWidth(), top, left, bottom, p, true);
+	p = TexMan[border->r];
+	screen->FlatFill(right, top, right + p->GetWidth(), bottom, p, true);
+
+	// Draw beveled corners.
+	screen->DrawTexture (TexMan[border->tl], left-offset, top-offset, TAG_DONE);
+	screen->DrawTexture (TexMan[border->tr], left+width, top-offset, TAG_DONE);
+	screen->DrawTexture (TexMan[border->bl], left-offset, top+height, TAG_DONE);
+	screen->DrawTexture (TexMan[border->br], left+width, top+height, TAG_DONE);
+}
+
 CVAR (Int, r_bordertexture, 50, CVAR_ARCHIVE);
 //==========================================================================
 //
@@ -1427,63 +1466,47 @@ void V_DrawBorder (int x1, int y1, int x2, int y2)
             picnum = TexMan.CheckForTexture ("FLAT5_5", FTexture::TEX_Flat);
         } else if (r_bordertexture == 5) {
             picnum = TexMan.CheckForTexture ("CEIL5_2", FTexture::TEX_Flat);
-        } else if (r_bordertexture == 6) {
-            picnum = TexMan.CheckForTexture ("CC1", FTexture::TEX_Flat);
-        } else if (r_bordertexture == 7) {
-            picnum = TexMan.CheckForTexture ("AA", FTexture::TEX_Flat);
-        } else if (r_bordertexture == 8) {
-            picnum = TexMan.CheckForTexture ("SL", FTexture::TEX_Flat);
-        } else if (r_bordertexture == 9) {
-            picnum = TexMan.CheckForTexture ("ICARUS", FTexture::TEX_Flat);
-	} else if (r_bordertexture == 10) {
-	    picnum = TexMan.CheckForTexture("VANGUARD", FTexture::TEX_Flat);
-	} else if (r_bordertexture == 11) {
-	    picnum = TexMan.CheckForTexture("SUNDER", FTexture::TEX_Flat);
-	} else if (r_bordertexture == 12) {
-	    picnum = TexMan.CheckForTexture("VANILLA", FTexture::TEX_Flat);
-	} else if (r_bordertexture == 13) {
-	    picnum = TexMan.CheckForTexture("CT", FTexture::TEX_Flat);
         }
         /* Heretic */
-        else if (r_bordertexture == 14) {
+        else if (r_bordertexture == 6) {
             picnum = TexMan.CheckForTexture ("FLOOR03", FTexture::TEX_Flat);
-        } else if (r_bordertexture == 15) {
+        } else if (r_bordertexture == 7) {
             picnum = TexMan.CheckForTexture ("FLOOR05", FTexture::TEX_Flat);
-        } else if (r_bordertexture == 16) {
+        } else if (r_bordertexture == 8) {
             picnum = TexMan.CheckForTexture ("FLOOR26", FTexture::TEX_Flat);
-        } else if (r_bordertexture == 17) {
+        } else if (r_bordertexture == 9) {
             picnum = TexMan.CheckForTexture ("FLOOR18", FTexture::TEX_Flat);
-        } else if (r_bordertexture == 18) {
+        } else if (r_bordertexture == 10) {
             picnum = TexMan.CheckForTexture ("FLOOR27", FTexture::TEX_Flat);
-        } else if (r_bordertexture == 19) {
+        } else if (r_bordertexture == 11) {
             picnum = TexMan.CheckForTexture ("FLOOR17", FTexture::TEX_Flat);
         }
         /* Hexen */
-        else if (r_bordertexture == 20) {
+        else if (r_bordertexture == 12) {
             picnum = TexMan.CheckForTexture ("F_004", FTexture::TEX_Flat);
-        } else if (r_bordertexture == 21) {
+        } else if (r_bordertexture == 13) {
             picnum = TexMan.CheckForTexture ("F_008", FTexture::TEX_Flat);
-        } else if (r_bordertexture == 22) {
+        } else if (r_bordertexture == 14) {
             picnum = TexMan.CheckForTexture ("F_012", FTexture::TEX_Flat);
-        } else if (r_bordertexture == 23) {
+        } else if (r_bordertexture == 15) {
             picnum = TexMan.CheckForTexture ("F_065", FTexture::TEX_Flat);
-        } else if (r_bordertexture == 24) {
+        } else if (r_bordertexture == 16) {
             picnum = TexMan.CheckForTexture ("F_0082", FTexture::TEX_Flat);
-        } else if (r_bordertexture == 25) {
+        } else if (r_bordertexture == 17) {
             picnum = TexMan.CheckForTexture ("F_074", FTexture::TEX_Flat);
         }
         /* Strife */
-        else if (r_bordertexture == 26) {
+        else if (r_bordertexture == 18) {
             picnum = TexMan.CheckForTexture ("F_GDCONC", FTexture::TEX_Flat);
-        } else if (r_bordertexture == 27) {
+        } else if (r_bordertexture == 19) {
             picnum = TexMan.CheckForTexture ("F_BASHXL", FTexture::TEX_Flat);
-        } else if (r_bordertexture == 28) {
+        } else if (r_bordertexture == 20) {
             picnum = TexMan.CheckForTexture ("F_DECK", FTexture::TEX_Flat);
-        } else if (r_bordertexture == 29) {
+        } else if (r_bordertexture == 21) {
             picnum = TexMan.CheckForTexture ("F_TEKABS", FTexture::TEX_Flat);
-        } else if (r_bordertexture == 30) {
+        } else if (r_bordertexture == 22) {
             picnum = TexMan.CheckForTexture ("F_FANTEK", FTexture::TEX_Flat);
-        } else if (r_bordertexture == 31) {
+        } else if (r_bordertexture == 23) {
             picnum = TexMan.CheckForTexture ("F_SIGWIN", FTexture::TEX_Flat);
         }
         /* Default for all games */
@@ -1532,6 +1555,7 @@ static void V_DrawViewBorder (void)
 	V_DrawBorder (viewwindowx + viewwidth, viewwindowy, SCREENWIDTH, viewheight + viewwindowy);
 	V_DrawBorder (0, viewwindowy + viewheight, SCREENWIDTH, ST_Y);
 
+	V_DrawFrame (viewwindowx, viewwindowy, viewwidth, viewheight);
 	V_MarkRect (0, 0, SCREENWIDTH, ST_Y);
 }
 

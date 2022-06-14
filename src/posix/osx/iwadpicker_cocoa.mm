@@ -4,7 +4,7 @@
  ** Implements Mac OS X native IWAD Picker.
  **
  **---------------------------------------------------------------------------
- ** Copyright 2010 Braden Obrzut, 2022 Gibbon
+ ** Copyright 2010 Braden Obrzut
  ** All rights reserved.
  **
  ** Redistribution and use in source and binary forms, with or without
@@ -207,7 +207,7 @@ static NSArray* GetKnownExtensions()
 	[openPanel setResolvesAliases:YES];
 	[openPanel setAllowedFileTypes:GetKnownExtensions()];
 
-    if (NSModalResponseOK == [openPanel runModal])
+	if (NSOKButton == [openPanel runModal])
 	{
 		NSArray* files = [openPanel URLs];
 		NSMutableString* parameters = [NSMutableString string];
@@ -272,7 +272,7 @@ static NSArray* GetKnownExtensions()
 	id windowTitle = [NSString stringWithFormat:@"%s %s", GAMENAME, GetVersionString()];
 
 	NSRect frame = NSMakeRect(0, 0, 440, 450);
-    window = [[NSWindow alloc] initWithContentRect:frame styleMask:NSWindowStyleMaskTitled backing:NSBackingStoreBuffered defer:NO];
+	window = [[NSWindow alloc] initWithContentRect:frame styleMask:NSTitledWindowMask backing:NSBackingStoreBuffered defer:NO];
 	[window setTitle:windowTitle];
 
 	NSTextField *description = [[NSTextField alloc] initWithFrame:NSMakeRect(18, 384, 402, 50)];
@@ -324,7 +324,7 @@ static NSArray* GetKnownExtensions()
 
 	okButton = [[NSButton alloc] initWithFrame:NSMakeRect(236, 8, 96, 32)];
 	[okButton setTitle:@"OK"];
-    [okButton setBezelStyle:NSBezelStyleRounded];
+	[okButton setBezelStyle:NSRoundedBezelStyle];
 	[okButton setAction:@selector(buttonPressed:)];
 	[okButton setTarget:self];
 	[okButton setKeyEquivalent:@"\r"];
@@ -332,7 +332,7 @@ static NSArray* GetKnownExtensions()
 
 	cancelButton = [[NSButton alloc] initWithFrame:NSMakeRect(332, 8, 96, 32)];
 	[cancelButton setTitle:@"Cancel"];
-	[cancelButton setBezelStyle:NSBezelStyleRounded];
+	[cancelButton setBezelStyle:NSRoundedBezelStyle];
 	[cancelButton setAction:@selector(buttonPressed:)];
 	[cancelButton setTarget:self];
 	[cancelButton setKeyEquivalent:@"\033"];
@@ -340,7 +340,7 @@ static NSArray* GetKnownExtensions()
 
 	browseButton = [[NSButton alloc] initWithFrame:NSMakeRect(14, 8, 96, 32)];
 	[browseButton setTitle:@"Browse..."];
-	[browseButton setBezelStyle:NSBezelStyleRounded];
+	[browseButton setBezelStyle:NSRoundedBezelStyle];
 	[browseButton setAction:@selector(browseButtonPressed:)];
 	[browseButton setTarget:self];
 	[[window contentView] addSubview:browseButton];

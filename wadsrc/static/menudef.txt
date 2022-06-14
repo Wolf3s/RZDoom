@@ -756,47 +756,39 @@ OptionValue BorderTexturesDoom
 	3.0, "FLOOR6_2"
 	4.0, "FLAT5_5"
 	5.0, "CEIL5_2"
-	6.0, "Community Chest"
-	7.0, "Ancient Aliens"
-	8.0, "Sunlust"
-	9.0, "Icarus"
-	10.0, "Vanguard"
-	11.0, "Sunder"
-	12.0, "Vanilla"
-	13.0, "Community Trunk"
 	50.0, "Default"
 }
 
 OptionValue BorderTexturesHeretic
 {
-	14.0, "FLOOR03"
-	15.0, "FLOOR05"
-	16.0, "FLOOR26"
-	17.0, "FLOOR18"
-	18.0, "FLOOR27"
-	19.0, "FLOOR17"
+	6.0, "FLOOR03"
+	7.0, "FLOOR05"
+	8.0, "FLOOR26"
+	9.0, "FLOOR18"
+	10.0, "FLOOR27"
+	11.0, "FLOOR17"
 	50.0, "Default"
 }
 
 OptionValue BorderTexturesHexen
 {
-	20.0, "F_004"
-	21.0, "F_008"
-	22.0, "F_0012"
-	23.0, "F_065"
-	24.0, "F_0082"
-	25.0, "F_074"
+	12.0, "F_004"
+	13.0, "F_008"
+	14.0, "F_0012"
+	15.0, "F_065"
+	16.0, "F_0082"
+	17.0, "F_074"
 	50.0, "Default"
 }
 
 OptionValue BorderTexturesStrife
 {
-	26.0, "F_GDCONC"
-	27.0, "F_BASHXL"
-	28.0, "F_DECK"
-	29.0, "F_TEKABS"
-	30.0, "F_FANTEK"
-	31.0, "F_SIGWIN"
+	18.0, "F_GDCONC"
+	19.0, "F_BASHXL"
+	20.0, "F_DECK"
+	21.0, "F_TEKABS"
+	22.0, "F_FANTEK"
+	23.0, "F_SIGWIN"
 	50.0, "Default"
 }
 

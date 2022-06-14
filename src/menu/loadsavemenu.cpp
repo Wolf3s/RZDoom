@@ -559,6 +559,7 @@ void DLoadSaveMenu::Drawer ()
 		return;
 	}
 
+	V_DrawFrame (savepicLeft, savepicTop, savepicWidth, savepicHeight);
 	if (SavePic != NULL)
 	{
 		screen->DrawTexture(SavePic, savepicLeft, savepicTop,
@@ -586,6 +587,7 @@ void DLoadSaveMenu::Drawer ()
 	}
 
 	// Draw comment area
+	V_DrawFrame (commentLeft, commentTop, commentWidth, commentHeight);
 	screen->Clear (commentLeft, commentTop, commentRight, commentBottom, 0, 0);
 	if (SaveComment != NULL)
 	{
@@ -601,6 +603,7 @@ void DLoadSaveMenu::Drawer ()
 	}
 
 	// Draw file area
+	V_DrawFrame (listboxLeft, listboxTop, listboxWidth, listboxHeight);
 	screen->Clear (listboxLeft, listboxTop, listboxRight, listboxBottom, 0, 0);
 
 	if (SaveGames.Size() == 0)

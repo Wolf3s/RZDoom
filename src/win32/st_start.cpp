@@ -120,11 +120,11 @@ public:
 	~FBasicStartupScreen();
 
 	void Progress();
-	void NetInit(const char *message, int num_players);
+	void NetInit(const char* message, int num_players);
 	void NetProgress(int count);
-	void NetMessage(const char *format, ...);	// cover for printf
+	void NetMessage(const char* format, ...);	// cover for printf
 	void NetDone();
-	bool NetLoop(bool (*timer_callback)(void *), void *userdata);
+	bool NetLoop(bool (*timer_callback)(void*), void* userdata);
 protected:
 	LRESULT NetMarqueeMode;
 	int NetMaxPos, NetCurPos;
@@ -140,11 +140,11 @@ public:
 class FHereticStartupScreen : public FGraphicalStartupScreen
 {
 public:
-	FHereticStartupScreen(int max_progress, HRESULT &hr);
+	FHereticStartupScreen(int max_progress, HRESULT& hr);
 
 	void Progress();
-	void LoadingStatus(const char *message, int colors);
-	void AppendStatusLine(const char *status);
+	void LoadingStatus(const char* message, int colors);
+	void AppendStatusLine(const char* status);
 protected:
 	int ThermX, ThermY, ThermWidth, ThermHeight;
 	int HMsgY, SMsgX;
@@ -153,7 +153,7 @@ protected:
 class FHexenStartupScreen : public FGraphicalStartupScreen
 {
 public:
-	FHexenStartupScreen(int max_progress, HRESULT &hr);
+	FHexenStartupScreen(int max_progress, HRESULT& hr);
 	~FHexenStartupScreen();
 
 	void Progress();
@@ -161,51 +161,51 @@ public:
 	void NetDone();
 
 	// Hexen's notch graphics, converted to chunky pixels.
-	BYTE * NotchBits;
-	BYTE * NetNotchBits;
+	BYTE* NotchBits;
+	BYTE* NetNotchBits;
 };
 
 class FStrifeStartupScreen : public FGraphicalStartupScreen
 {
 public:
-	FStrifeStartupScreen(int max_progress, HRESULT &hr);
+	FStrifeStartupScreen(int max_progress, HRESULT& hr);
 	~FStrifeStartupScreen();
 
 	void Progress();
 protected:
 	void DrawStuff(int old_laser, int new_laser);
 
-	BYTE *StartupPics[4+2+1];
+	BYTE* StartupPics[4 + 2 + 1];
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 void RestoreConView();
-void LayoutMainWindow (HWND hWnd, HWND pane);
-int LayoutNetStartPane (HWND pane, int w);
+void LayoutMainWindow(HWND hWnd, HWND pane);
+int LayoutNetStartPane(HWND pane, int w);
 
-bool ST_Util_CreateStartupWindow ();
-void ST_Util_SizeWindowForBitmap (int scale);
-BITMAPINFO *ST_Util_CreateBitmap (int width, int height, int color_bits);
-BYTE *ST_Util_BitsForBitmap (BITMAPINFO *bitmap_info);
-void ST_Util_FreeBitmap (BITMAPINFO *bitmap_info);
-void ST_Util_BitmapColorsFromPlaypal (BITMAPINFO *bitmap_info);
-void ST_Util_PlanarToChunky4 (BYTE *dest, const BYTE *src, int width, int height);
-void ST_Util_DrawBlock (BITMAPINFO *bitmap_info, const BYTE *src, int x, int y, int bytewidth, int height);
-void ST_Util_ClearBlock (BITMAPINFO *bitmap_info, BYTE fill, int x, int y, int bytewidth, int height);
-void ST_Util_InvalidateRect (HWND hwnd, BITMAPINFO *bitmap_info, int left, int top, int right, int bottom);
-BYTE *ST_Util_LoadFont (const char *filename);
-void ST_Util_FreeFont (BYTE *font);
-BITMAPINFO *ST_Util_AllocTextBitmap (const BYTE *font);
-void ST_Util_DrawTextScreen (BITMAPINFO *bitmap_info, const BYTE *text_screen, const BYTE *font);
-void ST_Util_UpdateTextBlink (BITMAPINFO *bitmap_info, const BYTE *text_screen, const BYTE *font, bool blink_on);
-void ST_Util_DrawChar (BITMAPINFO *screen, const BYTE *font, int x, int y, BYTE charnum, BYTE attrib);
+bool ST_Util_CreateStartupWindow();
+void ST_Util_SizeWindowForBitmap(int scale);
+BITMAPINFO* ST_Util_CreateBitmap(int width, int height, int color_bits);
+BYTE* ST_Util_BitsForBitmap(BITMAPINFO* bitmap_info);
+void ST_Util_FreeBitmap(BITMAPINFO* bitmap_info);
+void ST_Util_BitmapColorsFromPlaypal(BITMAPINFO* bitmap_info);
+void ST_Util_PlanarToChunky4(BYTE* dest, const BYTE* src, int width, int height);
+void ST_Util_DrawBlock(BITMAPINFO* bitmap_info, const BYTE* src, int x, int y, int bytewidth, int height);
+void ST_Util_ClearBlock(BITMAPINFO* bitmap_info, BYTE fill, int x, int y, int bytewidth, int height);
+void ST_Util_InvalidateRect(HWND hwnd, BITMAPINFO* bitmap_info, int left, int top, int right, int bottom);
+BYTE* ST_Util_LoadFont(const char* filename);
+void ST_Util_FreeFont(BYTE* font);
+BITMAPINFO* ST_Util_AllocTextBitmap(const BYTE* font);
+void ST_Util_DrawTextScreen(BITMAPINFO* bitmap_info, const BYTE* text_screen, const BYTE* font);
+void ST_Util_UpdateTextBlink(BITMAPINFO* bitmap_info, const BYTE* text_screen, const BYTE* font, bool blink_on);
+void ST_Util_DrawChar(BITMAPINFO* screen, const BYTE* font, int x, int y, BYTE charnum, BYTE attrib);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static INT_PTR CALLBACK NetStartPaneProc (HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam);
+static INT_PTR CALLBACK NetStartPaneProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -214,24 +214,24 @@ extern HWND Window, ConWindow, ProgressBar, NetStartPane, StartupScreen, GameTit
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-FStartupScreen *StartScreen;
-BITMAPINFO *StartupBitmap;
+FStartupScreen* StartScreen;
+BITMAPINFO* StartupBitmap;
 
-CUSTOM_CVAR(Int, showendoom, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, showendoom, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (self < 0) self = 0;
-	else if (self > 2) self=2;
+	else if (self > 2) self = 2;
 }
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static const char *StrifeStartupPicNames[4+2+1] =
+static const char* StrifeStartupPicNames[4 + 2 + 1] =
 {
 	"STRTPA1", "STRTPB1", "STRTPC1", "STRTPD1",
 	"STRTLZ1", "STRTLZ2",
 	"STRTBOT"
 };
-static const int StrifeStartupPicSizes[4+2+1] =
+static const int StrifeStartupPicSizes[4 + 2 + 1] =
 {
 	2048, 2048, 2048, 2048,
 	256, 256,
@@ -270,9 +270,9 @@ static const RGBQUAD TextModePalette[16] =
 //
 //==========================================================================
 
-FStartupScreen *FStartupScreen::CreateInstance(int max_progress)
+FStartupScreen* FStartupScreen::CreateInstance(int max_progress)
 {
-	FStartupScreen *scr = NULL;
+	FStartupScreen* scr = NULL;
 	HRESULT hr;
 
 	if (!Args->CheckParm("-nostartup"))
@@ -314,7 +314,7 @@ FStartupScreen *FStartupScreen::CreateInstance(int max_progress)
 //==========================================================================
 
 FBasicStartupScreen::FBasicStartupScreen(int max_progress, bool show_bar)
-: FStartupScreen(max_progress)
+	: FStartupScreen(max_progress)
 {
 	if (show_bar)
 	{
@@ -322,8 +322,8 @@ FBasicStartupScreen::FBasicStartupScreen(int max_progress, bool show_bar)
 			NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS,
 			0, 0, 0, 0,
 			Window, 0, g_hInst, NULL);
-		SendMessage (ProgressBar, PBM_SETRANGE, 0, MAKELPARAM(0,MaxPos));
-		LayoutMainWindow (Window, NULL);
+		SendMessage(ProgressBar, PBM_SETRANGE, 0, MAKELPARAM(0, MaxPos));
+		LayoutMainWindow(Window, NULL);
 	}
 	NetMaxPos = 0;
 	NetCurPos = 0;
@@ -342,9 +342,9 @@ FBasicStartupScreen::~FBasicStartupScreen()
 {
 	if (ProgressBar != NULL)
 	{
-		DestroyWindow (ProgressBar);
+		DestroyWindow(ProgressBar);
 		ProgressBar = NULL;
-		LayoutMainWindow (Window, NULL);
+		LayoutMainWindow(Window, NULL);
 	}
 	KillTimer(Window, 1337);
 }
@@ -362,7 +362,7 @@ void FBasicStartupScreen::Progress()
 	if (CurPos < MaxPos)
 	{
 		CurPos++;
-		SendMessage (ProgressBar, PBM_SETPOS, CurPos, 0);
+		SendMessage(ProgressBar, PBM_SETPOS, CurPos, 0);
 	}
 }
 
@@ -378,60 +378,60 @@ void FBasicStartupScreen::Progress()
 //
 //==========================================================================
 
-void FBasicStartupScreen::NetInit(const char *message, int numplayers)
+void FBasicStartupScreen::NetInit(const char* message, int numplayers)
 {
 	NetMaxPos = numplayers;
 	if (NetStartPane == NULL)
 	{
-		NetStartPane = CreateDialogParam (g_hInst, MAKEINTRESOURCE(IDD_NETSTARTPANE), Window, NetStartPaneProc, 0);
+		NetStartPane = CreateDialogParam(g_hInst, MAKEINTRESOURCE(IDD_NETSTARTPANE), Window, NetStartPaneProc, 0);
 		// We don't need two progress bars.
 		if (ProgressBar != NULL)
 		{
-			DestroyWindow (ProgressBar);
+			DestroyWindow(ProgressBar);
 			ProgressBar = NULL;
 		}
 		RECT winrect;
-		GetWindowRect (Window, &winrect);
-		SetWindowPos (Window, NULL, 0, 0,
-			winrect.right - winrect.left, winrect.bottom - winrect.top + LayoutNetStartPane (NetStartPane, 0),
+		GetWindowRect(Window, &winrect);
+		SetWindowPos(Window, NULL, 0, 0,
+			winrect.right - winrect.left, winrect.bottom - winrect.top + LayoutNetStartPane(NetStartPane, 0),
 			SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
-		LayoutMainWindow (Window, NULL);
-		SetFocus (NetStartPane);
+		LayoutMainWindow(Window, NULL);
+		SetFocus(NetStartPane);
 	}
 	if (NetStartPane != NULL)
 	{
 		HWND ctl;
 
-		SetDlgItemText (NetStartPane, IDC_NETSTARTMESSAGE, message);
-		ctl = GetDlgItem (NetStartPane, IDC_NETSTARTPROGRESS);
+		SetDlgItemText(NetStartPane, IDC_NETSTARTMESSAGE, message);
+		ctl = GetDlgItem(NetStartPane, IDC_NETSTARTPROGRESS);
 
 		if (numplayers == 0)
 		{
 			// PBM_SETMARQUEE is only available under XP and above, so this might fail.
-			NetMarqueeMode = SendMessage (ctl, PBM_SETMARQUEE, TRUE, 100);
+			NetMarqueeMode = SendMessage(ctl, PBM_SETMARQUEE, TRUE, 100);
 			if (NetMarqueeMode == FALSE)
 			{
-				SendMessage (ctl, PBM_SETRANGE, 0, MAKELPARAM(0,16));
+				SendMessage(ctl, PBM_SETRANGE, 0, MAKELPARAM(0, 16));
 			}
 			else
 			{
 				// If we don't set the PBS_MARQUEE style, then the marquee will never show up.
-				SetWindowLong (ctl, GWL_STYLE, GetWindowLong (ctl, GWL_STYLE) | PBS_MARQUEE);
+				SetWindowLong(ctl, GWL_STYLE, GetWindowLong(ctl, GWL_STYLE) | PBS_MARQUEE);
 			}
-			SetDlgItemText (NetStartPane, IDC_NETSTARTCOUNT, "");
+			SetDlgItemText(NetStartPane, IDC_NETSTARTCOUNT, "");
 		}
 		else
 		{
 			NetMarqueeMode = FALSE;
-			SendMessage (ctl, PBM_SETMARQUEE, FALSE, 0);
+			SendMessage(ctl, PBM_SETMARQUEE, FALSE, 0);
 			// Make sure the marquee really is turned off.
-			SetWindowLong (ctl, GWL_STYLE, GetWindowLong (ctl, GWL_STYLE) & (~PBS_MARQUEE));
+			SetWindowLong(ctl, GWL_STYLE, GetWindowLong(ctl, GWL_STYLE) & (~PBS_MARQUEE));
 
-			SendMessage (ctl, PBM_SETRANGE, 0, MAKELPARAM(0,numplayers));
+			SendMessage(ctl, PBM_SETRANGE, 0, MAKELPARAM(0, numplayers));
 			if (numplayers == 1)
 			{
-				SendMessage (ctl, PBM_SETPOS, 1, 0);
-				SetDlgItemText (NetStartPane, IDC_NETSTARTCOUNT, "");
+				SendMessage(ctl, PBM_SETPOS, 1, 0);
+				SetDlgItemText(NetStartPane, IDC_NETSTARTCOUNT, "");
 			}
 		}
 	}
@@ -452,9 +452,9 @@ void FBasicStartupScreen::NetDone()
 {
 	if (NetStartPane != NULL)
 	{
-		DestroyWindow (NetStartPane);
+		DestroyWindow(NetStartPane);
 		NetStartPane = NULL;
-		LayoutMainWindow (Window, NULL);
+		LayoutMainWindow(Window, NULL);
 	}
 }
 
@@ -468,15 +468,15 @@ void FBasicStartupScreen::NetDone()
 //
 //==========================================================================
 
-void FBasicStartupScreen::NetMessage(const char *format, ...)
+void FBasicStartupScreen::NetMessage(const char* format, ...)
 {
 	FString str;
 	va_list argptr;
-	
-	va_start (argptr, format);
-	str.VFormat (format, argptr);
-	va_end (argptr);
-	Printf ("%s\n", str.GetChars());
+
+	va_start(argptr, format);
+	str.VFormat(format, argptr);
+	va_end(argptr);
+	Printf("%s\n", str.GetChars());
 }
 
 //==========================================================================
@@ -488,7 +488,7 @@ void FBasicStartupScreen::NetMessage(const char *format, ...)
 //
 //==========================================================================
 
-void FBasicStartupScreen :: NetProgress(int count)
+void FBasicStartupScreen::NetProgress(int count)
 {
 	if (count == 0)
 	{
@@ -505,15 +505,15 @@ void FBasicStartupScreen :: NetProgress(int count)
 	if (NetMaxPos == 0 && !NetMarqueeMode)
 	{
 		// PBM_SETMARQUEE didn't work, so just increment the progress bar endlessly.
-		SendDlgItemMessage (NetStartPane, IDC_NETSTARTPROGRESS, PBM_SETPOS, NetCurPos & 15, 0);
+		SendDlgItemMessage(NetStartPane, IDC_NETSTARTPROGRESS, PBM_SETPOS, NetCurPos & 15, 0);
 	}
 	else if (NetMaxPos > 1)
 	{
 		char buf[16];
 
-		mysnprintf (buf, countof(buf), "%d/%d", NetCurPos, NetMaxPos);
-		SetDlgItemText (NetStartPane, IDC_NETSTARTCOUNT, buf);
-		SendDlgItemMessage (NetStartPane, IDC_NETSTARTPROGRESS, PBM_SETPOS, MIN(NetCurPos, NetMaxPos), 0);
+		mysnprintf(buf, countof(buf), "%d/%d", NetCurPos, NetMaxPos);
+		SetDlgItemText(NetStartPane, IDC_NETSTARTCOUNT, buf);
+		SendDlgItemMessage(NetStartPane, IDC_NETSTARTPROGRESS, PBM_SETPOS, MIN(NetCurPos, NetMaxPos), 0);
 	}
 }
 
@@ -531,41 +531,41 @@ void FBasicStartupScreen :: NetProgress(int count)
 //
 //==========================================================================
 
-bool FBasicStartupScreen::NetLoop(bool (*timer_callback)(void *), void *userdata)
+bool FBasicStartupScreen::NetLoop(bool (*timer_callback)(void*), void* userdata)
 {
 	BOOL bRet;
 	MSG msg;
 
-	if (SetTimer (Window, 1337, 500, NULL) == 0)
+	if (SetTimer(Window, 1337, 500, NULL) == 0)
 	{
-		I_FatalError ("Could not set network synchronization timer.");
+		I_FatalError("Could not set network synchronization timer.");
 	}
 
 	while ((bRet = GetMessage(&msg, NULL, 0, 0)) != 0)
 	{
 		if (bRet == -1)
 		{
-			KillTimer (Window, 1337);
+			KillTimer(Window, 1337);
 			return false;
 		}
 		else
 		{
 			if (msg.message == WM_TIMER && msg.hwnd == Window && msg.wParam == 1337)
 			{
-				if (timer_callback (userdata))
+				if (timer_callback(userdata))
 				{
-					KillTimer (NetStartPane, 1);
+					KillTimer(NetStartPane, 1);
 					return true;
 				}
 			}
-			if (!IsDialogMessage (NetStartPane, &msg))
+			if (!IsDialogMessage(NetStartPane, &msg))
 			{
-				TranslateMessage (&msg);
-				DispatchMessage (&msg);
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
 			}
 		}
 	}
-	KillTimer (Window, 1337);
+	KillTimer(Window, 1337);
 	return false;
 }
 
@@ -578,11 +578,11 @@ bool FBasicStartupScreen::NetLoop(bool (*timer_callback)(void *), void *userdata
 //
 //==========================================================================
 
-static INT_PTR CALLBACK NetStartPaneProc (HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK NetStartPaneProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	if (msg == WM_COMMAND && HIWORD(wParam) == BN_CLICKED && LOWORD(wParam) == IDCANCEL)
 	{
-		PostQuitMessage (0);
+		PostQuitMessage(0);
 		return TRUE;
 	}
 	return FALSE;
@@ -598,7 +598,7 @@ static INT_PTR CALLBACK NetStartPaneProc (HWND hDlg, UINT msg, WPARAM wParam, LP
 //==========================================================================
 
 FGraphicalStartupScreen::FGraphicalStartupScreen(int max_progress)
-: FBasicStartupScreen(max_progress, false)
+	: FBasicStartupScreen(max_progress, false)
 {
 }
 
@@ -612,12 +612,12 @@ FGraphicalStartupScreen::~FGraphicalStartupScreen()
 {
 	if (StartupScreen != NULL)
 	{
-		DestroyWindow (StartupScreen);
+		DestroyWindow(StartupScreen);
 		StartupScreen = NULL;
 	}
 	if (StartupBitmap != NULL)
 	{
-		ST_Util_FreeBitmap (StartupBitmap);
+		ST_Util_FreeBitmap(StartupBitmap);
 		StartupBitmap = NULL;
 	}
 }
@@ -634,26 +634,26 @@ FGraphicalStartupScreen::~FGraphicalStartupScreen()
 //
 //==========================================================================
 
-FHexenStartupScreen::FHexenStartupScreen(int max_progress, HRESULT &hr)
-: FGraphicalStartupScreen(max_progress)
+FHexenStartupScreen::FHexenStartupScreen(int max_progress, HRESULT& hr)
+	: FGraphicalStartupScreen(max_progress)
 {
-	int startup_lump = Wads.CheckNumForName ("STARTUP");
-	int netnotch_lump = Wads.CheckNumForName ("NETNOTCH");
-	int notch_lump = Wads.CheckNumForName ("NOTCH");
+	int startup_lump = Wads.CheckNumForName("STARTUP");
+	int netnotch_lump = Wads.CheckNumForName("NETNOTCH");
+	int notch_lump = Wads.CheckNumForName("NOTCH");
 	hr = E_FAIL;
 
-	if (startup_lump < 0 || Wads.LumpLength (startup_lump) != 153648 || !ST_Util_CreateStartupWindow() ||
-		netnotch_lump < 0 || Wads.LumpLength (netnotch_lump) != ST_NETNOTCH_WIDTH / 2 * ST_NETNOTCH_HEIGHT ||
-		notch_lump < 0 || Wads.LumpLength (notch_lump) != ST_NOTCH_WIDTH / 2 * ST_NOTCH_HEIGHT)
+	if (startup_lump < 0 || Wads.LumpLength(startup_lump) != 153648 || !ST_Util_CreateStartupWindow() ||
+		netnotch_lump < 0 || Wads.LumpLength(netnotch_lump) != ST_NETNOTCH_WIDTH / 2 * ST_NETNOTCH_HEIGHT ||
+		notch_lump < 0 || Wads.LumpLength(notch_lump) != ST_NOTCH_WIDTH / 2 * ST_NOTCH_HEIGHT)
 	{
 		NetNotchBits = NotchBits = NULL;
 		return;
 	}
 
 	NetNotchBits = new BYTE[ST_NETNOTCH_WIDTH / 2 * ST_NETNOTCH_HEIGHT];
-	Wads.ReadLump (netnotch_lump, NetNotchBits);
+	Wads.ReadLump(netnotch_lump, NetNotchBits);
 	NotchBits = new BYTE[ST_NOTCH_WIDTH / 2 * ST_NOTCH_HEIGHT];
- 	Wads.ReadLump (notch_lump, NotchBits);
+	Wads.ReadLump(notch_lump, NotchBits);
 
 	BYTE startup_screen[153648];
 	union
@@ -662,18 +662,18 @@ FHexenStartupScreen::FHexenStartupScreen(int max_progress, HRESULT &hr)
 		DWORD	quad;
 	} c;
 
-	Wads.ReadLump (startup_lump, startup_screen);
+	Wads.ReadLump(startup_lump, startup_screen);
 
 	c.color.rgbReserved = 0;
 
-	StartupBitmap = ST_Util_CreateBitmap (640, 480, 4);
+	StartupBitmap = ST_Util_CreateBitmap(640, 480, 4);
 
 	// Initialize the bitmap palette.
 	for (int i = 0; i < 16; ++i)
 	{
-		c.color.rgbRed = startup_screen[i*3+0];
-		c.color.rgbGreen = startup_screen[i*3+1];
-		c.color.rgbBlue = startup_screen[i*3+2];
+		c.color.rgbRed = startup_screen[i * 3 + 0];
+		c.color.rgbGreen = startup_screen[i * 3 + 1];
+		c.color.rgbBlue = startup_screen[i * 3 + 2];
 		// Convert from 6-bit per component to 8-bit per component.
 		c.quad = (c.quad << 2) | ((c.quad >> 4) & 0x03030303);
 		StartupBitmap->bmiColors[i] = c.color;
@@ -682,11 +682,11 @@ FHexenStartupScreen::FHexenStartupScreen(int max_progress, HRESULT &hr)
 	// Fill in the bitmap data. Convert to chunky, because I can't figure out
 	// if Windows actually supports planar images or not, despite the presence
 	// of biPlanes in the BITMAPINFOHEADER.
-	ST_Util_PlanarToChunky4 (ST_Util_BitsForBitmap(StartupBitmap), startup_screen + 48, 640, 480);
+	ST_Util_PlanarToChunky4(ST_Util_BitsForBitmap(StartupBitmap), startup_screen + 48, 640, 480);
 
-	ST_Util_SizeWindowForBitmap (1);
-	LayoutMainWindow (Window, NULL);
-	InvalidateRect (StartupScreen, NULL, TRUE);
+	ST_Util_SizeWindowForBitmap(1);
+	LayoutMainWindow(Window, NULL);
+	InvalidateRect(StartupScreen, NULL, TRUE);
 
 	if (DoomStartupInfo.Song.IsNotEmpty())
 	{
@@ -694,7 +694,7 @@ FHexenStartupScreen::FHexenStartupScreen(int max_progress, HRESULT &hr)
 	}
 	else
 	{
-		S_ChangeMusic ("orb", true, true);
+		S_ChangeMusic("orb", true, true);
 	}
 	hr = S_OK;
 }
@@ -737,12 +737,12 @@ void FHexenStartupScreen::Progress()
 			{
 				x = ST_PROGRESS_X + ST_NOTCH_WIDTH * NotchPos;
 				y = ST_PROGRESS_Y;
-				ST_Util_DrawBlock (StartupBitmap, NotchBits, x, y, ST_NOTCH_WIDTH / 2, ST_NOTCH_HEIGHT);
+				ST_Util_DrawBlock(StartupBitmap, NotchBits, x, y, ST_NOTCH_WIDTH / 2, ST_NOTCH_HEIGHT);
 			}
-			S_Sound (CHAN_BODY, "StartupTick", 1, ATTN_NONE);
+			S_Sound(CHAN_BODY, "StartupTick", 1, ATTN_NONE);
 		}
 	}
-	I_GetEvent ();
+	I_GetEvent();
 }
 
 //==========================================================================
@@ -758,17 +758,17 @@ void FHexenStartupScreen::NetProgress(int count)
 	int oldpos = NetCurPos;
 	int x, y;
 
-	FGraphicalStartupScreen::NetProgress (count);
+	FGraphicalStartupScreen::NetProgress(count);
 	if (NetMaxPos != 0 && NetCurPos > oldpos)
 	{
 		for (; oldpos < NetCurPos && oldpos < ST_MAX_NETNOTCHES; ++oldpos)
 		{
 			x = ST_NETPROGRESS_X + ST_NETNOTCH_WIDTH * oldpos;
 			y = ST_NETPROGRESS_Y;
-			ST_Util_DrawBlock (StartupBitmap, NetNotchBits, x, y, ST_NETNOTCH_WIDTH / 2, ST_NETNOTCH_HEIGHT);
+			ST_Util_DrawBlock(StartupBitmap, NetNotchBits, x, y, ST_NETNOTCH_WIDTH / 2, ST_NETNOTCH_HEIGHT);
 		}
 		S_Sound(CHAN_BODY, "misc/netnotch", 1, ATTN_NONE);
-		I_GetEvent ();
+		I_GetEvent();
 	}
 }
 
@@ -782,7 +782,7 @@ void FHexenStartupScreen::NetProgress(int count)
 
 void FHexenStartupScreen::NetDone()
 {
-	S_Sound (CHAN_BODY, "PickupWeapon", 1, ATTN_NORM);
+	S_Sound(CHAN_BODY, "PickupWeapon", 1, ATTN_NORM);
 	FGraphicalStartupScreen::NetDone();
 }
 
@@ -798,36 +798,36 @@ void FHexenStartupScreen::NetDone()
 //
 //==========================================================================
 
-FHereticStartupScreen::FHereticStartupScreen(int max_progress, HRESULT &hr)
-: FGraphicalStartupScreen(max_progress)
+FHereticStartupScreen::FHereticStartupScreen(int max_progress, HRESULT& hr)
+	: FGraphicalStartupScreen(max_progress)
 {
-	int loading_lump = Wads.CheckNumForName ("LOADING");
+	int loading_lump = Wads.CheckNumForName("LOADING");
 	BYTE loading_screen[4000];
-	BYTE *font;
+	BYTE* font;
 
 	hr = E_FAIL;
-	if (loading_lump < 0 || Wads.LumpLength (loading_lump) != 4000 || !ST_Util_CreateStartupWindow())
+	if (loading_lump < 0 || Wads.LumpLength(loading_lump) != 4000 || !ST_Util_CreateStartupWindow())
 	{
 		return;
 	}
 
-	font = ST_Util_LoadFont (TEXT_FONT_NAME);
+	font = ST_Util_LoadFont(TEXT_FONT_NAME);
 	if (font == NULL)
 	{
-		DestroyWindow (StartupScreen);
+		DestroyWindow(StartupScreen);
 		return;
 	}
 
-	Wads.ReadLump (loading_lump, loading_screen);
+	Wads.ReadLump(loading_lump, loading_screen);
 
 	// Slap the Heretic minor version on the loading screen. Heretic
 	// did this inside the executable rather than coming with modified
 	// LOADING screens, so we need to do the same.
-	loading_screen[2*160 + 49*2] = HERETIC_MINOR_VERSION;
+	loading_screen[2 * 160 + 49 * 2] = HERETIC_MINOR_VERSION;
 
 	// Draw the loading screen to a bitmap.
-	StartupBitmap = ST_Util_AllocTextBitmap (font);
-	ST_Util_DrawTextScreen (StartupBitmap, loading_screen, font);
+	StartupBitmap = ST_Util_AllocTextBitmap(font);
+	ST_Util_DrawTextScreen(StartupBitmap, loading_screen, font);
 
 	ThermX = THERM_X * 8;
 	ThermY = THERM_Y * font[0];
@@ -836,11 +836,11 @@ FHereticStartupScreen::FHereticStartupScreen(int max_progress, HRESULT &hr)
 	HMsgY = 7;
 	SMsgX = 1;
 
-	ST_Util_FreeFont (font);
+	ST_Util_FreeFont(font);
 
-	ST_Util_SizeWindowForBitmap (1);
-	LayoutMainWindow (Window, NULL);
-	InvalidateRect (StartupScreen, NULL, TRUE);
+	ST_Util_SizeWindowForBitmap(1);
+	LayoutMainWindow(Window, NULL);
+	InvalidateRect(StartupScreen, NULL, TRUE);
 	hr = S_OK;
 }
 
@@ -866,11 +866,11 @@ void FHereticStartupScreen::Progress()
 			int top = ThermY;
 			int right = notch_pos + ThermX;
 			int bottom = top + ThermHeight;
-			ST_Util_ClearBlock (StartupBitmap, THERM_COLOR, left, top, right - left, bottom - top);
+			ST_Util_ClearBlock(StartupBitmap, THERM_COLOR, left, top, right - left, bottom - top);
 			NotchPos = notch_pos;
 		}
 	}
-	I_GetEvent ();
+	I_GetEvent();
 }
 
 //==========================================================================
@@ -881,21 +881,21 @@ void FHereticStartupScreen::Progress()
 //
 //==========================================================================
 
-void FHereticStartupScreen::LoadingStatus(const char *message, int colors)
+void FHereticStartupScreen::LoadingStatus(const char* message, int colors)
 {
-	BYTE *font = ST_Util_LoadFont (TEXT_FONT_NAME);
+	BYTE* font = ST_Util_LoadFont(TEXT_FONT_NAME);
 	if (font != NULL)
 	{
 		int x;
 
 		for (x = 0; message[x] != '\0'; ++x)
 		{
-			ST_Util_DrawChar (StartupBitmap, font, 17 + x, HMsgY, message[x], colors);
+			ST_Util_DrawChar(StartupBitmap, font, 17 + x, HMsgY, message[x], colors);
 		}
-		ST_Util_InvalidateRect (StartupScreen, StartupBitmap, 17 * 8, HMsgY * font[0], (17 + x) * 8, HMsgY * font[0] + font[0]);
-		ST_Util_FreeFont (font);
+		ST_Util_InvalidateRect(StartupScreen, StartupBitmap, 17 * 8, HMsgY * font[0], (17 + x) * 8, HMsgY * font[0] + font[0]);
+		ST_Util_FreeFont(font);
 		HMsgY++;
-		I_GetEvent ();
+		I_GetEvent();
 	}
 }
 
@@ -907,21 +907,21 @@ void FHereticStartupScreen::LoadingStatus(const char *message, int colors)
 //
 //==========================================================================
 
-void FHereticStartupScreen::AppendStatusLine(const char *status)
+void FHereticStartupScreen::AppendStatusLine(const char* status)
 {
-	BYTE *font = ST_Util_LoadFont (TEXT_FONT_NAME);
+	BYTE* font = ST_Util_LoadFont(TEXT_FONT_NAME);
 	if (font != NULL)
 	{
 		int x;
 
 		for (x = 0; status[x] != '\0'; ++x)
 		{
-			ST_Util_DrawChar (StartupBitmap, font, SMsgX + x, 24, status[x], 0x1f);
+			ST_Util_DrawChar(StartupBitmap, font, SMsgX + x, 24, status[x], 0x1f);
 		}
-		ST_Util_InvalidateRect (StartupScreen, StartupBitmap, SMsgX * 8, 24 * font[0], (SMsgX + x) * 8, 25 * font[0]);
-		ST_Util_FreeFont (font);
+		ST_Util_InvalidateRect(StartupScreen, StartupBitmap, SMsgX * 8, 24 * font[0], (SMsgX + x) * 8, 25 * font[0]);
+		ST_Util_FreeFont(font);
 		SMsgX += x;
-		I_GetEvent ();
+		I_GetEvent();
 	}
 }
 
@@ -941,51 +941,51 @@ void FHereticStartupScreen::AppendStatusLine(const char *status)
 //
 //==========================================================================
 
-FStrifeStartupScreen::FStrifeStartupScreen(int max_progress, HRESULT &hr)
-: FGraphicalStartupScreen(max_progress)
+FStrifeStartupScreen::FStrifeStartupScreen(int max_progress, HRESULT& hr)
+	: FGraphicalStartupScreen(max_progress)
 {
-	int startup_lump = Wads.CheckNumForName ("STARTUP0");
+	int startup_lump = Wads.CheckNumForName("STARTUP0");
 	int i;
 
 	hr = E_FAIL;
-	for (i = 0; i < 4+2+1; ++i)
+	for (i = 0; i < 4 + 2 + 1; ++i)
 	{
 		StartupPics[i] = NULL;
 	}
 
-	if (startup_lump < 0 || Wads.LumpLength (startup_lump) != 64000 || !ST_Util_CreateStartupWindow())
+	if (startup_lump < 0 || Wads.LumpLength(startup_lump) != 64000 || !ST_Util_CreateStartupWindow())
 	{
 		return;
 	}
 
-	StartupBitmap = ST_Util_CreateBitmap (320, 200, 8);
-	ST_Util_BitmapColorsFromPlaypal (StartupBitmap);
+	StartupBitmap = ST_Util_CreateBitmap(320, 200, 8);
+	ST_Util_BitmapColorsFromPlaypal(StartupBitmap);
 
 	// Fill bitmap with the startup image.
-	memset (ST_Util_BitsForBitmap(StartupBitmap), 0xF0, 64000);
-	FWadLump lumpr = Wads.OpenLumpNum (startup_lump);
-	lumpr.Seek (57 * 320, SEEK_SET);
-	lumpr.Read (ST_Util_BitsForBitmap(StartupBitmap) + 41 * 320, 95 * 320);
+	memset(ST_Util_BitsForBitmap(StartupBitmap), 0xF0, 64000);
+	FWadLump lumpr = Wads.OpenLumpNum(startup_lump);
+	lumpr.Seek(57 * 320, SEEK_SET);
+	lumpr.Read(ST_Util_BitsForBitmap(StartupBitmap) + 41 * 320, 95 * 320);
 
 	// Load the animated overlays.
-	for (i = 0; i < 4+2+1; ++i)
+	for (i = 0; i < 4 + 2 + 1; ++i)
 	{
-		int lumpnum = Wads.CheckNumForName (StrifeStartupPicNames[i]);
+		int lumpnum = Wads.CheckNumForName(StrifeStartupPicNames[i]);
 		int lumplen;
 
-		if (lumpnum >= 0 && (lumplen = Wads.LumpLength (lumpnum)) == StrifeStartupPicSizes[i])
+		if (lumpnum >= 0 && (lumplen = Wads.LumpLength(lumpnum)) == StrifeStartupPicSizes[i])
 		{
-			FWadLump lumpr = Wads.OpenLumpNum (lumpnum);
+			FWadLump lumpr = Wads.OpenLumpNum(lumpnum);
 			StartupPics[i] = new BYTE[lumplen];
-			lumpr.Read (StartupPics[i], lumplen);
+			lumpr.Read(StartupPics[i], lumplen);
 		}
 	}
 
 	// Make the startup image appear.
-	DrawStuff (0, 0);
-	ST_Util_SizeWindowForBitmap (2);
-	LayoutMainWindow (Window, NULL);
-	InvalidateRect (StartupScreen, NULL, TRUE);
+	DrawStuff(0, 0);
+	ST_Util_SizeWindowForBitmap(2);
+	LayoutMainWindow(Window, NULL);
+	InvalidateRect(StartupScreen, NULL, TRUE);
 
 	hr = S_OK;
 }
@@ -1000,7 +1000,7 @@ FStrifeStartupScreen::FStrifeStartupScreen(int max_progress, HRESULT &hr)
 
 FStrifeStartupScreen::~FStrifeStartupScreen()
 {
-	for (int i = 0; i < 4+2+1; ++i)
+	for (int i = 0; i < 4 + 2 + 1; ++i)
 	{
 		if (StartupPics[i] != NULL)
 		{
@@ -1028,11 +1028,11 @@ void FStrifeStartupScreen::Progress()
 		notch_pos = (CurPos * (ST_LASERSPACE_WIDTH - ST_LASER_WIDTH)) / MaxPos;
 		if (notch_pos != NotchPos && !(notch_pos & 1))
 		{ // Time to update.
-			DrawStuff (NotchPos, notch_pos);
+			DrawStuff(NotchPos, notch_pos);
 			NotchPos = notch_pos;
 		}
 	}
-	I_GetEvent ();
+	I_GetEvent();
 }
 
 //==========================================================================
@@ -1050,27 +1050,27 @@ void FStrifeStartupScreen::DrawStuff(int old_laser, int new_laser)
 	int y;
 
 	// Clear old laser
-	ST_Util_ClearBlock (StartupBitmap, 0xF0, ST_LASERSPACE_X + old_laser,
+	ST_Util_ClearBlock(StartupBitmap, 0xF0, ST_LASERSPACE_X + old_laser,
 		ST_LASERSPACE_Y, ST_LASER_WIDTH, ST_LASER_HEIGHT);
 	// Draw new laser
-	ST_Util_DrawBlock (StartupBitmap, StartupPics[LASER_INDEX + (new_laser & 1)],
+	ST_Util_DrawBlock(StartupBitmap, StartupPics[LASER_INDEX + (new_laser & 1)],
 		ST_LASERSPACE_X + new_laser, ST_LASERSPACE_Y, ST_LASER_WIDTH, ST_LASER_HEIGHT);
 
 	// The bot jumps up and down like crazy.
 	y = MAX(0, (new_laser >> 1) % 5 - 2);
 	if (y > 0)
 	{
-		ST_Util_ClearBlock (StartupBitmap, 0xF0, ST_BOT_X, ST_BOT_Y, ST_BOT_WIDTH, y);
+		ST_Util_ClearBlock(StartupBitmap, 0xF0, ST_BOT_X, ST_BOT_Y, ST_BOT_WIDTH, y);
 	}
-	ST_Util_DrawBlock (StartupBitmap, StartupPics[BOT_INDEX], ST_BOT_X, ST_BOT_Y + y, ST_BOT_WIDTH, ST_BOT_HEIGHT);
+	ST_Util_DrawBlock(StartupBitmap, StartupPics[BOT_INDEX], ST_BOT_X, ST_BOT_Y + y, ST_BOT_WIDTH, ST_BOT_HEIGHT);
 	if (y < (5 - 1) - 2)
 	{
-		ST_Util_ClearBlock (StartupBitmap, 0xF0, ST_BOT_X, ST_BOT_Y + ST_BOT_HEIGHT + y, ST_BOT_WIDTH, 2 - y);
+		ST_Util_ClearBlock(StartupBitmap, 0xF0, ST_BOT_X, ST_BOT_Y + ST_BOT_HEIGHT + y, ST_BOT_WIDTH, 2 - y);
 	}
 
 	// The peasant desperately runs in place, trying to get away from the laser.
 	// Yet, despite all his limb flailing, he never manages to get anywhere.
-	ST_Util_DrawBlock (StartupBitmap, StartupPics[PEASANT_INDEX + ((new_laser >> 1) & 3)],
+	ST_Util_DrawBlock(StartupBitmap, StartupPics[PEASANT_INDEX + ((new_laser >> 1) & 3)],
 		ST_PEASANT_X, ST_PEASANT_Y, ST_PEASANT_WIDTH, ST_PEASANT_HEIGHT);
 }
 
@@ -1086,21 +1086,21 @@ void ST_Endoom()
 {
 	if (showendoom == 0) exit(0);
 
-	if (gameinfo.Endoom[0] == 0) 
+	if (gameinfo.Endoom[0] == 0)
 	{
 		exit(0);
 	}
 
-	int endoom_lump = Wads.CheckNumForName (gameinfo.Endoom);
+	int endoom_lump = Wads.CheckNumForName(gameinfo.Endoom);
 
 	BYTE endoom_screen[4000];
-	BYTE *font;
+	BYTE* font;
 	MSG mess;
 	BOOL bRet;
 	bool blinking = false, blinkstate = false;
 	int i;
 
-	if (endoom_lump < 0 || Wads.LumpLength (endoom_lump) != 4000)
+	if (endoom_lump < 0 || Wads.LumpLength(endoom_lump) != 4000)
 	{
 		exit(0);
 	}
@@ -1111,7 +1111,7 @@ void ST_Endoom()
 		exit(0);
 	}
 
-	font = ST_Util_LoadFont (TEXT_FONT_NAME);
+	font = ST_Util_LoadFont(TEXT_FONT_NAME);
 	if (font == NULL)
 	{
 		exit(0);
@@ -1119,41 +1119,41 @@ void ST_Endoom()
 
 	if (!ST_Util_CreateStartupWindow())
 	{
-		ST_Util_FreeFont (font);
+		ST_Util_FreeFont(font);
 		exit(0);
 	}
 
-	I_ShutdownGraphics ();
-	RestoreConView ();
+	I_ShutdownGraphics();
+	RestoreConView();
 	S_StopMusic(true);
 
-	Wads.ReadLump (endoom_lump, endoom_screen);
+	Wads.ReadLump(endoom_lump, endoom_screen);
 
 	// Draw the loading screen to a bitmap.
-	StartupBitmap = ST_Util_AllocTextBitmap (font);
-	ST_Util_DrawTextScreen (StartupBitmap, endoom_screen, font);
+	StartupBitmap = ST_Util_AllocTextBitmap(font);
+	ST_Util_DrawTextScreen(StartupBitmap, endoom_screen, font);
 
 	// Make the title banner go away.
 	if (GameTitleWindow != NULL)
 	{
-		DestroyWindow (GameTitleWindow);
+		DestroyWindow(GameTitleWindow);
 		GameTitleWindow = NULL;
 	}
 
-	ST_Util_SizeWindowForBitmap (1);
-	LayoutMainWindow (Window, NULL);
-	InvalidateRect (StartupScreen, NULL, TRUE);
+	ST_Util_SizeWindowForBitmap(1);
+	LayoutMainWindow(Window, NULL);
+	InvalidateRect(StartupScreen, NULL, TRUE);
 
 	// Does this screen need blinking?
-	for (i = 0; i < 80*25; ++i)
+	for (i = 0; i < 80 * 25; ++i)
 	{
-		if (endoom_screen[1+i*2] & 0x80)
+		if (endoom_screen[1 + i * 2] & 0x80)
 		{
 			blinking = true;
 			break;
 		}
 	}
-	if (blinking && SetTimer (Window, 0x5A15A, BLINK_PERIOD, NULL) == 0)
+	if (blinking && SetTimer(Window, 0x5A15A, BLINK_PERIOD, NULL) == 0)
 	{
 		blinking = false;
 	}
@@ -1161,25 +1161,25 @@ void ST_Endoom()
 	// Wait until any key has been pressed or a quit message has been received
 	for (;;)
 	{
-		bRet = GetMessage (&mess, NULL, 0, 0);
+		bRet = GetMessage(&mess, NULL, 0, 0);
 		if (bRet == 0 || bRet == -1 ||	// bRet == 0 means we received WM_QUIT
 			mess.message == WM_KEYDOWN || mess.message == WM_SYSKEYDOWN || mess.message == WM_LBUTTONDOWN)
 		{
 			if (blinking)
 			{
-				KillTimer (Window, 0x5A15A);
+				KillTimer(Window, 0x5A15A);
 			}
-			ST_Util_FreeBitmap (StartupBitmap);
-			ST_Util_FreeFont (font);
-			exit (int(bRet == 0 ? mess.wParam : 0));
+			ST_Util_FreeBitmap(StartupBitmap);
+			ST_Util_FreeFont(font);
+			exit(int(bRet == 0 ? mess.wParam : 0));
 		}
 		else if (blinking && mess.message == WM_TIMER && mess.hwnd == Window && mess.wParam == 0x5A15A)
 		{
-			ST_Util_UpdateTextBlink (StartupBitmap, endoom_screen, font, blinkstate);
+			ST_Util_UpdateTextBlink(StartupBitmap, endoom_screen, font, blinkstate);
 			blinkstate = !blinkstate;
 		}
-		TranslateMessage (&mess);
-		DispatchMessage (&mess);
+		TranslateMessage(&mess);
+		DispatchMessage(&mess);
 	}
 }
 
@@ -1191,16 +1191,16 @@ void ST_Endoom()
 //
 //==========================================================================
 
-bool ST_Util_CreateStartupWindow ()
+bool ST_Util_CreateStartupWindow()
 {
-	StartupScreen = CreateWindowEx (WS_EX_NOPARENTNOTIFY, "STATIC", NULL,
+	StartupScreen = CreateWindowEx(WS_EX_NOPARENTNOTIFY, "STATIC", NULL,
 		WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | SS_OWNERDRAW,
 		0, 0, 0, 0, Window, NULL, g_hInst, NULL);
 	if (StartupScreen == NULL)
 	{
 		return false;
 	}
-	SetWindowLong (StartupScreen, GWL_ID, IDC_STATIC_STARTUP);
+	SetWindowLong(StartupScreen, GWL_ID, IDC_STATIC_STARTUP);
 	return true;
 }
 
@@ -1213,7 +1213,7 @@ bool ST_Util_CreateStartupWindow ()
 //
 //==========================================================================
 
-void ST_Util_SizeWindowForBitmap (int scale)
+void ST_Util_SizeWindowForBitmap(int scale)
 {
 	DEVMODE displaysettings;
 	int w, h, cx, cy, x, y;
@@ -1221,22 +1221,22 @@ void ST_Util_SizeWindowForBitmap (int scale)
 
 	if (GameTitleWindow != NULL)
 	{
-		GetClientRect (GameTitleWindow, &rect);
+		GetClientRect(GameTitleWindow, &rect);
 	}
 	else
 	{
 		rect.bottom = 0;
 	}
-	w = StartupBitmap->bmiHeader.biWidth * scale + GetSystemMetrics (SM_CXSIZEFRAME)*2;
+	w = StartupBitmap->bmiHeader.biWidth * scale + GetSystemMetrics(SM_CXSIZEFRAME) * 2;
 	h = StartupBitmap->bmiHeader.biHeight * scale + rect.bottom
-		+ GetSystemMetrics (SM_CYSIZEFRAME) * 2 + GetSystemMetrics (SM_CYCAPTION);
+		+ GetSystemMetrics(SM_CYSIZEFRAME) * 2 + GetSystemMetrics(SM_CYCAPTION);
 
 	// Resize the window, but keep its center point the same, unless that
 	// puts it partially offscreen.
-	memset (&displaysettings, 0, sizeof(displaysettings));
+	memset(&displaysettings, 0, sizeof(displaysettings));
 	displaysettings.dmSize = sizeof(displaysettings);
-	EnumDisplaySettings (NULL, ENUM_CURRENT_SETTINGS, &displaysettings);
-	GetWindowRect (Window, &rect);
+	EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &displaysettings);
+	GetWindowRect(Window, &rect);
 	cx = (rect.left + rect.right) / 2;
 	cy = (rect.top + rect.bottom) / 2;
 	x = cx - w / 2;
@@ -1257,7 +1257,7 @@ void ST_Util_SizeWindowForBitmap (int scale)
 	{
 		y = 0;
 	}
-	MoveWindow (Window, x, y, w, h, TRUE);
+	MoveWindow(Window, x, y, w, h, TRUE);
 }
 
 //==========================================================================
@@ -1268,10 +1268,10 @@ void ST_Util_SizeWindowForBitmap (int scale)
 //
 //==========================================================================
 
-void ST_Util_PlanarToChunky4 (BYTE *dest, const BYTE *src, int width, int height)
+void ST_Util_PlanarToChunky4(BYTE* dest, const BYTE* src, int width, int height)
 {
 	int y, x;
-	const BYTE *src1, *src2, *src3, *src4;
+	const BYTE* src1, * src2, * src3, * src4;
 	size_t plane_size = width / 8 * height;
 
 	src1 = src;
@@ -1285,16 +1285,16 @@ void ST_Util_PlanarToChunky4 (BYTE *dest, const BYTE *src, int width, int height
 		{
 			// Pixels 0 and 1
 			dest[0] = (*src4 & 0x80) | ((*src3 & 0x80) >> 1) | ((*src2 & 0x80) >> 2) | ((*src1 & 0x80) >> 3) |
-					  ((*src4 & 0x40) >> 3) | ((*src3 & 0x40) >> 4) | ((*src2 & 0x40) >> 5) | ((*src1 & 0x40) >> 6);
+				((*src4 & 0x40) >> 3) | ((*src3 & 0x40) >> 4) | ((*src2 & 0x40) >> 5) | ((*src1 & 0x40) >> 6);
 			// Pixels 2 and 3
 			dest[1] = ((*src4 & 0x20) << 2) | ((*src3 & 0x20) << 1) | ((*src2 & 0x20)) | ((*src1 & 0x20) >> 1) |
-					  ((*src4 & 0x10) >> 1) | ((*src3 & 0x10) >> 2) | ((*src2 & 0x10) >> 3) | ((*src1 & 0x10) >> 4);
+				((*src4 & 0x10) >> 1) | ((*src3 & 0x10) >> 2) | ((*src2 & 0x10) >> 3) | ((*src1 & 0x10) >> 4);
 			// Pixels 4 and 5
 			dest[2] = ((*src4 & 0x08) << 4) | ((*src3 & 0x08) << 3) | ((*src2 & 0x08) << 2) | ((*src1 & 0x08) << 1) |
-					  ((*src4 & 0x04) << 1) | ((*src3 & 0x04)) | ((*src2 & 0x04) >> 1) | ((*src1 & 0x04) >> 2);
+				((*src4 & 0x04) << 1) | ((*src3 & 0x04)) | ((*src2 & 0x04) >> 1) | ((*src1 & 0x04) >> 2);
 			// Pixels 6 and 7
 			dest[3] = ((*src4 & 0x02) << 6) | ((*src3 & 0x02) << 5) | ((*src2 & 0x02) << 4) | ((*src1 & 0x02) << 3) |
-					  ((*src4 & 0x01) << 3) | ((*src3 & 0x01) << 2) | ((*src2 & 0x01) << 1) | ((*src1 & 0x01));
+				((*src4 & 0x01) << 3) | ((*src3 & 0x01) << 2) | ((*src2 & 0x01) << 1) | ((*src1 & 0x01));
 			dest += 4;
 			src1 += 1;
 			src2 += 1;
@@ -1310,7 +1310,7 @@ void ST_Util_PlanarToChunky4 (BYTE *dest, const BYTE *src, int width, int height
 //
 //==========================================================================
 
-void ST_Util_DrawBlock (BITMAPINFO *bitmap_info, const BYTE *src, int x, int y, int bytewidth, int height)
+void ST_Util_DrawBlock(BITMAPINFO* bitmap_info, const BYTE* src, int x, int y, int bytewidth, int height)
 {
 	if (src == NULL)
 	{
@@ -1319,16 +1319,16 @@ void ST_Util_DrawBlock (BITMAPINFO *bitmap_info, const BYTE *src, int x, int y, 
 
 	int pitchshift = int(bitmap_info->bmiHeader.biBitCount == 4);
 	int destpitch = bitmap_info->bmiHeader.biWidth >> pitchshift;
-	BYTE *dest = ST_Util_BitsForBitmap(bitmap_info) + (x >> pitchshift) + y * destpitch;
+	BYTE* dest = ST_Util_BitsForBitmap(bitmap_info) + (x >> pitchshift) + y * destpitch;
 
-	ST_Util_InvalidateRect (StartupScreen, bitmap_info, x, y, x + (bytewidth << pitchshift), y + height);
+	ST_Util_InvalidateRect(StartupScreen, bitmap_info, x, y, x + (bytewidth << pitchshift), y + height);
 
 	if (bytewidth == 8)
 	{ // progress notches
 		for (; height > 0; --height)
 		{
-			((DWORD *)dest)[0] = ((const DWORD *)src)[0];
-			((DWORD *)dest)[1] = ((const DWORD *)src)[1];
+			((DWORD*)dest)[0] = ((const DWORD*)src)[0];
+			((DWORD*)dest)[1] = ((const DWORD*)src)[1];
 			dest += destpitch;
 			src += 8;
 		}
@@ -1337,7 +1337,7 @@ void ST_Util_DrawBlock (BITMAPINFO *bitmap_info, const BYTE *src, int x, int y, 
 	{ // net progress notches
 		for (; height > 0; --height)
 		{
-			*((WORD *)dest) = *((const WORD *)src);
+			*((WORD*)dest) = *((const WORD*)src);
 			dest += destpitch;
 			src += 2;
 		}
@@ -1346,7 +1346,7 @@ void ST_Util_DrawBlock (BITMAPINFO *bitmap_info, const BYTE *src, int x, int y, 
 	{
 		for (; height > 0; --height)
 		{
-			memcpy (dest, src, bytewidth);
+			memcpy(dest, src, bytewidth);
 			dest += destpitch;
 			src += bytewidth;
 		}
@@ -1359,17 +1359,17 @@ void ST_Util_DrawBlock (BITMAPINFO *bitmap_info, const BYTE *src, int x, int y, 
 //
 //==========================================================================
 
-void ST_Util_ClearBlock (BITMAPINFO *bitmap_info, BYTE fill, int x, int y, int bytewidth, int height)
+void ST_Util_ClearBlock(BITMAPINFO* bitmap_info, BYTE fill, int x, int y, int bytewidth, int height)
 {
 	int pitchshift = int(bitmap_info->bmiHeader.biBitCount == 4);
 	int destpitch = bitmap_info->bmiHeader.biWidth >> pitchshift;
-	BYTE *dest = ST_Util_BitsForBitmap(bitmap_info) + (x >> pitchshift) + y * destpitch;
+	BYTE* dest = ST_Util_BitsForBitmap(bitmap_info) + (x >> pitchshift) + y * destpitch;
 
-	ST_Util_InvalidateRect (StartupScreen, bitmap_info, x, y, x + (bytewidth << pitchshift), y + height);
+	ST_Util_InvalidateRect(StartupScreen, bitmap_info, x, y, x + (bytewidth << pitchshift), y + height);
 
 	while (height > 0)
 	{
-		memset (dest, fill, bytewidth);
+		memset(dest, fill, bytewidth);
 		dest += destpitch;
 		height--;
 	}
@@ -1388,10 +1388,10 @@ void ST_Util_ClearBlock (BITMAPINFO *bitmap_info, BYTE fill, int x, int y, int b
 //
 //==========================================================================
 
-BITMAPINFO *ST_Util_CreateBitmap (int width, int height, int color_bits)
+BITMAPINFO* ST_Util_CreateBitmap(int width, int height, int color_bits)
 {
 	DWORD size_image = (width * height) >> int(color_bits == 4);
-	BITMAPINFO *bitmap_info = (BITMAPINFO *)M_Malloc (sizeof(BITMAPINFOHEADER) +
+	BITMAPINFO* bitmap_info = (BITMAPINFO*)M_Malloc(sizeof(BITMAPINFOHEADER) +
 		(sizeof(RGBQUAD) << color_bits) + size_image);
 
 	// Initialize the header.
@@ -1419,9 +1419,9 @@ BITMAPINFO *ST_Util_CreateBitmap (int width, int height, int color_bits)
 //
 //==========================================================================
 
-BYTE *ST_Util_BitsForBitmap (BITMAPINFO *bitmap_info)
+BYTE* ST_Util_BitsForBitmap(BITMAPINFO* bitmap_info)
 {
-	return (BYTE *)bitmap_info + sizeof(BITMAPINFOHEADER) + (sizeof(RGBQUAD) << bitmap_info->bmiHeader.biBitCount);
+	return (BYTE*)bitmap_info + sizeof(BITMAPINFOHEADER) + (sizeof(RGBQUAD) << bitmap_info->bmiHeader.biBitCount);
 }
 
 //==========================================================================
@@ -1432,9 +1432,9 @@ BYTE *ST_Util_BitsForBitmap (BITMAPINFO *bitmap_info)
 //
 //==========================================================================
 
-void ST_Util_FreeBitmap (BITMAPINFO *bitmap_info)
+void ST_Util_FreeBitmap(BITMAPINFO* bitmap_info)
 {
-	M_Free (bitmap_info);
+	M_Free(bitmap_info);
 }
 
 //==========================================================================
@@ -1445,20 +1445,20 @@ void ST_Util_FreeBitmap (BITMAPINFO *bitmap_info)
 //
 //==========================================================================
 
-void ST_Util_BitmapColorsFromPlaypal (BITMAPINFO *bitmap_info)
+void ST_Util_BitmapColorsFromPlaypal(BITMAPINFO* bitmap_info)
 {
 	BYTE playpal[768];
 	int i;
 
 	{
-		FWadLump lumpr = Wads.OpenLumpName ("PLAYPAL");
-		lumpr.Read (playpal, 768);
+		FWadLump lumpr = Wads.OpenLumpName("PLAYPAL");
+		lumpr.Read(playpal, 768);
 	}
 	for (i = 0; i < 256; ++i)
 	{
-		bitmap_info->bmiColors[i].rgbBlue	= playpal[i*3+2];
-		bitmap_info->bmiColors[i].rgbGreen	= playpal[i*3+1];
-		bitmap_info->bmiColors[i].rgbRed	= playpal[i*3];
+		bitmap_info->bmiColors[i].rgbBlue = playpal[i * 3 + 2];
+		bitmap_info->bmiColors[i].rgbGreen = playpal[i * 3 + 1];
+		bitmap_info->bmiColors[i].rgbRed = playpal[i * 3];
 		bitmap_info->bmiColors[i].rgbReserved = 0;
 	}
 }
@@ -1472,16 +1472,16 @@ void ST_Util_BitmapColorsFromPlaypal (BITMAPINFO *bitmap_info)
 //
 //==========================================================================
 
-void ST_Util_InvalidateRect (HWND hwnd, BITMAPINFO *bitmap_info, int left, int top, int right, int bottom)
+void ST_Util_InvalidateRect(HWND hwnd, BITMAPINFO* bitmap_info, int left, int top, int right, int bottom)
 {
 	RECT rect;
 
-	GetClientRect (hwnd, &rect);
+	GetClientRect(hwnd, &rect);
 	rect.left = left * rect.right / bitmap_info->bmiHeader.biWidth - 1;
 	rect.top = top * rect.bottom / bitmap_info->bmiHeader.biHeight - 1;
 	rect.right = right * rect.right / bitmap_info->bmiHeader.biWidth + 1;
 	rect.bottom = bottom * rect.bottom / bitmap_info->bmiHeader.biHeight + 1;
-	InvalidateRect (hwnd, &rect, FALSE);
+	InvalidateRect(hwnd, &rect, FALSE);
 }
 
 //==========================================================================
@@ -1494,17 +1494,17 @@ void ST_Util_InvalidateRect (HWND hwnd, BITMAPINFO *bitmap_info, int left, int t
 //
 //==========================================================================
 
-BYTE *ST_Util_LoadFont (const char *filename)
+BYTE* ST_Util_LoadFont(const char* filename)
 {
 	int lumpnum, lumplen, height;
-	BYTE *font;
-	
-	lumpnum = Wads.CheckNumForFullName (filename);
+	BYTE* font;
+
+	lumpnum = Wads.CheckNumForFullName(filename);
 	if (lumpnum < 0)
 	{ // font not found
 		return NULL;
 	}
-	lumplen = Wads.LumpLength (lumpnum);
+	lumplen = Wads.LumpLength(lumpnum);
 	height = lumplen / 256;
 	if (height * 256 != lumplen)
 	{ // font is a bad size
@@ -1516,11 +1516,11 @@ BYTE *ST_Util_LoadFont (const char *filename)
 	}
 	font = new BYTE[lumplen + 1];
 	font[0] = height;	// Store font height in the first byte.
-	Wads.ReadLump (lumpnum, font + 1);
+	Wads.ReadLump(lumpnum, font + 1);
 	return font;
 }
 
-void ST_Util_FreeFont (BYTE *font)
+void ST_Util_FreeFont(BYTE* font)
 {
 	delete[] font;
 }
@@ -1534,10 +1534,10 @@ void ST_Util_FreeFont (BYTE *font)
 //
 //==========================================================================
 
-BITMAPINFO *ST_Util_AllocTextBitmap (const BYTE *font)
+BITMAPINFO* ST_Util_AllocTextBitmap(const BYTE* font)
 {
-	BITMAPINFO *bitmap = ST_Util_CreateBitmap (80 * 8, 25 * font[0], 4);
-	memcpy (bitmap->bmiColors, TextModePalette, sizeof(TextModePalette));
+	BITMAPINFO* bitmap = ST_Util_CreateBitmap(80 * 8, 25 * font[0], 4);
+	memcpy(bitmap->bmiColors, TextModePalette, sizeof(TextModePalette));
 	return bitmap;
 }
 
@@ -1550,7 +1550,7 @@ BITMAPINFO *ST_Util_AllocTextBitmap (const BYTE *font)
 //
 //==========================================================================
 
-void ST_Util_DrawTextScreen (BITMAPINFO *bitmap_info, const BYTE *text_screen, const BYTE *font)
+void ST_Util_DrawTextScreen(BITMAPINFO* bitmap_info, const BYTE* text_screen, const BYTE* font)
 {
 	int x, y;
 
@@ -1558,7 +1558,7 @@ void ST_Util_DrawTextScreen (BITMAPINFO *bitmap_info, const BYTE *text_screen, c
 	{
 		for (x = 0; x < 80; ++x)
 		{
-			ST_Util_DrawChar (bitmap_info, font, x, y, text_screen[0], text_screen[1]);
+			ST_Util_DrawChar(bitmap_info, font, x, y, text_screen[0], text_screen[1]);
 			text_screen += 2;
 		}
 	}
@@ -1573,16 +1573,16 @@ void ST_Util_DrawTextScreen (BITMAPINFO *bitmap_info, const BYTE *text_screen, c
 //
 //==========================================================================
 
-void ST_Util_DrawChar (BITMAPINFO *screen, const BYTE *font, int x, int y, BYTE charnum, BYTE attrib)
+void ST_Util_DrawChar(BITMAPINFO* screen, const BYTE* font, int x, int y, BYTE charnum, BYTE attrib)
 {
 	const BYTE bg_left = attrib & 0x70;
-	const BYTE fg      = attrib & 0x0F;
+	const BYTE fg = attrib & 0x0F;
 	const BYTE fg_left = fg << 4;
-	const BYTE bg      = bg_left >> 4;
+	const BYTE bg = bg_left >> 4;
 	const BYTE color_array[4] = { (BYTE)(bg_left | bg), (BYTE)(attrib & 0x7F), (BYTE)(fg_left | bg), (BYTE)(fg_left | fg) };
-	const BYTE *src = font + 1 + charnum * font[0];
+	const BYTE* src = font + 1 + charnum * font[0];
 	int pitch = screen->bmiHeader.biWidth >> 1;
-	BYTE *dest = ST_Util_BitsForBitmap(screen) + x*4 + y * font[0] * pitch;
+	BYTE* dest = ST_Util_BitsForBitmap(screen) + x * 4 + y * font[0] * pitch;
 
 	for (y = font[0]; y > 0; --y)
 	{
@@ -1595,7 +1595,7 @@ void ST_Util_DrawChar (BITMAPINFO *screen, const BYTE *font, int x, int y, BYTE 
 		// Pixels 4 and 5
 		dest[2] = color_array[(srcbyte >> 2) & 3];
 		// Pixels 6 and 7
-		dest[3] = color_array[(srcbyte)      & 3];
+		dest[3] = color_array[(srcbyte) & 3];
 		dest += pitch;
 	}
 }
@@ -1609,7 +1609,7 @@ void ST_Util_DrawChar (BITMAPINFO *screen, const BYTE *font, int x, int y, BYTE 
 //
 //==========================================================================
 
-void ST_Util_UpdateTextBlink (BITMAPINFO *bitmap_info, const BYTE *text_screen, const BYTE *font, bool on)
+void ST_Util_UpdateTextBlink(BITMAPINFO* bitmap_info, const BYTE* text_screen, const BYTE* font, bool on)
 {
 	int x, y;
 
@@ -1619,8 +1619,8 @@ void ST_Util_UpdateTextBlink (BITMAPINFO *bitmap_info, const BYTE *text_screen, 
 		{
 			if (text_screen[1] & 0x80)
 			{
-				ST_Util_DrawChar (bitmap_info, font, x, y, on ? text_screen[0] : ' ', text_screen[1]);
-				ST_Util_InvalidateRect (Window, bitmap_info, x*8, y*font[0], x*8+8, y*font[0]+font[0]);
+				ST_Util_DrawChar(bitmap_info, font, x, y, on ? text_screen[0] : ' ', text_screen[1]);
+				ST_Util_InvalidateRect(Window, bitmap_info, x * 8, y * font[0], x * 8 + 8, y * font[0] + font[0]);
 			}
 			text_screen += 2;
 		}

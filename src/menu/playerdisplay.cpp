@@ -561,6 +561,8 @@ void FListMenuItemPlayerDisplay::Drawer(bool selected)
 		DTA_Masked, true,
 		TAG_DONE);
 
+	V_DrawFrame (x, y, 72*CleanXfac, 80*CleanYfac-1);
+
 	spriteframe_t *sprframe = NULL;
 	fixed_t scaleX, scaleY;
 

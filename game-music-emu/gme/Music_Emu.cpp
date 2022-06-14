@@ -304,7 +304,7 @@ static long count_silence( Music_Emu::sample_t* begin, long size )
 	Music_Emu::sample_t first = *begin;
 	*begin = silence_threshold; // sentinel
 	Music_Emu::sample_t* p = begin + size;
-	while ((unsigned)(*--p + silence_threshold / 2) <= (unsigned)silence_threshold) {}
+	while ( (unsigned) (*--p + silence_threshold / 2) <= (unsigned) silence_threshold ) { }
 	*begin = first;
 	return size - (p - begin);
 }

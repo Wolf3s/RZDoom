@@ -1371,6 +1371,9 @@
     <ClCompile Include="src\sound\fmodsound.cpp">
       <Filter>Audio Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\win32\hardware.cpp">
+      <Filter>Win32 Files</Filter>
+    </ClCompile>
     <ClCompile Include="src\win32\fb_d3d9.cpp">
       <Filter>Win32 Files</Filter>
     </ClCompile>
@@ -2047,6 +2050,9 @@
     </ClInclude>
     <ClInclude Include="src\sound\fmodsound.h">
       <Filter>Audio Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\win32\hardware.h">
+      <Filter>Win32 Files</Filter>
     </ClInclude>
     <ClInclude Include="src\win32\win32iface.h">
       <Filter>Win32 Files</Filter>

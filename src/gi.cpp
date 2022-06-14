@@ -50,21 +50,28 @@ const char *GameNames[17] =
 	NULL, "Doom", "Heretic", NULL, "Hexen", NULL, NULL, NULL, "Strife", NULL, NULL, NULL, NULL, NULL, NULL, NULL, "Chex"
 };
 
-// Gibbon - This is a stupid nasty hack to get rid of those stupid green tiny borders.
-
 static staticgameborder_t DoomBorder =
 {
-	// HACK
+	8, 8,
+	"brdr_tl", "brdr_t", "brdr_tr",
+	"brdr_l",			 "brdr_r",
+	"brdr_bl", "brdr_b", "brdr_br"
 };
 
 static staticgameborder_t HereticBorder =
 {
-	// HACK
+	4, 16,
+	"bordtl", "bordt", "bordtr",
+	"bordl",           "bordr",
+	"bordbl", "bordb", "bordbr"
 };
 
 static staticgameborder_t StrifeBorder =
 {
-	// HACK
+	8, 8,
+	"brdr_tl", "brdr_t", "brdr_tr",
+	"brdr_l",			 "brdr_r",
+	"brdr_bl", "brdr_b", "brdr_br"
 };
 
 // Custom GAMEINFO ------------------------------------------------------------
