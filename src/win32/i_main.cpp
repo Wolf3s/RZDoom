@@ -999,7 +999,6 @@ void DoMain (HINSTANCE hInstance)
 
 		C_InitConsole (((WinWidth / 8) + 2) * 8, (WinHeight / 12) * 8, false);
 
-		I_DetectOS ();
 		D_DoomMain ();
 	}
 	catch (class CNoRunExit &)

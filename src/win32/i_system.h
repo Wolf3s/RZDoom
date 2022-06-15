@@ -39,9 +39,6 @@ enum
 extern uint32 LanguageIDs[4];
 extern void SetLanguageIDs();
 
-// [RH] Detects the OS the game is running under.
-void I_DetectOS(void);
-
 typedef enum {
 	os_unknown,
 	os_Win95,

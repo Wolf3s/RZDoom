@@ -125,10 +125,12 @@ void FNodeBuilder::BuildTree ()
 {
 	fixed_t bbox[4];
 
+	C_InitTicker ("Building BSP", FRACUNIT);
 	HackSeg = DWORD_MAX;
 	HackMate = DWORD_MAX;
 	CreateNode (0, Segs.Size(), bbox);
 	CreateSubsectorsForReal ();
+	C_InitTicker (NULL, 0);
 }
 
 int FNodeBuilder::CreateNode (DWORD set, unsigned int count, fixed_t bbox[4])
@@ -197,6 +199,10 @@ int FNodeBuilder::CreateSubsector (DWORD set, fixed_t bbox[4])
 	}
 
 	SegsStuffed += count;
+	if ((SegsStuffed & ~127) != ((SegsStuffed - count) & ~127))
+	{
+		C_SetTicker (MulScale16 (SegsStuffed, (SDWORD)Segs.Size()));
+	}
 
 	D(Printf (PRINT_LOG, "bbox (%d,%d)-(%d,%d)\n", bbox[BOXLEFT]>>16, bbox[BOXBOTTOM]>>16, bbox[BOXRIGHT]>>16, bbox[BOXTOP]>>16));
 
@@ -1071,83 +1077,3 @@ void FNodeBuilder::PrintSet (int l, DWORD set)
 	}
 	Printf (PRINT_LOG, "*\n");
 }
-
-
-
-#ifdef BACKPATCH
-#ifdef _WIN32
-extern "C" {
-__declspec(dllimport) int __stdcall VirtualProtect(void *, unsigned long, unsigned long, unsigned long *);
-}
-#define PAGE_EXECUTE_READWRITE 64
-#else
-#include <sys/mman.h>
-#include <limits.h>
-#include <unistd.h>
-#endif
-
-#ifdef __GNUC__
-extern "C" int ClassifyLineBackpatch (node_t &node, const FSimpleVert *v1, const FSimpleVert *v2, int sidev[2])
-#else
-static int *CallerOffset;
-int ClassifyLineBackpatchC (node_t &node, const FSimpleVert *v1, const FSimpleVert *v2, int sidev[2])
-#endif
-{
-	// Select the routine based on SSE2 availability and patch the caller so that
-	// they call that routine directly next time instead of going through here.
-	int *calleroffset;
-	int diff;
-	int (*func)(node_t &, const FSimpleVert *, const FSimpleVert *, int[2]);
-
-#ifdef __GNUC__
-	calleroffset = (int *)__builtin_return_address(0);
-#else
-	calleroffset = CallerOffset;
-#endif
-	func = ClassifyLine2;
-	diff = int((char *)ClassifyLine2 - (char *)calleroffset);
-
-	calleroffset--;
-	// Patch the caller.
-#ifdef _WIN32
-	unsigned long oldprotect;
-	if (VirtualProtect (calleroffset, 4, PAGE_EXECUTE_READWRITE, &oldprotect))
-#else
-	// must make this page-aligned for mprotect
-	long pagesize = sysconf(_SC_PAGESIZE);
-	char *callerpage = (char *)((intptr_t)calleroffset & ~(pagesize - 1));
-	size_t protectlen = (intptr_t)calleroffset + sizeof(void*) - (intptr_t)callerpage;
-	int ptect;
-	if (!(ptect = mprotect(callerpage, protectlen, PROT_READ|PROT_WRITE|PROT_EXEC)))
-#endif
-	{
-		*calleroffset = diff;
-#ifdef _WIN32
-		VirtualProtect (calleroffset, sizeof(void*), oldprotect, &oldprotect);
-#else
-		mprotect(callerpage, protectlen, PROT_READ|PROT_EXEC);
-#endif
-	}
-
-	// And return by calling the real function.
-	return func (node, v1, v2, sidev);
-}
-
-#ifndef __GNUC__
-// The ClassifyLineBackpatch() function here is a stub that uses inline assembly and nakedness
-// to retrieve the return address of the stack before sending control to the real
-// ClassifyLineBackpatchC() function. Since BACKPATCH shouldn't be defined on 64-bit builds,
-// we're okay that VC++ can't do inline assembly on that target.
-
-extern "C" __declspec(noinline) __declspec(naked) int ClassifyLineBackpatch (node_t &node, const FSimpleVert *v1, const FSimpleVert *v2, int sidev[2])
-{
-	// We store the return address in a global, so as not to need to mess with the parameter list.
-	__asm
-	{
-		mov eax, [esp]
-		mov CallerOffset, eax
-		jmp ClassifyLineBackpatchC
-	}
-}
-#endif
-#endif

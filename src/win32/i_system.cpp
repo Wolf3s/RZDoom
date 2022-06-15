@@ -511,119 +511,6 @@ void I_WaitVBL(int count)
 
 //==========================================================================
 //
-// I_DetectOS
-//
-// Determine which version of Windows the game is running on.
-//
-//==========================================================================
-
-void I_DetectOS(void)
-{
-	OSVERSIONINFOEX info;
-	const char* osname;
-
-	info.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-	if (!GetVersionEx((OSVERSIONINFO*)&info))
-	{
-		// Retry with the older OSVERSIONINFO structure.
-		info.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-		GetVersionEx((OSVERSIONINFO*)&info);
-	}
-
-	switch (info.dwPlatformId)
-	{
-	case VER_PLATFORM_WIN32_WINDOWS:
-		OSPlatform = os_Win95;
-		if (info.dwMinorVersion < 10)
-		{
-			osname = "95";
-		}
-		else if (info.dwMinorVersion < 90)
-		{
-			osname = "98";
-		}
-		else
-		{
-			osname = "Me";
-		}
-		break;
-
-	case VER_PLATFORM_WIN32_NT:
-		OSPlatform = info.dwMajorVersion < 5 ? os_WinNT4 : os_Win2k;
-		osname = "NT";
-		if (info.dwMajorVersion == 5)
-		{
-			if (info.dwMinorVersion == 0)
-			{
-				osname = "2000";
-			}
-			if (info.dwMinorVersion == 1)
-			{
-				osname = "XP";
-			}
-			else if (info.dwMinorVersion == 2)
-			{
-				osname = "Server 2003";
-			}
-		}
-		else if (info.dwMajorVersion == 6)
-		{
-			if (info.dwMinorVersion == 0)
-			{
-				osname = (info.wProductType == VER_NT_WORKSTATION) ? "Vista" : "Server 2008";
-			}
-			else if (info.dwMinorVersion == 1)
-			{
-				osname = (info.wProductType == VER_NT_WORKSTATION) ? "7" : "Server 2008 R2";
-			}
-			else if (info.dwMinorVersion == 2)
-			{
-				// Starting with Windows 8.1, you need to specify in your manifest
-				// the highest version of Windows you support, which will also be the
-				// highest version of Windows this function returns.
-				osname = (info.wProductType == VER_NT_WORKSTATION) ? "8" : "Server 2012";
-			}
-			else if (info.dwMinorVersion == 3)
-			{
-				osname = (info.wProductType == VER_NT_WORKSTATION) ? "8.1" : "Server 2012 R2";
-			}
-			else if (info.dwMinorVersion == 4)
-			{
-				osname = (info.wProductType == VER_NT_WORKSTATION) ? "10 (or higher)" : "Server 10 (or higher)";
-			}
-		}
-		break;
-
-	default:
-		OSPlatform = os_unknown;
-		osname = "Unknown OS";
-		break;
-	}
-
-	if (OSPlatform == os_Win95)
-	{
-		Printf("OS: Windows %s %lu.%lu.%lu %s\n",
-			osname,
-			info.dwMajorVersion, info.dwMinorVersion,
-			info.dwBuildNumber & 0xffff, info.szCSDVersion);
-	}
-	else
-	{
-		Printf("OS: Windows %s (NT %lu.%lu) Build %lu\n    %s\n",
-			osname,
-			info.dwMajorVersion, info.dwMinorVersion,
-			info.dwBuildNumber, info.szCSDVersion);
-	}
-
-	if (OSPlatform == os_unknown)
-	{
-		Printf("(Assuming Windows 2000)\n");
-		OSPlatform = os_Win2k;
-	}
-}
-
-//==========================================================================
-//
 // SubsetLanguageIDs
 //
 // Helper function for SetLanguageIDs.
@@ -733,8 +620,6 @@ void CalculateCPUSpeed()
 		PerfToSec = double(count1.QuadPart - count2.QuadPart) / (double(ClockCalibration.GetRawCounter()) * freq.QuadPart);
 		PerfToMillisec = PerfToSec * 1000.0;
 	}
-
-	Printf("CPU Speed: %.0f MHz\n", 0.001 / PerfToMillisec);
 }
 
 //==========================================================================
