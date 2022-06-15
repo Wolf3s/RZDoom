@@ -309,7 +309,7 @@ FDInputJoystick::~FDInputJoystick()
 	{
 		Joy_GenerateButtonEvents(Axes[0].ButtonValue, 0, 2, KEY_JOYAXIS1PLUS);
 	}
-	else if (Axes.Size() > 1)
+	else
 	{
 		Joy_GenerateButtonEvents(Axes[1].ButtonValue, 0, 4, KEY_JOYAXIS1PLUS);
 		for (i = 2; i < Axes.Size(); ++i)

@@ -398,6 +398,8 @@ public:
 	virtual void WipeEndScreen();
 	virtual bool WipeDo(int ticks);
 	virtual void WipeCleanup();
+	virtual int GetPixelDoubling() const { return 0; }
+	virtual int GetTrueHeight() { return GetHeight(); }
 
 	virtual void ScaleCoordsFromWindow(SWORD &x, SWORD &y) {}
 
