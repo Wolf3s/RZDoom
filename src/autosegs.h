@@ -78,11 +78,11 @@ class FAutoSegIterator
 			}
 			Probe = Head;
 		}
-		REGINFO operator*() const NO_SANITIZE
+		REGINFO operator*() const
 		{
 			return *Probe;
 		}
-		FAutoSegIterator &operator++() NO_SANITIZE
+		FAutoSegIterator &operator++()
 		{
 			do
 			{
