@@ -20,3 +20,6 @@ Wildmidi, Timidity, Fluidsynth, OPL etc..  remain as you remember them.
 
 # Notices
 Master branch is inherently unstable, expect bugs if you compile from there. Feel free to report anything you wish, I'll be happy to work with you on them. Of course, I do debug it myself often.
+
+# Where do I find more information
+RZDoom has a slowly evolving wiki page on GitHub.  Stop by and see if anything there helps you out.
