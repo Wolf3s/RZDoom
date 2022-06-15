@@ -103,7 +103,7 @@ static char HexenSectorSpecialOk[256]={
 static inline bool P_IsThingSpecial(int specnum)
 {
 	return (specnum >= Thing_Projectile && specnum <= Thing_SpawnNoFog) ||
-			specnum == Thing_SpawnFacing || Thing_ProjectileIntercept || Thing_ProjectileAimed;
+			specnum == Thing_SpawnFacing || specnum == Thing_ProjectileIntercept || specnum == Thing_ProjectileAimed;
 }
 
 enum
@@ -147,7 +147,7 @@ extern TArray<int>		linemap;
 
 void UDMFParserBase::Skip()
 {
-	if (developer) sc.ScriptMessage("Ignoring unknown key \"%s\".", sc.String);
+	if (developer) sc.ScriptMessage("Ignoring unknown UDMF key \"%s\".", sc.String);
 	if(sc.CheckToken('{'))
 	{
 		int level = 1;
@@ -299,7 +299,7 @@ void P_ClearUDMFKeys()
 	}
 }
 
-static int STACK_ARGS udmfcmp(const void *a, const void *b)
+static int udmfcmp(const void *a, const void *b)
 {
 	FUDMFKey *A = (FUDMFKey*)a;
 	FUDMFKey *B = (FUDMFKey*)b;
@@ -314,6 +314,7 @@ void FUDMFKeys::Sort()
 
 FUDMFKey *FUDMFKeys::Find(FName key)
 {
+
 	int min = 0, max = Size()-1;
 
 	while (min <= max)
