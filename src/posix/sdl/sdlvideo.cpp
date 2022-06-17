@@ -16,10 +16,6 @@
 
 #include <SDL.h>
 
-#ifdef __APPLE__
-#include <OpenGL/OpenGL.h>
-#endif // __APPLE__
-
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -49,7 +45,6 @@ public:
 
 	friend class SDLVideo;
 
-	virtual void SetVSync (bool vsync);
 	virtual void ScaleCoordsFromWindow(SWORD &x, SWORD &y);
 
 private:
@@ -391,10 +386,6 @@ SDLFB::SDLFB (int width, int height, bool fullscreen, SDL_Window *oldwin)
 
 	memcpy (SourcePalette, GPalette.BaseColors, sizeof(PalEntry)*256);
 	UpdateColors ();
-
-#ifdef __APPLE__
-	SetVSync (vid_vsync);
-#endif
 }
 
 
@@ -715,28 +706,6 @@ void SDLFB::ResetSDLRenderer ()
 		ScaleWithAspect (w, h, Width, Height);
 		SDL_RenderSetLogicalSize (Renderer, w, h);
 	}
-}
-
-void SDLFB::SetVSync (bool vsync)
-{
-#ifdef __APPLE__
-	if (CGLContextObj context = CGLGetCurrentContext())
-	{
-		// Apply vsync for native backend only (where OpenGL context is set)
-
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1050
-		// Inconsistency between 10.4 and 10.5 SDKs:
-		// third argument of CGLSetParameter() is const long* on 10.4 and const GLint* on 10.5
-		// So, GLint typedef'ed to long instead of int to workaround this issue
-		typedef long GLint;
-#endif // prior to 10.5
-
-		const GLint value = vsync ? 1 : 0;
-		CGLSetParameter(context, kCGLCPSwapInterval, &value);
-	}
-#else
-	ResetSDLRenderer ();
-#endif // __APPLE__
 }
 
 void SDLFB::ScaleCoordsFromWindow(SWORD &x, SWORD &y)
