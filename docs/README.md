@@ -6,6 +6,8 @@ In my own opinion, ZDoom is too big with too many additions for one person to pr
 
 RZDoom is 'the' premier and most performant ZDoom derivative (I am not counting GZ, that is its own thing) that exists today.  MacOS users are also treated very well and after I finally removed the last vestiges of OpenGL, Mac users will find their performance is drastically increased.  Slaughter maps with Brutal Doom are possible at 60fps.
 
+You'll also find that (unlike most ZDoom developers) I don't bloat the source port more than it already is.  I modernise or remove things that are either deprecated or plain outdated and either replace them with a modern derivative or deprecated that feature entirely.  One of which was OpenAL which was replaced with FMOD Studio (which also handles mod music), so two things removed for one update.
+
 # Differences
 
 You will notice differences to ZDoom 2.8.1, largely about the difference in Sound Systems / Backend Choices.
