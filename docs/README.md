@@ -4,7 +4,9 @@ It will be a minimal, stripped-down version of ZDoom 2.8.1 with bug fixes, my ad
 # Why is it needed?
 In my own opinion, ZDoom is too big with too many additions for one person to properly maintain. I'm not interested in pleasing everyone, I don't care about supporting impossibly old systems (XP) or having pointless X64 assembly when our processors are plenty fast enough without it.
 
-So this will contain features I deem 'sensible' for a Doom source port.
+RZDoom is 'the' premier and most performant ZDoom derivative (I am not counting GZ, that is its own thing) that exists today.  MacOS users are also treated very well and after I finally removed the last vestiges of OpenGL, Mac users will find their performance is drastically increased.  Slaughter maps with Brutal Doom are possible at 60fps.
+
+You'll also find that (unlike most ZDoom developers) I don't bloat the source port more than it already is.  I modernise or remove things that are either deprecated or plain outdated and either replace them with a modern derivative or deprecate that feature entirely.  One of which was OpenAL which was replaced with FMOD Studio (which also handles mod music), so two things removed for one update.
 
 # Differences
 
