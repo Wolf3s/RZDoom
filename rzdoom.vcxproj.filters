@@ -1311,9 +1311,6 @@
     <ClCompile Include="src\textures\imgztexture.cpp">
       <Filter>Render Data\Textures</Filter>
     </ClCompile>
-    <ClCompile Include="src\textures\jpegtexture.cpp">
-      <Filter>Render Data\Textures</Filter>
-    </ClCompile>
     <ClCompile Include="src\textures\multipatchtexture.cpp">
       <Filter>Render Data\Textures</Filter>
     </ClCompile>

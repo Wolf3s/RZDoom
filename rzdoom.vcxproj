@@ -1123,7 +1123,6 @@
     <ClCompile Include="src\textures\emptytexture.cpp" />
     <ClCompile Include="src\textures\flattexture.cpp" />
     <ClCompile Include="src\textures\imgztexture.cpp" />
-    <ClCompile Include="src\textures\jpegtexture.cpp" />
     <ClCompile Include="src\textures\multipatchtexture.cpp" />
     <ClCompile Include="src\textures\patchtexture.cpp" />
     <ClCompile Include="src\textures\pcxtexture.cpp" />
